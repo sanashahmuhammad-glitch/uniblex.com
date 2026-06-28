@@ -68,7 +68,7 @@ export function Header() {
       </div>
 
       <div className={`overflow-hidden border-t border-uniblex-border/70 bg-uniblex-bg/95 backdrop-blur-xl transition-all duration-300 md:hidden ${open ? "max-h-[420px] opacity-100" : "max-h-0 opacity-0"}`}>
-        <nav className="container-pad grid gap-2 py-4">
+        <nav className="container-pad grid gap-2 py-3">
           {links.map((link) => (
             <Link
               key={link.href}
