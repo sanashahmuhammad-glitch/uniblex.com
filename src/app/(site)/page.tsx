@@ -62,7 +62,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[460px] lg:max-w-none">
+          <div className="relative mx-auto w-full max-w-[430px] lg:max-w-none">
             <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-r from-uniblex-blue/20 to-uniblex-purple/20 blur-3xl" />
             <div className="card relative p-3 sm:p-4">
               <Image src="/brand/gaming.png" alt="Uniblex gaming showcase" width={720} height={540} priority className="rounded-2xl" />
