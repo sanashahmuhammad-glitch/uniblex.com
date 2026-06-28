@@ -28,7 +28,7 @@ export default function GameDetailPage({ params }: { params: { slug: string } })
   if (!game) return notFound();
 
   return (
-    <main className="container-pad py-14">
+    <main className="container-pad py-12 md:py-16">
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "GameApplication",
@@ -40,7 +40,7 @@ export default function GameDetailPage({ params }: { params: { slug: string } })
       }} />
       <div className="mb-8">
         <p className="text-uniblex-blue">{game.genre}</p>
-        <h1 className="font-heading text-5xl">{game.title}</h1>
+        <h1 className="font-heading text-4xl leading-tight md:text-5xl">{game.title}</h1>
         <p className="mt-4 max-w-3xl text-lg leading-8 text-uniblex-gray">{game.description}</p>
       </div>
       <GamePlayer title={game.title} iframeUrl={game.iframeUrl} />

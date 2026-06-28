@@ -7,9 +7,9 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="container-pad py-14">
+    <main className="container-pad py-12 md:py-16">
       <article className="card p-8 md:p-12">
-        <h1 className="font-heading text-5xl">Terms of Service</h1>
+        <h1 className="font-heading text-4xl leading-tight md:text-5xl">Terms of Service</h1>
         <p className="mt-6 leading-8 text-uniblex-gray">
           By using Uniblex, visitors agree to use the platform responsibly. Game content, articles, logos and brand assets belong to their respective owners. Final legal content should be reviewed before launch.
         </p>

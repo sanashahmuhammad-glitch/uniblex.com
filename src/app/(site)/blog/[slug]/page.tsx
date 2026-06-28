@@ -28,7 +28,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
   if (!post) return notFound();
 
   return (
-    <main className="container-pad py-14">
+    <main className="container-pad py-12 md:py-16">
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "BlogPosting",
@@ -40,7 +40,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
       }} />
       <article className="mx-auto max-w-4xl">
         <p className="text-uniblex-blue">{post.category} • {post.readingTime}</p>
-        <h1 className="mt-3 font-heading text-5xl leading-tight">{post.title}</h1>
+        <h1 className="mt-3 font-heading text-4xl leading-tight md:text-5xl">{post.title}</h1>
         <p className="mt-5 text-lg leading-8 text-uniblex-gray">{post.excerpt}</p>
         <div className="relative my-10 aspect-[16/9] overflow-hidden rounded-3xl border border-uniblex-border">
           <Image src={post.image} alt={post.title} fill className="object-cover" />

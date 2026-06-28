@@ -7,11 +7,11 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <main className="container-pad py-14">
+    <main className="container-pad py-12 md:py-16">
       <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
         <div>
           <p className="text-uniblex-blue">Contact</p>
-          <h1 className="mt-3 font-heading text-5xl">Get in Touch</h1>
+          <h1 className="mt-3 font-heading text-4xl leading-tight md:text-5xl">Get in Touch</h1>
           <p className="mt-5 text-uniblex-gray">For feedback, collaborations or platform updates, contact Uniblex through the form.</p>
         </div>
         <form className="card grid gap-4 p-6">
