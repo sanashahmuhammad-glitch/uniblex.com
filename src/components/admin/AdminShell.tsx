@@ -392,7 +392,8 @@ export function AdminShell() {
 
   async function saveRecord(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase) return; const client = supabase; const client = supabase;
+   if (!supabase) return;
+const client = supabase;
 
     try {
       const payload = normalizePayload(activeConfig, formValues);
