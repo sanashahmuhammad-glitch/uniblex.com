@@ -171,7 +171,7 @@ const defaultValues: Partial<Record<string, string | boolean>> = {
 };
 
 function formatValue(value: unknown) {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") return "-";
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "object") return JSON.stringify(value);
   if (typeof value === "boolean") return value ? "Yes" : "No";
@@ -301,11 +301,12 @@ export function AdminShell() {
   }, [activeConfig, isAuthorized]);
 
   async function verifyAdmin(sessionUser: User) {
-    if (!supabase) return; const client = supabase; const client = supabase; const client = supabase;
+    if (!supabase) return;
+    const client = supabase;
     setAuthReady(false);
     setAuthError("");
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("admins")
       .select("id,email,display_name,role,is_active")
       .eq("id", sessionUser.id)
@@ -324,31 +325,34 @@ export function AdminShell() {
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase) return; const client = supabase; const client = supabase; const client = supabase;
+    if (!supabase) return;
+    const client = supabase;
     setAuthLoading(true);
     setAuthError("");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await client.auth.signInWithPassword({ email, password });
     if (error) setAuthError(error.message);
 
     setAuthLoading(false);
   }
 
   async function handleSignOut() {
-    if (!supabase) return; const client = supabase; const client = supabase;
-    await supabase.auth.signOut();
+    if (!supabase) return;
+    const client = supabase;
+    await client.auth.signOut();
     setRows([]);
     setCounts({});
     setFormOpen(false);
   }
 
   async function loadRows(config: ResourceConfig) {
-    if (!supabase) return; const client = supabase; const client = supabase;
+    if (!supabase) return;
+    const client = supabase;
     setLoadingRows(true);
     setNotice("");
 
     const ascending = config.orderBy === "sort_order" || config.orderBy === "route";
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from(config.table)
       .select("*")
       .order(config.orderBy, { ascending });
@@ -364,7 +368,8 @@ export function AdminShell() {
   }
 
   async function loadCounts() {
-    if (!supabase) return; const client = supabase; const client = supabase;
+    if (!supabase) return;
+    const client = supabase;
     const pairs = await Promise.all(resources.map(async (resource) => {
       const { count } = await client.from(resource.table).select("id", { count: "exact", head: true });
       return [resource.table, count ?? 0] as const;
@@ -392,14 +397,14 @@ export function AdminShell() {
 
   async function saveRecord(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-   if (!supabase) return;
-const client = supabase;
+    if (!supabase) return;
+    const client = supabase;
 
     try {
       const payload = normalizePayload(activeConfig, formValues);
       const query = editingId
-        ? supabase.from(activeConfig.table).update(payload).eq("id", editingId)
-        : supabase.from(activeConfig.table).insert(payload);
+        ? client.from(activeConfig.table).update(payload).eq("id", editingId)
+        : client.from(activeConfig.table).insert(payload);
       const { error } = await query;
 
       if (error) {
@@ -417,12 +422,13 @@ const client = supabase;
   }
 
   async function deleteRecord(row: RowData) {
-    if (!supabase) return; const client = supabase;
+    if (!supabase) return;
+    const client = supabase;
     const label = formatValue(row[activeConfig.primary]);
     const confirmed = window.confirm(`Delete ${activeConfig.label.toLowerCase()} "${label}"?`);
     if (!confirmed) return;
 
-    const { error } = await supabase.from(activeConfig.table).delete().eq("id", String(row.id));
+    const { error } = await client.from(activeConfig.table).delete().eq("id", String(row.id));
     if (error) {
       setNotice(error.message);
       return;
@@ -468,13 +474,13 @@ const client = supabase;
           <form onSubmit={handleLogin} className="mt-8 grid gap-4">
             <label className="grid gap-2 text-sm font-bold">
               Email
-              <input className="rounded-2xl border border-uniblex-border bg-white/[.03] px-4 py-3 text-white outline-none transition focus:border-uniblex-blue" value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
+              <input className="rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-white outline-none transition focus:border-uniblex-blue" value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
             </label>
             <label className="grid gap-2 text-sm font-bold">
               Password
-              <input className="rounded-2xl border border-uniblex-border bg-white/[.03] px-4 py-3 text-white outline-none transition focus:border-uniblex-blue" value={password} onChange={(event) => setPassword(event.target.value)} type="password" required />
+              <input className="rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-white outline-none transition focus:border-uniblex-blue" value={password} onChange={(event) => setPassword(event.target.value)} type="password" required />
             </label>
-            {authError ? <p className="rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{authError}</p> : null}
+            {authError ? <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{authError}</p> : null}
             <button className="btn-primary w-full" disabled={authLoading} type="submit">{authLoading ? "Signing in..." : "Sign In"}</button>
           </form>
         </section>
@@ -487,7 +493,7 @@ const client = supabase;
       <div className="container-pad py-8">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-uniblex-gray">Signed in as {formatValue(adminProfile?.email)} · {formatValue(adminProfile?.role)}</p>
+            <p className="text-sm text-uniblex-gray">Signed in as {formatValue(adminProfile?.email)} | {formatValue(adminProfile?.role)}</p>
             <h1 className="font-heading text-4xl gradient-text">Uniblex Admin</h1>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -508,7 +514,7 @@ const client = supabase;
                       setActiveTable(resource.table);
                       setFormOpen(false);
                     }}
-                    className={`rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${active ? "bg-uniblex-blue/10 text-uniblex-blue ring-1 ring-uniblex-blue/30" : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"}`}
+                    className={`rounded-lg px-4 py-3 text-left text-sm font-semibold transition ${active ? "bg-uniblex-blue/10 text-uniblex-blue ring-1 ring-uniblex-blue/30" : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"}`}
                   >
                     <span className="flex items-center justify-between gap-3">
                       {resource.plural}
@@ -601,11 +607,11 @@ const client = supabase;
 }
 
 function renderField(field: FieldConfig, value: string | boolean | undefined, updateField: (key: string, value: string | boolean) => void) {
-  const baseClass = "rounded-2xl border border-uniblex-border bg-white/[.03] px-4 py-3 text-white outline-none transition focus:border-uniblex-blue";
+  const baseClass = "rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-white outline-none transition focus:border-uniblex-blue";
 
   if (field.kind === "boolean") {
     return (
-      <span className="flex min-h-[48px] items-center gap-3 rounded-2xl border border-uniblex-border bg-white/[.03] px-4">
+      <span className="flex min-h-[48px] items-center gap-3 rounded-lg border border-uniblex-border bg-white/[.03] px-4">
         <input checked={Boolean(value)} onChange={(event) => updateField(field.key, event.target.checked)} type="checkbox" />
         <span className="text-uniblex-gray">{Boolean(value) ? "Enabled" : "Disabled"}</span>
       </span>

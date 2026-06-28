@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import type { Post } from "@/data/posts";
 
 export function PostCard({ post }: { post: Post }) {
@@ -12,12 +13,14 @@ export function PostCard({ post }: { post: Post }) {
       <div className="p-6">
         <div className="mb-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-uniblex-gray">
           <span className="text-uniblex-blue">{post.category}</span>
-          <span>•</span>
+          <span>|</span>
           <span>{post.readingTime}</span>
         </div>
         <h3 className="mb-3 font-heading text-xl leading-tight">{post.title}</h3>
         <p className="mb-5 text-sm leading-6 text-uniblex-gray">{post.excerpt}</p>
-        <Link href={`/blog/${post.slug}`} className="font-bold text-uniblex-blue transition hover:text-uniblex-purple">Read Article →</Link>
+        <Link href={`/blog/${post.slug}`} className="inline-flex items-center gap-2 font-bold text-uniblex-blue transition hover:text-uniblex-purple">
+          Read Article <ArrowRight size={16} />
+        </Link>
       </div>
     </article>
   );

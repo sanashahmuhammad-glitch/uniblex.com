@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PostCard } from "@/components/site/PostCard";
 import { AdZone } from "@/components/site/AdZone";
-import { posts } from "@/data/posts";
+import { categories, posts } from "@/data/posts";
 
 export const metadata: Metadata = {
   title: "Blog & Game Dev Articles",
@@ -15,10 +15,20 @@ export default function BlogPage() {
         <p className="text-uniblex-blue">Articles</p>
         <h1 className="font-heading text-4xl leading-tight md:text-5xl">Blog & Tutorials</h1>
         <p className="mt-4 text-lg leading-8 text-uniblex-gray">
-          Original content for game developers, 3D artists, creators and browser gaming fans.
+          Original content for game developers, 3D artists, creators, and browser gaming fans. These articles support discovery, learning, and AdSense-ready content depth for Uniblex.
         </p>
       </div>
+
+      <div className="mb-8 flex flex-wrap gap-3">
+        {categories.map((category) => (
+          <span key={category} className="rounded-full border border-uniblex-border bg-white/[.03] px-4 py-2 text-sm font-bold text-uniblex-gray">
+            {category}
+          </span>
+        ))}
+      </div>
+
       <AdZone label="Blog Header" size="leaderboard" />
+
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {posts.map((post) => <PostCard key={post.slug} post={post} />)}
       </div>

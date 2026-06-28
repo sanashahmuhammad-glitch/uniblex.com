@@ -15,10 +15,12 @@ export default function GamesPage() {
         <p className="text-uniblex-blue">Game Library</p>
         <h1 className="font-heading text-4xl leading-tight md:text-5xl">WebGL Games</h1>
         <p className="mt-4 text-lg leading-8 text-uniblex-gray">
-          Explore browser-based games with fast loading, clean pages, screenshots, descriptions and play buttons.
+          Explore browser-based games with fast loading pages, clean descriptions, screenshots, play buttons, controls, and SEO-friendly game detail pages.
         </p>
       </div>
+
       <AdZone label="Games Page Header" size="leaderboard" />
+
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {games.map((game) => <GameCard key={game.slug} game={game} />)}
       </div>

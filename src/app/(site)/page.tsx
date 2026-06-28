@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpenText, Code2, Gamepad2, Rocket, ShieldCheck, Smartphone, TrendingUp, Users, Zap } from "lucide-react";
+import { ArrowRight, BookOpenText, Gauge, Gamepad2, LayoutDashboard, Play, Search, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
 import { GameCard } from "@/components/site/GameCard";
 import { PostCard } from "@/components/site/PostCard";
@@ -9,20 +9,23 @@ import { posts } from "@/data/posts";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 const stats = [
-  { icon: Gamepad2, value: "50+", label: "Web Games" },
-  { icon: BookOpenText, value: "100+", label: "Articles" },
-  { icon: Users, value: "1K+", label: "Creators" },
-  { icon: Zap, value: "Instant", label: "Play Now" }
+  { value: `${games.length}+`, label: "Game pages" },
+  { value: `${posts.length}+`, label: "Original articles" },
+  { value: "4", label: "Ad zones" },
+  { value: "80+", label: "Lighthouse target" }
 ];
 
-const improvements = [
-  { icon: ShieldCheck, title: "SEO Ready", text: "Meta tags, OG and structured data" },
-  { icon: Smartphone, title: "Mobile Friendly", text: "Optimized for all screen sizes" },
-  { icon: Rocket, title: "Fast & Lightweight", text: "Built for better performance" },
-  { icon: Code2, title: "Developer Friendly", text: "Clean and scalable code" }
+const platform = [
+  { icon: Gamepad2, title: "WebGL Showcase", text: "Dedicated game pages with controls, tags, schema, and lazy loaded iframe players." },
+  { icon: BookOpenText, title: "Content Engine", text: "Original articles for game dev, 3D art, tutorials, and industry topics." },
+  { icon: Search, title: "SEO Foundation", text: "Dynamic metadata, sitemap, robots.txt, Open Graph, canonical URLs, and JSON-LD." },
+  { icon: LayoutDashboard, title: "Admin CMS", text: "Supabase-backed management for games, blogs, categories, ads, contacts, and SEO." }
 ];
 
 export default function HomePage() {
+  const featuredGames = games.slice(0, 3);
+  const latestPosts = posts.slice(0, 3);
+
   return (
     <main>
       <JsonLd data={{
@@ -30,42 +33,48 @@ export default function HomePage() {
         "@type": "WebSite",
         name: "Uniblex",
         url: "https://uniblex.com",
-        description: "Discover WebGL browser games, tutorials, and game dev articles."
+        description: "Discover WebGL browser games, tutorials, and game dev articles.",
+        publisher: { "@type": "Person", name: "Mohsin Shah" }
       }} />
 
       <section className="relative overflow-hidden border-b border-uniblex-border/50">
         <div className="soft-grid pointer-events-none absolute inset-0 opacity-70" />
-        <div className="container-pad relative grid min-h-[calc(100svh-64px)] items-center gap-10 py-12 md:min-h-[calc(100vh-86px)] md:gap-12 md:py-16 lg:grid-cols-[1.05fr_.95fr] lg:py-20">
-          <div className="max-w-[620px] text-center lg:text-left">
-            <p className="mb-4 text-sm font-black uppercase tracking-[.35em] text-uniblex-blue">Create • Play • Inspire</p>
-            <h1 className="mx-auto mb-6 max-w-[520px] font-heading text-4xl leading-[1.05] sm:text-5xl md:text-6xl lg:mx-0 lg:text-7xl">
-              Browser Games & <span className="gradient-text">Game Dev Content</span>
+        <div className="container-pad relative grid min-h-[calc(100svh-64px)] items-center gap-10 py-10 md:min-h-[calc(100vh-86px)] md:py-14 lg:grid-cols-[1.05fr_.95fr]">
+          <div className="max-w-[670px] text-center lg:text-left">
+            <p className="mb-4 text-sm font-black uppercase tracking-[.32em] text-uniblex-blue">Create | Play | Inspire</p>
+            <h1 className="mx-auto mb-6 max-w-[680px] font-heading text-4xl leading-[1.05] sm:text-5xl md:text-6xl lg:mx-0 lg:text-7xl">
+              Uniblex <span className="gradient-text">Browser Games</span> & Game Dev Content
             </h1>
-            <p className="mx-auto mb-8 max-w-[560px] text-base leading-8 text-uniblex-gray sm:text-lg lg:mx-0">
-              Discover WebGL games, game development articles, 3D art tutorials, and creator-focused content. Play instantly, no installs.
+            <p className="mx-auto mb-8 max-w-[620px] text-base leading-8 text-uniblex-gray sm:text-lg lg:mx-0">
+              Built by Mohsin Shah for players, 3D artists, and game creators. Play WebGL games instantly, read practical production articles, and explore a platform designed for AdSense-ready growth.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
-              <Link href="/games" className="btn-primary"><Gamepad2 size={19} /> Explore Games</Link>
+              <Link href="/games" className="btn-primary"><Play size={19} /> Play Games</Link>
               <Link href="/blog" className="btn-secondary"><BookOpenText size={19} /> Read Articles</Link>
             </div>
 
-            <div className="mt-8 grid grid-cols-2 overflow-hidden rounded-3xl border border-uniblex-border bg-white/[.02] backdrop-blur sm:grid-cols-4 lg:max-w-[600px]">
+            <div className="mt-8 grid grid-cols-2 overflow-hidden rounded-lg border border-uniblex-border bg-white/[.02] backdrop-blur sm:grid-cols-4 lg:max-w-[650px]">
               {stats.map((item, index) => (
-                <div key={item.label} className={`flex items-center gap-3 p-4 sm:p-5 ${index !== 0 ? "sm:border-l sm:border-uniblex-border" : ""} ${index > 1 ? "border-t border-uniblex-border sm:border-t-0" : ""}`}>
-                  <item.icon className="shrink-0 text-uniblex-blue" size={28} />
-                  <div>
-                    <div className="text-xl font-black text-white sm:text-2xl">{item.value}</div>
-                    <div className="text-xs text-uniblex-gray sm:text-sm">{item.label}</div>
-                  </div>
+                <div key={item.label} className={`p-4 sm:p-5 ${index !== 0 ? "sm:border-l sm:border-uniblex-border" : ""} ${index > 1 ? "border-t border-uniblex-border sm:border-t-0" : ""}`}>
+                  <div className="font-heading text-2xl text-white sm:text-3xl">{item.value}</div>
+                  <div className="mt-1 text-xs text-uniblex-gray sm:text-sm">{item.label}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[360px] sm:max-w-[400px] lg:max-w-[500px]">
-            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-r from-uniblex-blue/20 to-uniblex-purple/20 blur-3xl sm:-inset-6" />
-            <div className="card relative p-3 sm:p-4">
-              <Image src="/brand/gaming.png" alt="Uniblex gaming showcase" width={720} height={540} priority className="rounded-2xl" />
+          <div className="relative mx-auto w-full max-w-[480px]">
+            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-r from-uniblex-blue/20 via-uniblex-purple/20 to-uniblex-pink/20 blur-3xl" />
+            <div className="card relative overflow-hidden p-3">
+              <Image src="/og-image.png" alt="Uniblex browser games and creator content" width={1200} height={630} priority className="rounded-lg" />
+              <div className="grid gap-3 p-4 sm:grid-cols-3">
+                {[ShieldCheck, Gauge, Zap].map((Icon, index) => (
+                  <div key={index} className="flex items-center gap-2 rounded-lg border border-uniblex-border bg-white/[.03] px-3 py-2 text-xs font-bold text-uniblex-gray">
+                    <Icon className="text-uniblex-blue" size={16} />
+                    {["Secure CMS", "Fast Pages", "Lazy Player"][index]}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -81,10 +90,30 @@ export default function HomePage() {
             <p className="font-bold text-uniblex-blue">Featured Games</p>
             <h2 className="section-title">Play in Browser</h2>
           </div>
-          <Link href="/games" className="font-bold text-uniblex-blue">View All →</Link>
+          <Link href="/games" className="inline-flex items-center gap-2 font-bold text-uniblex-blue">
+            View All <ArrowRight size={17} />
+          </Link>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {games.map((game) => <GameCard key={game.slug} game={game} />)}
+          {featuredGames.map((game) => <GameCard key={game.slug} game={game} />)}
+        </div>
+      </section>
+
+      <section className="border-y border-uniblex-border/70 bg-uniblex-card/20 py-12 md:py-16">
+        <div className="container-pad">
+          <div className="mb-8 max-w-3xl">
+            <p className="font-bold text-uniblex-blue">Platform System</p>
+            <h2 className="section-title">Frontend, Backend, SEO, Monetization</h2>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {platform.map((item) => (
+              <div key={item.title} className="rounded-lg border border-uniblex-border bg-white/[.025] p-5">
+                <item.icon className="mb-4 text-uniblex-blue" size={30} />
+                <h3 className="font-heading text-lg">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-uniblex-gray">{item.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -94,24 +123,26 @@ export default function HomePage() {
             <p className="font-bold text-uniblex-blue">Latest Articles</p>
             <h2 className="section-title">Game Dev Insights</h2>
           </div>
-          <Link href="/blog" className="font-bold text-uniblex-blue">View Blog →</Link>
+          <Link href="/blog" className="inline-flex items-center gap-2 font-bold text-uniblex-blue">
+            View Blog <ArrowRight size={17} />
+          </Link>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => <PostCard key={post.slug} post={post} />)}
+          {latestPosts.map((post) => <PostCard key={post.slug} post={post} />)}
         </div>
       </section>
 
       <section className="container-pad pb-12 md:pb-16">
-        <div className="card grid gap-4 p-4 sm:grid-cols-2 md:p-6 lg:grid-cols-4">
-          {improvements.map((item) => (
-            <div key={item.title} className="flex items-center gap-4 rounded-2xl border border-uniblex-border/60 bg-white/[.02] p-4">
-              <item.icon className="text-uniblex-blue" size={32} />
-              <div>
-                <h3 className="font-heading text-lg">{item.title}</h3>
-                <p className="text-sm text-uniblex-gray">{item.text}</p>
+        <div className="rounded-lg border border-uniblex-border bg-gradient-to-r from-uniblex-blue/10 via-white/[.03] to-uniblex-purple/10 p-6 md:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-[.22em] text-uniblex-blue">
+                <Sparkles size={16} /> Launch Ready Direction
               </div>
+              <h2 className="font-heading text-3xl">Original content, admin controls, and performance-first game pages.</h2>
             </div>
-          ))}
+            <Link href="/admin" className="btn-primary shrink-0">Open Admin</Link>
+          </div>
         </div>
       </section>
     </main>
