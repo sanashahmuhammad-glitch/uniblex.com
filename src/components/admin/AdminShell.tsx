@@ -302,10 +302,11 @@ export function AdminShell() {
 
   async function verifyAdmin(sessionUser: User) {
     if (!supabase) return;
+    const client = supabase;
     setAuthReady(false);
     setAuthError("");
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("admins")
       .select("id,email,display_name,role,is_active")
       .eq("id", sessionUser.id)
@@ -325,10 +326,11 @@ export function AdminShell() {
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabase) return;
+    const client = supabase;
     setAuthLoading(true);
     setAuthError("");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await client.auth.signInWithPassword({ email, password });
     if (error) setAuthError(error.message);
 
     setAuthLoading(false);
@@ -336,7 +338,8 @@ export function AdminShell() {
 
   async function handleSignOut() {
     if (!supabase) return;
-    await supabase.auth.signOut();
+    const client = supabase;
+    await client.auth.signOut();
     setRows([]);
     setCounts({});
     setFormOpen(false);
@@ -344,11 +347,12 @@ export function AdminShell() {
 
   async function loadRows(config: ResourceConfig) {
     if (!supabase) return;
+    const client = supabase;
     setLoadingRows(true);
     setNotice("");
 
     const ascending = config.orderBy === "sort_order" || config.orderBy === "route";
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from(config.table)
       .select("*")
       .order(config.orderBy, { ascending });
@@ -394,12 +398,13 @@ export function AdminShell() {
   async function saveRecord(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabase) return;
+    const client = supabase;
 
     try {
       const payload = normalizePayload(activeConfig, formValues);
       const query = editingId
-        ? supabase.from(activeConfig.table).update(payload).eq("id", editingId)
-        : supabase.from(activeConfig.table).insert(payload);
+        ? client.from(activeConfig.table).update(payload).eq("id", editingId)
+        : client.from(activeConfig.table).insert(payload);
       const { error } = await query;
 
       if (error) {
@@ -418,11 +423,12 @@ export function AdminShell() {
 
   async function deleteRecord(row: RowData) {
     if (!supabase) return;
+    const client = supabase;
     const label = formatValue(row[activeConfig.primary]);
     const confirmed = window.confirm(`Delete ${activeConfig.label.toLowerCase()} "${label}"?`);
     if (!confirmed) return;
 
-    const { error } = await supabase.from(activeConfig.table).delete().eq("id", String(row.id));
+    const { error } = await client.from(activeConfig.table).delete().eq("id", String(row.id));
     if (error) {
       setNotice(error.message);
       return;
