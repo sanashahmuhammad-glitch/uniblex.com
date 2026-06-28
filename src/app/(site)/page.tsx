@@ -35,13 +35,13 @@ export default function HomePage() {
 
       <section className="relative overflow-hidden border-b border-uniblex-border/50">
         <div className="soft-grid pointer-events-none absolute inset-0 opacity-70" />
-        <div className="container-pad relative grid min-h-[calc(100vh-86px)] items-center gap-12 py-14 md:py-20 lg:grid-cols-[1.08fr_.92fr]">
-          <div className="text-center lg:text-left">
+        <div className="container-pad relative grid min-h-[calc(100svh-64px)] items-center gap-10 py-12 md:min-h-[calc(100vh-86px)] md:gap-12 md:py-16 lg:grid-cols-[1.05fr_.95fr] lg:py-20">
+          <div className="max-w-[620px] text-center lg:text-left">
             <p className="mb-4 text-sm font-black uppercase tracking-[.35em] text-uniblex-blue">Create • Play • Inspire</p>
-            <h1 className="mx-auto mb-6 max-w-[560px] font-heading text-4xl leading-[1.05] sm:text-5xl md:text-6xl lg:mx-0 lg:text-7xl">
+            <h1 className="mx-auto mb-6 max-w-[520px] font-heading text-4xl leading-[1.05] sm:text-5xl md:text-6xl lg:mx-0 lg:text-7xl">
               Browser Games & <span className="gradient-text">Game Dev Content</span>
             </h1>
-            <p className="mx-auto mb-8 max-w-2xl text-base leading-8 text-uniblex-gray sm:text-lg lg:mx-0">
+            <p className="mx-auto mb-8 max-w-[560px] text-base leading-8 text-uniblex-gray sm:text-lg lg:mx-0">
               Discover WebGL games, game development articles, 3D art tutorials, and creator-focused content. Play instantly, no installs.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
@@ -49,7 +49,7 @@ export default function HomePage() {
               <Link href="/blog" className="btn-secondary"><BookOpenText size={19} /> Read Articles</Link>
             </div>
 
-            <div className="mt-10 grid grid-cols-2 overflow-hidden rounded-3xl border border-uniblex-border bg-white/[.02] backdrop-blur sm:grid-cols-4 lg:max-w-2xl">
+            <div className="mt-8 grid grid-cols-2 overflow-hidden rounded-3xl border border-uniblex-border bg-white/[.02] backdrop-blur sm:grid-cols-4 lg:max-w-[600px]">
               {stats.map((item, index) => (
                 <div key={item.label} className={`flex items-center gap-3 p-4 sm:p-5 ${index !== 0 ? "sm:border-l sm:border-uniblex-border" : ""} ${index > 1 ? "border-t border-uniblex-border sm:border-t-0" : ""}`}>
                   <item.icon className="shrink-0 text-uniblex-blue" size={28} />
@@ -62,8 +62,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[430px] lg:max-w-none">
-            <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-r from-uniblex-blue/20 to-uniblex-purple/20 blur-3xl" />
+          <div className="relative mx-auto w-full max-w-[360px] sm:max-w-[400px] lg:max-w-[500px]">
+            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-r from-uniblex-blue/20 to-uniblex-purple/20 blur-3xl sm:-inset-6" />
             <div className="card relative p-3 sm:p-4">
               <Image src="/brand/gaming.png" alt="Uniblex gaming showcase" width={720} height={540} priority className="rounded-2xl" />
             </div>
@@ -71,11 +71,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="container-pad py-8">
+      <section className="container-pad py-8 md:py-10">
         <AdZone label="Header Leaderboard" size="leaderboard" />
       </section>
 
-      <section className="container-pad py-14 md:py-20">
+      <section className="container-pad py-12 md:py-16">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="font-bold text-uniblex-blue">Featured Games</p>
@@ -83,12 +83,12 @@ export default function HomePage() {
           </div>
           <Link href="/games" className="font-bold text-uniblex-blue">View All →</Link>
         </div>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {games.map((game) => <GameCard key={game.slug} game={game} />)}
         </div>
       </section>
 
-      <section className="container-pad py-14 md:py-20">
+      <section className="container-pad py-12 md:py-16">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="font-bold text-uniblex-blue">Latest Articles</p>
@@ -96,13 +96,13 @@ export default function HomePage() {
           </div>
           <Link href="/blog" className="font-bold text-uniblex-blue">View Blog →</Link>
         </div>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => <PostCard key={post.slug} post={post} />)}
         </div>
       </section>
 
-      <section className="container-pad pb-16">
-        <div className="card grid gap-5 p-5 md:grid-cols-4 md:p-6">
+      <section className="container-pad pb-12 md:pb-16">
+        <div className="card grid gap-4 p-4 sm:grid-cols-2 md:p-6 lg:grid-cols-4">
           {improvements.map((item) => (
             <div key={item.title} className="flex items-center gap-4 rounded-2xl border border-uniblex-border/60 bg-white/[.02] p-4">
               <item.icon className="text-uniblex-blue" size={32} />

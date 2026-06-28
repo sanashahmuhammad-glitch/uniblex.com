@@ -5,8 +5,8 @@ import type { Game } from "@/data/games";
 export function GameCard({ game }: { game: Game }) {
   return (
     <article className="card group overflow-hidden transition duration-300 hover:-translate-y-1 hover:border-uniblex-blue/50 hover:shadow-[0_24px_70px_rgba(0,178,255,.16)]">
-      <div className="relative aspect-[16/10] overflow-hidden">
-        <Image src={game.cover} alt={game.title} fill className="object-contain transition duration-500 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
+      <div className="relative aspect-[16/10] overflow-hidden bg-white/[.03]">
+        <Image src={game.cover} alt={game.title} fill className="object-contain p-3 transition duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
         <div className="absolute inset-0 bg-gradient-to-t from-uniblex-bg/90 via-transparent to-transparent" />
         <span className="absolute left-4 top-4 rounded-full border border-uniblex-blue/30 bg-uniblex-bg/75 px-3 py-1 text-xs font-bold text-uniblex-blue backdrop-blur">
           {game.status}

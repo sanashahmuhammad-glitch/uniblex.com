@@ -10,16 +10,16 @@ export const metadata: Metadata = {
 
 export default function BlogPage() {
   return (
-    <main className="container-pad py-14">
+    <main className="container-pad py-12 md:py-16">
       <div className="mb-10 max-w-3xl">
         <p className="text-uniblex-blue">Articles</p>
-        <h1 className="font-heading text-5xl">Blog & Tutorials</h1>
+        <h1 className="font-heading text-4xl leading-tight md:text-5xl">Blog & Tutorials</h1>
         <p className="mt-4 text-lg leading-8 text-uniblex-gray">
           Original content for game developers, 3D artists, creators and browser gaming fans.
         </p>
       </div>
       <AdZone label="Blog Header" size="leaderboard" />
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {posts.map((post) => <PostCard key={post.slug} post={post} />)}
       </div>
     </main>

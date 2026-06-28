@@ -7,9 +7,9 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="container-pad py-14">
+    <main className="container-pad py-12 md:py-16">
       <article className="card p-8 md:p-12">
-        <h1 className="font-heading text-5xl">Privacy Policy</h1>
+        <h1 className="font-heading text-4xl leading-tight md:text-5xl">Privacy Policy</h1>
         <p className="mt-6 leading-8 text-uniblex-gray">
           Uniblex respects user privacy. This page explains how basic contact form information, analytics data and site usage information may be handled. Final legal content should be reviewed before launch.
         </p>
