@@ -38,7 +38,7 @@ export default function HomePage() {
         <div className="container-pad relative grid min-h-[calc(100vh-86px)] items-center gap-12 py-14 md:py-20 lg:grid-cols-[1.08fr_.92fr]">
           <div className="text-center lg:text-left">
             <p className="mb-4 text-sm font-black uppercase tracking-[.35em] text-uniblex-blue">Create • Play • Inspire</p>
-            <h1 className="mx-auto mb-6 max-w-4xl font-heading text-4xl leading-[1.05] sm:text-5xl md:text-6xl lg:mx-0 lg:text-7xl">
+            <h1 className="mx-auto mb-6 max-w-[560px] font-heading text-4xl leading-[1.05] sm:text-5xl md:text-6xl lg:mx-0 lg:text-7xl">
               Browser Games & <span className="gradient-text">Game Dev Content</span>
             </h1>
             <p className="mx-auto mb-8 max-w-2xl text-base leading-8 text-uniblex-gray sm:text-lg lg:mx-0">
