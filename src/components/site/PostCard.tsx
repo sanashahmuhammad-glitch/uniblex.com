@@ -1,13 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { Post } from "@/data/posts";
+import { PostThumbnail } from "@/components/site/VisualThumb";
 
 export function PostCard({ post }: { post: Post }) {
   return (
     <article className="card group overflow-hidden transition duration-300 hover:-translate-y-1 hover:border-uniblex-purple/50 hover:shadow-[0_24px_70px_rgba(122,60,255,.14)]">
       <div className="relative aspect-[16/9] overflow-hidden">
-        <Image src={post.image} alt={post.title} fill className="object-cover transition duration-500 group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
+        <PostThumbnail post={post} />
         <div className="absolute inset-0 bg-gradient-to-t from-uniblex-bg/90 via-transparent to-transparent" />
       </div>
       <div className="p-6">

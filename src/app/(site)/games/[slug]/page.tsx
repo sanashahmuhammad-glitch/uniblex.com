@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Clock3, Gamepad2, Settings2, Star, Trophy, Users } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
 import { GamePlayer } from "@/components/site/GamePlayer";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { GameThumbnail } from "@/components/site/VisualThumb";
 import { games, getGame } from "@/data/games";
 
 export function generateStaticParams() {
@@ -74,7 +74,7 @@ export default function GameDetailPage({ params }: { params: { slug: string } })
             background: `radial-gradient(circle at 30% 20%, ${game.accent}35, transparent 36%), linear-gradient(135deg, rgba(13,17,24,.96), rgba(17,24,39,.82))`
           }}
         >
-          <Image src={game.cover} alt={game.title} fill className="object-contain p-6" priority />
+          <GameThumbnail game={game} />
         </div>
       </div>
 

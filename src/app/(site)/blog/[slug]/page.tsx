@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { PostThumbnail } from "@/components/site/VisualThumb";
 import { getPost, getRelatedPosts, posts } from "@/data/posts";
 
 export function generateStaticParams() {
@@ -51,7 +51,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
         <h1 className="mt-3 font-heading text-4xl leading-tight md:text-5xl">{post.title}</h1>
         <p className="mt-5 text-lg leading-8 text-uniblex-gray">{post.excerpt}</p>
         <div className="relative my-10 aspect-[16/9] overflow-hidden rounded-lg border border-uniblex-border">
-          <Image src={post.image} alt={post.title} fill className="object-cover" priority />
+          <PostThumbnail post={post} />
         </div>
 
         <div className="prose prose-invert max-w-none prose-headings:font-heading prose-h2:text-3xl prose-p:text-uniblex-gray prose-p:leading-8">

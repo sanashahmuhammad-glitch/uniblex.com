@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Clock3, Gamepad2, Star, Trophy } from "lucide-react";
 import type { Game } from "@/data/games";
+import { GameThumbnail } from "@/components/site/VisualThumb";
 
 export function GameCard({ game }: { game: Game }) {
   return (
@@ -12,7 +12,7 @@ export function GameCard({ game }: { game: Game }) {
           background: `radial-gradient(circle at 30% 20%, ${game.accent}35, transparent 36%), linear-gradient(135deg, rgba(13,17,24,.96), rgba(17,24,39,.82))`
         }}
       >
-        <Image src={game.cover} alt={game.title} fill className="object-contain p-5 transition duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+        <GameThumbnail game={game} />
         <div className="absolute inset-0 bg-gradient-to-t from-uniblex-bg/90 via-transparent to-transparent" />
         <span className="absolute left-4 top-4 rounded-full border border-uniblex-blue/30 bg-uniblex-bg/75 px-3 py-1 text-xs font-bold text-uniblex-blue backdrop-blur">
           {game.status}
