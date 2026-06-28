@@ -22,7 +22,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-uniblex-border/80 bg-uniblex-bg/78 shadow-[0_10px_40px_rgba(0,0,0,.25)] backdrop-blur-xl">
-      <div className="container-pad flex h-20 items-center justify-between gap-5 md:h-[86px]">
+      <div className="container-pad flex h-16 items-center justify-between gap-5 md:h-[86px]">
         <Link href="/" className="group flex min-w-0 items-center" aria-label="Uniblex home">
           <Image
             src="/brand/horizontal-lockup.png"
