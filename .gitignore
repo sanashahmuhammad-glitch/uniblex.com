@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# production build artifacts
+dist/
+build/
+
+# local environment
+.env
+.env.local
+.env.*.local
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# local package-manager workarounds
+pnpm-lock.yaml
+pnpm-workspace.yaml
+vendor/
+
+# system files
+.DS_Store
+Thumbs.db

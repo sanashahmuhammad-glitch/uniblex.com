@@ -47,16 +47,16 @@ img {
 }
 
 .card {
-@apply rounded-3xl border border-uniblex-border shadow-glow backdrop-blur;
+@apply rounded-lg border border-uniblex-border shadow-glow backdrop-blur;
  background-color: rgba(17, 24, 39, 0.78); 
 }
 
 .btn-primary {
-  @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-uniblex-blue to-uniblex-purple px-6 py-3 font-bold text-white shadow-[0_12px_40px_rgba(0,178,255,.18)] transition hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-[0_18px_50px_rgba(122,60,255,.25)] active:scale-[.99];
+  @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-uniblex-blue to-uniblex-purple px-6 py-3 font-bold text-white shadow-[0_12px_40px_rgba(0,178,255,.18)] transition hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-[0_18px_50px_rgba(122,60,255,.25)] active:scale-[.99];
 }
 
 .btn-secondary {
-  @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-uniblex-border bg-white/[.02] px-6 py-3 font-bold text-uniblex-white transition hover:-translate-y-0.5 hover:border-uniblex-blue hover:bg-uniblex-blue/10 hover:text-uniblex-blue active:scale-[.99];
+  @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg border border-uniblex-border bg-white/[.02] px-6 py-3 font-bold text-uniblex-white transition hover:-translate-y-0.5 hover:border-uniblex-blue hover:bg-uniblex-blue/10 hover:text-uniblex-blue active:scale-[.99];
 }
 
 .section-title {

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Gamepad2 } from "lucide-react";
 import type { Game } from "@/data/games";
 
 export function GameCard({ game }: { game: Game }) {
@@ -21,7 +22,9 @@ export function GameCard({ game }: { game: Game }) {
             <span key={tag} className="rounded-full border border-uniblex-border px-3 py-1 text-xs text-uniblex-gray">{tag}</span>
           ))}
         </div>
-        <Link className="btn-primary w-full" href={`/games/${game.slug}`}>View Game</Link>
+        <Link className="btn-primary w-full" href={`/games/${game.slug}`}>
+          <Gamepad2 size={18} /> View Game
+        </Link>
       </div>
     </article>
   );

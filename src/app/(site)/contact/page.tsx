@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Mail, MapPin, MessageCircle } from "lucide-react";
+import { ContactForm } from "@/components/site/ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -12,14 +14,34 @@ export default function ContactPage() {
         <div>
           <p className="text-uniblex-blue">Contact</p>
           <h1 className="mt-3 font-heading text-4xl leading-tight md:text-5xl">Get in Touch</h1>
-          <p className="mt-5 text-uniblex-gray">For feedback, collaborations or platform updates, contact Uniblex through the form.</p>
+          <p className="mt-5 leading-8 text-uniblex-gray">
+            Send feedback, collaboration notes, game questions, or website support requests. Messages are saved to the Uniblex admin dashboard when Supabase is configured.
+          </p>
+          <div className="mt-8 grid gap-4">
+            <div className="flex gap-3 rounded-lg border border-uniblex-border bg-white/[.03] p-4">
+              <Mail className="text-uniblex-blue" />
+              <div>
+                <h2 className="font-heading text-lg">Email</h2>
+                <p className="text-sm text-uniblex-gray">hello.uniblex@gmail.com</p>
+              </div>
+            </div>
+            <div className="flex gap-3 rounded-lg border border-uniblex-border bg-white/[.03] p-4">
+              <MapPin className="text-uniblex-purple" />
+              <div>
+                <h2 className="font-heading text-lg">Location</h2>
+                <p className="text-sm text-uniblex-gray">Lahore, Pakistan</p>
+              </div>
+            </div>
+            <div className="flex gap-3 rounded-lg border border-uniblex-border bg-white/[.03] p-4">
+              <MessageCircle className="text-uniblex-pink" />
+              <div>
+                <h2 className="font-heading text-lg">Topics</h2>
+                <p className="text-sm text-uniblex-gray">Games, 3D art, tutorials, browser content, and platform feedback.</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <form className="card grid gap-4 p-6">
-          <input className="rounded-2xl border border-uniblex-border bg-uniblex-bg px-4 py-3 outline-none focus:border-uniblex-blue" placeholder="Your name" />
-          <input type="email" className="rounded-2xl border border-uniblex-border bg-uniblex-bg px-4 py-3 outline-none focus:border-uniblex-blue" placeholder="Email address" />
-          <textarea rows={6} className="rounded-2xl border border-uniblex-border bg-uniblex-bg px-4 py-3 outline-none focus:border-uniblex-blue" placeholder="Message" />
-          <button type="button" className="btn-primary">Send Message</button>
-        </form>
+        <ContactForm />
       </div>
     </main>
   );
