@@ -54,12 +54,12 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="/admin" className="hidden items-center gap-2 rounded-full border border-uniblex-purple/40 bg-uniblex-purple/5 px-5 py-3 text-sm font-bold text-white transition hover:border-uniblex-blue hover:text-uniblex-blue md:inline-flex">
+          <Link href="/admin" className="hidden items-center gap-2 rounded-full border border-uniblex-purple/40 bg-uniblex-purple/5 px-5 py-2 text-sm font-bold text-white transition hover:border-uniblex-blue hover:text-uniblex-blue md:inline-flex">
             <UserRound size={16} /> Admin
           </Link>
           <button
             onClick={() => setOpen((value) => !value)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-uniblex-border bg-white/[.03] text-white transition hover:border-uniblex-blue md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-uniblex-border bg-white/[.03] text-white transition hover:border-uniblex-blue md:hidden"
             aria-label="Toggle navigation menu"
           >
             {open ? <X size={22} /> : <Menu size={22} />}
@@ -74,12 +74,12 @@ export function Header() {
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className={`rounded-2xl px-4 py-3 text-sm font-bold transition ${isActive(link.href) ? "bg-uniblex-blue/10 text-uniblex-blue" : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"}`}
+              className={`rounded-2xl px-4 py-2 text-sm font-bold transition ${isActive(link.href) ? "bg-uniblex-blue/10 text-uniblex-blue" : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"}`}
             >
               {link.label}
             </Link>
           ))}
-          <Link href="/admin" onClick={() => setOpen(false)} className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl border border-uniblex-purple/40 px-4 py-3 text-sm font-bold text-white">
+          <Link href="/admin" onClick={() => setOpen(false)} className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl border border-uniblex-purple/40 px-4 py-2 text-sm font-bold text-white">
             <UserRound size={16} /> Admin Panel
           </Link>
         </nav>
