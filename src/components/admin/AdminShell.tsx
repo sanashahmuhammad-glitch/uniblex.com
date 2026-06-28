@@ -301,7 +301,7 @@ export function AdminShell() {
   }, [activeConfig, isAuthorized]);
 
   async function verifyAdmin(sessionUser: User) {
-    if (!supabase) return;
+    if (!supabase) return; const client = supabase; const client = supabase; const client = supabase;
     setAuthReady(false);
     setAuthError("");
 
@@ -324,7 +324,7 @@ export function AdminShell() {
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase) return;
+    if (!supabase) return; const client = supabase; const client = supabase; const client = supabase;
     setAuthLoading(true);
     setAuthError("");
 
@@ -335,7 +335,7 @@ export function AdminShell() {
   }
 
   async function handleSignOut() {
-    if (!supabase) return;
+    if (!supabase) return; const client = supabase; const client = supabase;
     await supabase.auth.signOut();
     setRows([]);
     setCounts({});
@@ -343,7 +343,7 @@ export function AdminShell() {
   }
 
   async function loadRows(config: ResourceConfig) {
-    if (!supabase) return;
+    if (!supabase) return; const client = supabase; const client = supabase;
     setLoadingRows(true);
     setNotice("");
 
@@ -364,9 +364,9 @@ export function AdminShell() {
   }
 
   async function loadCounts() {
-    if (!supabase) return;
+    if (!supabase) return; const client = supabase; const client = supabase;
     const pairs = await Promise.all(resources.map(async (resource) => {
-      const { count } = await supabase.from(resource.table).select("id", { count: "exact", head: true });
+      const { count } = await client.from(resource.table).select("id", { count: "exact", head: true });
       return [resource.table, count ?? 0] as const;
     }));
     setCounts(Object.fromEntries(pairs) as Partial<Record<TableName, number>>);
@@ -392,7 +392,7 @@ export function AdminShell() {
 
   async function saveRecord(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase) return;
+    if (!supabase) return; const client = supabase; const client = supabase;
 
     try {
       const payload = normalizePayload(activeConfig, formValues);
@@ -416,7 +416,7 @@ export function AdminShell() {
   }
 
   async function deleteRecord(row: RowData) {
-    if (!supabase) return;
+    if (!supabase) return; const client = supabase;
     const label = formatValue(row[activeConfig.primary]);
     const confirmed = window.confirm(`Delete ${activeConfig.label.toLowerCase()} "${label}"?`);
     if (!confirmed) return;
