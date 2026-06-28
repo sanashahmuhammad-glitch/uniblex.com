@@ -47,7 +47,8 @@ img {
 }
 
 .card {
-  @apply rounded-3xl border border-uniblex-border bg-uniblex-card/78 shadow-glow backdrop-blur;
+@apply rounded-3xl border border-uniblex-border shadow-glow backdrop-blur;
+ background-color: rgba(17, 24, 39, 0.78); 
 }
 
 .btn-primary {
