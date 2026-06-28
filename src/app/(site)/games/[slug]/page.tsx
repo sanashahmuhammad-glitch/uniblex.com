@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Gamepad2, Settings2 } from "lucide-react";
+import { CheckCircle2, Clock3, Gamepad2, Settings2, Star, Trophy, Users } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
 import { GamePlayer } from "@/components/site/GamePlayer";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -49,11 +49,31 @@ export default function GameDetailPage({ params }: { params: { slug: string } })
           <p className="text-uniblex-blue">{game.genre} | {game.status}</p>
           <h1 className="mt-3 font-heading text-4xl leading-tight md:text-5xl">{game.title}</h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-uniblex-gray">{game.description}</p>
+          <div className="mt-6 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { icon: Star, label: "Rating", value: game.rating },
+              { icon: Trophy, label: "Difficulty", value: game.difficulty },
+              { icon: Clock3, label: "Session", value: game.sessionLength },
+              { icon: Users, label: "Players", value: game.players }
+            ].map((item) => (
+              <div key={item.label} className="rounded-lg border border-uniblex-border bg-white/[.03] p-3">
+                <div className="flex items-center gap-2 text-xs text-uniblex-gray">
+                  <item.icon size={14} className="text-uniblex-blue" /> {item.label}
+                </div>
+                <div className="mt-1 font-heading text-lg">{item.value}</div>
+              </div>
+            ))}
+          </div>
           <div className="mt-6 flex flex-wrap gap-3">
             {game.tags.map((tag) => <span key={tag} className="rounded-full border border-uniblex-border px-4 py-2 text-sm text-uniblex-gray">{tag}</span>)}
           </div>
         </div>
-        <div className="relative aspect-[16/10] overflow-hidden rounded-lg border border-uniblex-border bg-white/[.03]">
+        <div
+          className="relative aspect-[16/10] overflow-hidden rounded-lg border border-uniblex-border bg-white/[.03]"
+          style={{
+            background: `radial-gradient(circle at 30% 20%, ${game.accent}35, transparent 36%), linear-gradient(135deg, rgba(13,17,24,.96), rgba(17,24,39,.82))`
+          }}
+        >
           <Image src={game.cover} alt={game.title} fill className="object-contain p-6" priority />
         </div>
       </div>

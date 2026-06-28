@@ -221,6 +221,76 @@ export const posts: Post[] = [
       "The content strategy should connect playable experiments with production knowledge. A game page can show the experience, while articles explain the modeling, optimization, design, or publishing work behind it. This gives visitors more reasons to stay and gives search engines more useful context.",
       "Over time, Uniblex can become a home for browser games, development notes, tutorials, and portfolio-quality breakdowns. The first version should focus on quality, speed, clear navigation, and original content. Community features can come later when the foundation is steady."
     ]
+  },
+  {
+    title: "Designing a Polished Game Card for Better Clicks",
+    slug: "designing-polished-game-card-for-better-clicks",
+    category: "Tutorials",
+    excerpt: "A strong game card should communicate genre, quality, session length, and player promise before the visitor opens the page.",
+    publishedAt: "2026-06-12",
+    readingTime: "7 min read",
+    image: sharedImages[0],
+    content: [
+      "A game card is often the first real decision point on a showcase website. It needs to show the title, genre, visual identity, status, and a short promise that helps visitors understand why they should click. When cards look consistent but not identical, the whole library feels more premium.",
+      "Useful card metadata includes difficulty, session length, rating, player mode, and tags. These details help users choose the right game for their time and device. A casual visitor might choose a three-minute runner, while a strategy player might open a longer tactics page.",
+      "The design should avoid crowding. A strong thumbnail area, short copy, three or four data points, and a clear button are enough. The card should feel clickable on desktop and readable on mobile."
+    ]
+  },
+  {
+    title: "How to Prepare Dummy Content for a Client Demo",
+    slug: "prepare-dummy-content-for-client-demo",
+    category: "Tutorials",
+    excerpt: "Client demos feel stronger when placeholder content looks intentional, complete, and close to the final product.",
+    publishedAt: "2026-06-11",
+    readingTime: "6 min read",
+    image: sharedImages[1],
+    content: [
+      "Dummy content should never look like filler. Even when a project is still waiting for final games, screenshots, or articles, the demo should show realistic titles, complete descriptions, categories, metadata, and page structure. This helps the client understand the final experience.",
+      "For a game platform, realistic demo content can include fake game names, session length, difficulty, controls, rating, tags, technical notes, and article links. These details show that the CMS and design system can support real publishing workflows.",
+      "The best demo content is honest and polished. It should not pretend that unavailable games are already launched, but it should still make the platform feel complete and ready for real assets."
+    ]
+  },
+  {
+    title: "Mobile First Checks for Browser Game Libraries",
+    slug: "mobile-first-checks-for-browser-game-libraries",
+    category: "Game Dev",
+    excerpt: "Game libraries need stable cards, readable buttons, and layouts that do not collapse when viewed on smaller screens.",
+    publishedAt: "2026-06-10",
+    readingTime: "8 min read",
+    image: sharedImages[2],
+    content: [
+      "A browser game library must be easy to scan on mobile. Cards should stack naturally, text should wrap without overlap, buttons should remain large enough to tap, and metadata should not force horizontal scrolling. A premium layout feels calm even on a small device.",
+      "The most common mobile problems are oversized headings inside cards, thumbnails without stable aspect ratios, tags that wrap awkwardly, and buttons that shift when dynamic content loads. These can be prevented with fixed card image ratios, shorter labels, and responsive grid tracks.",
+      "Testing should include the home page, games listing, game detail pages, blog listing, and article pages. The goal is not just that the page loads; it should feel intentionally designed at every viewport."
+    ]
+  },
+  {
+    title: "Turning Game Production Notes into Blog Traffic",
+    slug: "turning-game-production-notes-into-blog-traffic",
+    category: "Game Dev",
+    excerpt: "Production notes can become useful articles when they explain decisions, constraints, tradeoffs, and repeatable lessons.",
+    publishedAt: "2026-06-09",
+    readingTime: "7 min read",
+    image: sharedImages[3],
+    content: [
+      "Game production creates useful content naturally. Every optimization decision, control change, art pass, level design test, and WebGL export issue can become an article if it is explained clearly. This turns everyday development into long-term search value.",
+      "A good production article starts with a specific problem. It explains the context, lists the tools involved, shows the decision process, and ends with a practical checklist. Readers should leave with something they can apply to their own project.",
+      "For Uniblex, this strategy connects games and blog posts together. A game page can link to its production breakdown, while the article sends interested readers back to play the demo."
+    ]
+  },
+  {
+    title: "What Makes a Web Game Page Feel Premium",
+    slug: "what-makes-web-game-page-feel-premium",
+    category: "Industry News",
+    excerpt: "Premium game pages combine fast loading, confident visuals, clear copy, useful metadata, and a player experience that respects the visitor.",
+    publishedAt: "2026-06-08",
+    readingTime: "8 min read",
+    image: sharedImages[4],
+    content: [
+      "A premium web game page feels intentional from the first second. The visitor sees a clear title, strong visual identity, direct description, and useful details like controls, difficulty, session length, and tags. Nothing feels accidental or unfinished.",
+      "Performance is part of the premium feeling. The game player should not load before the visitor asks for it, images should reserve space, and the page should remain readable while assets load. Good structure makes even demo content feel trustworthy.",
+      "The best pages also support business goals. They include schema markup, original text, internal links, ad placement zones, and a CMS-friendly content model. That makes the page useful for players, clients, and search engines at the same time."
+    ]
   }
 ];
 
