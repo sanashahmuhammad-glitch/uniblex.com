@@ -59,7 +59,7 @@ export function Header() {
           </Link>
           <button
             onClick={() => setOpen((value) => !value)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-uniblex-border bg-white/[.03] text-white transition hover:border-uniblex-blue md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-uniblex-border bg-white/[.03] text-white transition hover:border-uniblex-blue md:hidden"
             aria-label="Toggle navigation menu"
           >
             {open ? <X size={22} /> : <Menu size={22} />}
