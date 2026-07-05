@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { AdminProfile } from "@/lib/adminAuth";
 import { allowedAdminRoles } from "@/lib/adminAuth";
+import { slugify } from "@/lib/slug";
 
 type TableName = "admins" | "categories" | "games" | "blogs" | "contacts" | "ad_zones" | "seo_settings";
 type FieldKind = "text" | "textarea" | "select" | "boolean" | "number" | "tags" | "json" | "datetime";
@@ -48,7 +49,7 @@ const resources: ResourceConfig[] = [
     orderBy: "created_at",
     fields: [
       { key: "title", label: "Title", kind: "text", required: true },
-      { key: "slug", label: "Slug", kind: "text", required: true },
+      { key: "slug", label: "Slug", kind: "text", placeholder: "Generated from title if empty" },
       { key: "category_id", label: "Category ID", kind: "text", placeholder: "Optional category uuid" },
       { key: "genre", label: "Genre", kind: "text" },
       { key: "status", label: "Status", kind: "select", options: ["draft", "published", "coming_soon", "archived"], required: true },
@@ -263,6 +264,9 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
   const [loadingRows, setLoadingRows] = useState(false);
   const [notice, setNotice] = useState("");
   const [formValues, setFormValues] = useState<FormValues>({});
+  const [gameZipFile, setGameZipFile] = useState<File | null>(null);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
@@ -388,6 +392,8 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
   function startCreate() {
     setEditingId(null);
     setFormValues(buildEmptyForm(activeConfig));
+    setGameZipFile(null);
+    setCoverImageFile(null);
     setFormOpen(true);
     setNotice("");
   }
@@ -399,6 +405,8 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
     }, {});
     setEditingId(String(row.id));
     setFormValues(nextValues);
+    setGameZipFile(null);
+    setCoverImageFile(null);
     setFormOpen(true);
     setNotice("");
   }
@@ -409,7 +417,17 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
     const client = supabase;
 
     try {
-      const payload = normalizePayload(activeConfig, formValues);
+      setUploadLoading(true);
+      let nextValues = { ...formValues };
+      let uploadSummary = "";
+
+      if (activeConfig.table === "games") {
+        const prepared = await prepareGameValues(nextValues);
+        nextValues = prepared.values;
+        uploadSummary = prepared.message;
+      }
+
+      const payload = normalizePayload(activeConfig, nextValues);
       const query = editingId
         ? client.from(activeConfig.table).update(payload).eq("id", editingId)
         : client.from(activeConfig.table).insert(payload);
@@ -420,20 +438,81 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
         return;
       }
 
-      setNotice(`${activeConfig.label} ${editingId ? "updated" : "created"}.`);
+      setNotice(`${activeConfig.label} ${editingId ? "updated" : "created"}.${uploadSummary ? ` ${uploadSummary}` : ""}`);
       setFormOpen(false);
+      setGameZipFile(null);
+      setCoverImageFile(null);
       await loadRows(activeConfig);
       await loadCounts();
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Unable to save record.");
+    } finally {
+      setUploadLoading(false);
     }
+  }
+
+  async function prepareGameValues(values: FormValues) {
+    if (!supabase) return { values, message: "" };
+
+    const title = String(values.title ?? "").trim();
+    const currentSlug = String(values.slug ?? "").trim();
+    const generatedSlug = slugify(currentSlug || title);
+
+    if (!generatedSlug) {
+      throw new Error("Enter a title or slug before saving a game.");
+    }
+
+    const nextValues: FormValues = { ...values, slug: generatedSlug };
+
+    if (!gameZipFile && !coverImageFile) {
+      setFormValues(nextValues);
+      return { values: nextValues, message: "Manual iframe_url and cover_url values were used." };
+    }
+
+    if (gameZipFile && !gameZipFile.name.toLowerCase().endsWith(".zip")) {
+      throw new Error("Game upload must be a .zip file.");
+    }
+
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      throw new Error("Your admin session expired. Sign in again before uploading files.");
+    }
+
+    const uploadData = new FormData();
+    uploadData.set("title", title);
+    uploadData.set("slug", generatedSlug);
+    if (gameZipFile) uploadData.set("gameZip", gameZipFile);
+    if (coverImageFile) uploadData.set("coverImage", coverImageFile);
+
+    const response = await fetch("/api/admin/uploads/game", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: uploadData
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(typeof payload.error === "string" ? payload.error : "Game upload failed.");
+    }
+
+    if (typeof payload.iframeUrl === "string") nextValues.iframe_url = payload.iframeUrl;
+    if (typeof payload.coverUrl === "string") nextValues.cover_url = payload.coverUrl;
+    if (typeof payload.slug === "string") nextValues.slug = payload.slug;
+
+    const message = Array.isArray(payload.messages) ? payload.messages.join(" ") : "Upload processed.";
+    setFormValues(nextValues);
+    return { values: nextValues, message };
   }
 
   async function deleteRecord(row: RowData) {
     if (!supabase) return;
     const client = supabase;
     const label = formatValue(row[activeConfig.primary]);
-    const confirmed = window.confirm(`Delete ${activeConfig.label.toLowerCase()} "${label}"?`);
+    const deleteNote = activeConfig.table === "games" ? " Uploaded game files and Cloudinary covers will not be deleted." : "";
+    const confirmed = window.confirm(`Delete ${activeConfig.label.toLowerCase()} "${label}"?${deleteNote}`);
     if (!confirmed) return;
 
     const { error } = await client.from(activeConfig.table).delete().eq("id", String(row.id));
@@ -562,6 +641,14 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                     <button type="button" className="text-sm font-bold text-uniblex-gray hover:text-white" onClick={() => setFormOpen(false)}>Cancel</button>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
+                    {activeConfig.table === "games" ? (
+                      <GameUploadFields
+                        gameZipFile={gameZipFile}
+                        coverImageFile={coverImageFile}
+                        setGameZipFile={setGameZipFile}
+                        setCoverImageFile={setCoverImageFile}
+                      />
+                    ) : null}
                     {activeConfig.fields.map((field) => (
                       <label key={field.key} className={`grid gap-2 text-sm font-bold ${field.kind === "textarea" || field.kind === "json" ? "md:col-span-2" : ""}`}>
                         {field.label}
@@ -570,7 +657,9 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                     ))}
                   </div>
                   <div className="flex justify-end">
-                    <button className="btn-primary" type="submit">Save {activeConfig.label}</button>
+                    <button className="btn-primary" disabled={uploadLoading} type="submit">
+                      {uploadLoading ? "Saving..." : `Save ${activeConfig.label}`}
+                    </button>
                   </div>
                 </form>
               ) : null}
@@ -649,5 +738,46 @@ function renderField(field: FieldConfig, value: string | boolean | undefined, up
       placeholder={field.placeholder}
       type={field.kind === "number" ? "number" : field.kind === "datetime" ? "datetime-local" : "text"}
     />
+  );
+}
+
+function GameUploadFields({
+  gameZipFile,
+  coverImageFile,
+  setGameZipFile,
+  setCoverImageFile
+}: {
+  gameZipFile: File | null;
+  coverImageFile: File | null;
+  setGameZipFile: (file: File | null) => void;
+  setCoverImageFile: (file: File | null) => void;
+}) {
+  return (
+    <div className="grid gap-4 rounded-lg border border-uniblex-border bg-white/[.02] p-4 md:col-span-2 md:grid-cols-2">
+      <label className="grid gap-2 text-sm font-bold">
+        WebGL ZIP Upload
+        <input
+          className="rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-sm text-white file:mr-4 file:rounded-md file:border-0 file:bg-uniblex-blue file:px-3 file:py-2 file:font-bold file:text-white"
+          accept=".zip,application/zip,application/x-zip-compressed"
+          type="file"
+          onChange={(event) => setGameZipFile(event.target.files?.[0] ?? null)}
+        />
+        <span className="text-xs font-normal text-uniblex-gray">
+          {gameZipFile ? gameZipFile.name : "Uploads extract to public/games/{slug}/ and set iframe_url automatically."}
+        </span>
+      </label>
+      <label className="grid gap-2 text-sm font-bold">
+        Cover Image Upload
+        <input
+          className="rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-sm text-white file:mr-4 file:rounded-md file:border-0 file:bg-uniblex-purple file:px-3 file:py-2 file:font-bold file:text-white"
+          accept="image/*"
+          type="file"
+          onChange={(event) => setCoverImageFile(event.target.files?.[0] ?? null)}
+        />
+        <span className="text-xs font-normal text-uniblex-gray">
+          {coverImageFile ? coverImageFile.name : "Uploads to Cloudinary and saves secure_url as cover_url."}
+        </span>
+      </label>
+    </div>
   );
 }

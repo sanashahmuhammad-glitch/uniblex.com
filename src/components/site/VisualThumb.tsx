@@ -48,15 +48,16 @@ const postCoverIndex: Record<string, number> = {
 
 export function GameThumbnail({ game }: { game: Game }) {
   const index = gameCoverIndex[game.slug] ?? 0;
+  const usesUploadedCover = game.cover !== "/cards/game-cover-sprite.png";
 
   return (
     <div
       className="relative h-full min-h-full overflow-hidden bg-cover bg-no-repeat transition duration-500 group-hover:scale-[1.03]"
       aria-label={`${game.title} game cover`}
       style={{
-        backgroundImage: "url('/cards/game-cover-sprite.png')",
-        backgroundSize: "400% 300%",
-        backgroundPosition: positions[index]
+        backgroundImage: `url('${game.cover}')`,
+        backgroundSize: usesUploadedCover ? "cover" : "400% 300%",
+        backgroundPosition: usesUploadedCover ? "center" : positions[index]
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-t from-uniblex-bg/85 via-uniblex-bg/5 to-black/10" />

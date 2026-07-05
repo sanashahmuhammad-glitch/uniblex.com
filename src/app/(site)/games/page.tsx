@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import { GameCard } from "@/components/site/GameCard";
 import { AdZone } from "@/components/site/AdZone";
-import { games } from "@/data/games";
+import { getPublishedGames } from "@/lib/publicGames";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "WebGL Browser Games",
   description: "Play Uniblex WebGL browser games instantly with no installs."
 };
 
-export default function GamesPage() {
+export default async function GamesPage() {
+  const games = await getPublishedGames();
+
   return (
     <main className="container-pad py-12 md:py-16">
       <div className="mb-10 max-w-3xl">

@@ -5,14 +5,17 @@ import { AdZone } from "@/components/site/AdZone";
 import { GamePlayer } from "@/components/site/GamePlayer";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GameThumbnail } from "@/components/site/VisualThumb";
-import { games, getGame } from "@/data/games";
+import { games } from "@/data/games";
+import { getPublishedGame } from "@/lib/publicGames";
+
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return games.map((game) => ({ slug: game.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const game = getGame(params.slug);
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const game = await getPublishedGame(params.slug);
   if (!game) return {};
 
   return {
@@ -27,8 +30,8 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function GameDetailPage({ params }: { params: { slug: string } }) {
-  const game = getGame(params.slug);
+export default async function GameDetailPage({ params }: { params: { slug: string } }) {
+  const game = await getPublishedGame(params.slug);
   if (!game) return notFound();
 
   return (
