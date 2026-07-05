@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, UserRound } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { AuthorizedAdminLink } from "@/components/admin/AuthorizedAdminLink";
 
 const links = [
   { href: "/", label: "Home" },
@@ -54,9 +55,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="/admin" className="hidden items-center gap-2 rounded-full border border-uniblex-purple/40 bg-uniblex-purple/5 px-5 py-2 text-sm font-bold text-white transition hover:border-uniblex-blue hover:text-uniblex-blue md:inline-flex">
-            <UserRound size={16} /> Admin
-          </Link>
+          <AuthorizedAdminLink />
           <button
             onClick={() => setOpen((value) => !value)}
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-uniblex-border bg-white/[.03] text-white transition hover:border-uniblex-blue md:hidden"
@@ -79,9 +78,7 @@ export function Header() {
               {link.label}
             </Link>
           ))}
-          <Link href="/admin" onClick={() => setOpen(false)} className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg border border-uniblex-purple/40 px-4 py-2 text-sm font-bold text-white">
-            <UserRound size={16} /> Admin Panel
-          </Link>
+          <AuthorizedAdminLink mobile onNavigate={() => setOpen(false)} />
         </nav>
       </div>
     </header>

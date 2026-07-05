@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import type { AdminProfile } from "@/lib/adminAuth";
+import { allowedAdminRoles } from "@/lib/adminAuth";
 
 type TableName = "admins" | "categories" | "games" | "blogs" | "contacts" | "ad_zones" | "seo_settings";
 type FieldKind = "text" | "textarea" | "select" | "boolean" | "number" | "tags" | "json" | "datetime";
@@ -243,9 +245,13 @@ function normalizePayload(config: ResourceConfig, values: FormValues) {
   }, {});
 }
 
-export function AdminShell() {
+type AdminShellProps = {
+  initialAdminProfile?: AdminProfile | null;
+};
+
+export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [adminProfile, setAdminProfile] = useState<RowData | null>(null);
+  const [adminProfile, setAdminProfile] = useState<RowData | null>(initialAdminProfile);
   const [authReady, setAuthReady] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -311,6 +317,7 @@ export function AdminShell() {
       .select("id,email,display_name,role,is_active")
       .eq("id", sessionUser.id)
       .eq("is_active", true)
+      .in("role", allowedAdminRoles)
       .maybeSingle();
 
     if (error || !data) {
@@ -340,6 +347,7 @@ export function AdminShell() {
     if (!supabase) return;
     const client = supabase;
     await client.auth.signOut();
+    window.location.href = "/admin/login";
     setRows([]);
     setCounts({});
     setFormOpen(false);

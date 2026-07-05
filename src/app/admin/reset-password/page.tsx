@@ -1,0 +1,11 @@
+import type { Metadata } from "next";
+import { AdminResetPasswordForm } from "@/components/admin/AdminResetPasswordForm";
+
+export const metadata: Metadata = {
+  title: "Reset Admin Password | Uniblex",
+  description: "Set a new password for a Uniblex admin account."
+};
+
+export default function AdminResetPasswordPage() {
+  return <AdminResetPasswordForm />;
+}

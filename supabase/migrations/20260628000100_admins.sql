@@ -34,6 +34,7 @@ as $$
     from public.admins
     where id = auth.uid()
       and is_active = true
+      and role in ('owner', 'admin')
   );
 $$;
 

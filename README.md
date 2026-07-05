@@ -39,6 +39,17 @@ NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=
 4. Insert that Auth user ID into the `admins` table with `role = 'owner'` and `is_active = true`.
 5. Add Supabase URL and anon key to Vercel environment variables.
 
+### Required Auth URL Settings
+
+In Supabase Auth URL Configuration, set:
+
+- Site URL: `https://www.uniblex.com`
+- Redirect URL: `https://www.uniblex.com/**`
+- Redirect URL: `https://uniblex.com/**`
+- Redirect URL: `https://www.uniblex.com/admin/reset-password`
+
+Password recovery emails from `/admin/login` redirect to `/admin/reset-password`, where the admin sets a new password before returning to `/admin/login`.
+
 ## Admin CMS
 
 The `/admin` route supports:
@@ -51,7 +62,7 @@ The `/admin` route supports:
 - Contact submissions
 - Admin access records
 
-Public users cannot register in phase 1. Only active admins in the `admins` table can manage content.
+Public users cannot register in phase 1. Only authenticated Supabase users with active `owner` or `admin` records in the `admins` table can access and manage content.
 
 ## Launch Checklist
 

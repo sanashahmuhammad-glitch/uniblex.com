@@ -7,6 +7,7 @@ import { PostCard } from "@/components/site/PostCard";
 import { games } from "@/data/games";
 import { posts } from "@/data/posts";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { AuthorizedAdminLink } from "@/components/admin/AuthorizedAdminLink";
 
 const stats = [
   { value: `${games.length}+`, label: "Game pages" },
@@ -141,7 +142,7 @@ export default function HomePage() {
               </div>
               <h2 className="font-heading text-3xl">Original content, admin controls, and performance-first game pages.</h2>
             </div>
-            <Link href="/admin" className="btn-primary shrink-0">Open Admin</Link>
+            <AuthorizedAdminLink variant="cta" />
           </div>
         </div>
       </section>

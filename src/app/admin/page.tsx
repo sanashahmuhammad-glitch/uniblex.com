@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 
 export const metadata: Metadata = {
   title: "Admin | Uniblex",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <AdminShell />;
+  return <AdminAccessGate />;
 }
