@@ -717,8 +717,12 @@ function renderField(field: FieldConfig, value: string | boolean | undefined, up
 
   if (field.kind === "select") {
     return (
-      <select className={baseClass} value={String(value ?? "")} onChange={(event) => updateField(field.key, event.target.value)} required={field.required}>
-        {(field.options ?? []).map((option) => <option key={option} value={option}>{option}</option>)}
+      <select className={`${baseClass} admin-select bg-slate-900 text-white`} value={String(value ?? "")} onChange={(event) => updateField(field.key, event.target.value)} required={field.required}>
+        {(field.options ?? []).map((option) => (
+          <option key={option} value={option} className="bg-slate-900 text-white" style={{ backgroundColor: "#111827", color: "#ffffff" }}>
+            {option}
+          </option>
+        ))}
       </select>
     );
   }
