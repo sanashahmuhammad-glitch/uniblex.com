@@ -11,6 +11,10 @@ type TableName = "admins" | "categories" | "games" | "blogs" | "contacts" | "ad_
 type FieldKind = "text" | "textarea" | "select" | "boolean" | "number" | "tags" | "json" | "datetime";
 type RowData = Record<string, unknown>;
 type FormValues = Record<string, string | boolean>;
+type ExtractedZipEntry = {
+  name: string;
+  blob: Blob;
+};
 
 type FieldConfig = {
   key: string;
@@ -172,6 +176,8 @@ const defaultValues: Partial<Record<string, string | boolean>> = {
   structured_data: "{}",
   noindex: false
 };
+
+const webglBucketName = "webgl-games";
 
 function formatValue(value: unknown) {
   if (value === null || value === undefined || value === "") return "-";
@@ -473,36 +479,20 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
       throw new Error("Game upload must be a .zip file.");
     }
 
-    const { data } = await supabase.auth.getSession();
-    const accessToken = data.session?.access_token;
+    const messages: string[] = [];
 
-    if (!accessToken) {
-      throw new Error("Your admin session expired. Sign in again before uploading files.");
+    if (gameZipFile) {
+      const uploadResult = await uploadWebglZipToStorage(gameZipFile, generatedSlug);
+      nextValues.iframe_url = uploadResult.iframeUrl;
+      messages.push(uploadResult.message);
     }
 
-    const uploadData = new FormData();
-    uploadData.set("title", title);
-    uploadData.set("slug", generatedSlug);
-    if (gameZipFile) uploadData.set("gameZip", gameZipFile);
-    if (coverImageFile) uploadData.set("coverImage", coverImageFile);
-
-    const response = await fetch("/api/admin/uploads/game", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}` },
-      body: uploadData
-    });
-
-    const payload = await response.json();
-
-    if (!response.ok) {
-      throw new Error(typeof payload.error === "string" ? payload.error : "Game upload failed.");
+    if (coverImageFile) {
+      nextValues.cover_url = await uploadCoverToCloudinary(coverImageFile, generatedSlug);
+      messages.push("Cover image uploaded to Cloudinary.");
     }
 
-    if (typeof payload.iframeUrl === "string") nextValues.iframe_url = payload.iframeUrl;
-    if (typeof payload.coverUrl === "string") nextValues.cover_url = payload.coverUrl;
-    if (typeof payload.slug === "string") nextValues.slug = payload.slug;
-
-    const message = Array.isArray(payload.messages) ? payload.messages.join(" ") : "Upload processed.";
+    const message = messages.join(" ");
     setFormValues(nextValues);
     return { values: nextValues, message };
   }
@@ -745,6 +735,248 @@ function renderField(field: FieldConfig, value: string | boolean | undefined, up
   );
 }
 
+async function uploadWebglZipToStorage(file: File, slug: string) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+
+  const entries = await extractZipFile(file);
+  const indexEntry = entries.find((entry) => entry.name.toLowerCase() === "index.html");
+
+  if (!indexEntry) {
+    throw new Error("ZIP must contain an index.html file.");
+  }
+
+  for (const entry of entries) {
+    const storagePath = `${slug}/${entry.name}`;
+    const { error } = await supabase.storage
+      .from(webglBucketName)
+      .upload(storagePath, entry.blob, {
+        cacheControl: "3600",
+        contentType: getContentType(entry.name),
+        upsert: true
+      });
+
+    if (error) {
+      throw new Error(`Unable to upload ${entry.name}: ${error.message}`);
+    }
+  }
+
+  const { data } = supabase.storage.from(webglBucketName).getPublicUrl(`${slug}/index.html`);
+
+  return {
+    iframeUrl: data.publicUrl,
+    message: `WebGL ZIP extracted in the browser and uploaded ${entries.length} files to Supabase Storage.`
+  };
+}
+
+async function extractZipFile(file: File) {
+  if (!file.name.toLowerCase().endsWith(".zip")) {
+    throw new Error("Game upload must be a .zip file.");
+  }
+
+  const buffer = await file.arrayBuffer();
+  const entries = await readZipEntries(buffer);
+  const indexEntry = entries.find((entry) => entry.name.split("/").pop()?.toLowerCase() === "index.html");
+
+  if (!indexEntry) {
+    throw new Error("ZIP must contain an index.html file.");
+  }
+
+  const prefix = indexEntry.name.includes("/") ? indexEntry.name.slice(0, indexEntry.name.lastIndexOf("/")) : "";
+
+  return entries
+    .map((entry) => ({ ...entry, name: normalizeZipPath(stripZipPrefix(entry.name, prefix)) }))
+    .filter((entry) => Boolean(entry.name));
+}
+
+async function readZipEntries(buffer: ArrayBuffer) {
+  const view = new DataView(buffer);
+  const entries: ExtractedZipEntry[] = [];
+  const centralDirectoryOffset = findCentralDirectoryOffset(view);
+  const totalEntries = view.getUint16(centralDirectoryOffset + 10, true);
+  let offset = view.getUint32(centralDirectoryOffset + 16, true);
+
+  for (let index = 0; index < totalEntries; index += 1) {
+    if (view.getUint32(offset, true) !== 0x02014b50) {
+      throw new Error("ZIP central directory is invalid.");
+    }
+
+    const flags = view.getUint16(offset + 8, true);
+    const method = view.getUint16(offset + 10, true);
+    const compressedSize = view.getUint32(offset + 20, true);
+    const uncompressedSize = view.getUint32(offset + 24, true);
+    const nameLength = view.getUint16(offset + 28, true);
+    const extraLength = view.getUint16(offset + 30, true);
+    const commentLength = view.getUint16(offset + 32, true);
+    const localHeaderOffset = view.getUint32(offset + 42, true);
+    const rawName = decodeZipString(buffer.slice(offset + 46, offset + 46 + nameLength));
+    const name = normalizeZipPath(rawName);
+
+    if (compressedSize === 0xffffffff || uncompressedSize === 0xffffffff || localHeaderOffset === 0xffffffff) {
+      throw new Error("ZIP64 archives are not supported by the browser uploader.");
+    }
+
+    if (flags & 0x01) {
+      throw new Error("Encrypted ZIP files are not supported.");
+    }
+
+    if (name && !rawName.endsWith("/")) {
+      if (view.getUint32(localHeaderOffset, true) !== 0x04034b50) {
+        throw new Error("ZIP local file header is invalid.");
+      }
+
+      const localNameLength = view.getUint16(localHeaderOffset + 26, true);
+      const localExtraLength = view.getUint16(localHeaderOffset + 28, true);
+      const dataStart = localHeaderOffset + 30 + localNameLength + localExtraLength;
+      const dataEnd = dataStart + compressedSize;
+
+      if (dataEnd > buffer.byteLength) {
+        throw new Error("ZIP file is invalid or truncated.");
+      }
+
+      const blob = await inflateZipEntry(buffer.slice(dataStart, dataEnd), method, uncompressedSize, name);
+      entries.push({ name, blob });
+    }
+
+    offset += 46 + nameLength + extraLength + commentLength;
+  }
+
+  if (!entries.length) {
+    throw new Error("ZIP file does not contain extractable files.");
+  }
+
+  return entries;
+}
+
+function findCentralDirectoryOffset(view: DataView) {
+  const minimumOffset = Math.max(0, view.byteLength - 65557);
+
+  for (let offset = view.byteLength - 22; offset >= minimumOffset; offset -= 1) {
+    if (view.getUint32(offset, true) === 0x06054b50) return offset;
+  }
+
+  throw new Error("ZIP end-of-central-directory record was not found.");
+}
+
+async function inflateZipEntry(data: ArrayBuffer, method: number, expectedSize: number, name: string) {
+  if (method === 0) return new Blob([data], { type: getContentType(name) });
+
+  if (method !== 8) {
+    throw new Error("ZIP compression method is not supported.");
+  }
+
+  const DecompressionStreamConstructor = globalThis.DecompressionStream;
+
+  if (!DecompressionStreamConstructor) {
+    throw new Error("This browser cannot extract compressed ZIP files. Use a current Chrome or Edge browser, then try again.");
+  }
+
+  try {
+    const stream = new Blob([data]).stream().pipeThrough(new DecompressionStreamConstructor("deflate-raw"));
+    const blob = await new Response(stream).blob();
+
+    if (expectedSize && blob.size !== expectedSize) {
+      throw new Error("ZIP entry failed size validation.");
+    }
+
+    return new Blob([blob], { type: getContentType(name) });
+  } catch (error) {
+    throw new Error(error instanceof Error ? `Unable to extract ${name}: ${error.message}` : `Unable to extract ${name}.`);
+  }
+}
+
+function decodeZipString(value: ArrayBuffer) {
+  return new TextDecoder("utf-8").decode(value);
+}
+
+function normalizeZipPath(name: string) {
+  const normalized = name.replace(/\\/g, "/").replace(/^\/+/, "");
+  const parts = normalized.split("/").filter(Boolean);
+
+  if (!parts.length || parts.some((part) => part === "." || part === "..")) {
+    return "";
+  }
+
+  return parts.join("/");
+}
+
+function stripZipPrefix(name: string, prefix: string) {
+  if (!prefix) return name;
+  return name === prefix ? "" : name.startsWith(`${prefix}/`) ? name.slice(prefix.length + 1) : name;
+}
+
+async function uploadCoverToCloudinary(file: File, slug: string) {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim();
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET?.trim();
+
+  if (!cloudName || !uploadPreset) {
+    throw new Error("Cloudinary cloud name and upload preset are not configured.");
+  }
+
+  const cloudinaryData = new FormData();
+  cloudinaryData.set("file", file);
+  cloudinaryData.set("upload_preset", uploadPreset);
+  cloudinaryData.set("folder", "uniblex/game-covers");
+  cloudinaryData.set("public_id", slug);
+
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: "POST",
+    body: cloudinaryData
+  });
+  const payload = await parseUploadResponse(response, "Cloudinary upload failed.");
+
+  if (!response.ok || typeof payload.secure_url !== "string") {
+    throw new Error(typeof payload.error?.message === "string" ? payload.error.message : "Cloudinary upload failed.");
+  }
+
+  return payload.secure_url as string;
+}
+
+async function parseUploadResponse(response: Response, fallbackMessage: string) {
+  const text = await response.text();
+
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(text || fallbackMessage);
+  }
+}
+
+function getContentType(name: string) {
+  const extension = name.split(".").pop()?.toLowerCase();
+
+  switch (extension) {
+    case "html":
+      return "text/html; charset=utf-8";
+    case "js":
+      return "application/javascript; charset=utf-8";
+    case "css":
+      return "text/css; charset=utf-8";
+    case "json":
+      return "application/json; charset=utf-8";
+    case "wasm":
+      return "application/wasm";
+    case "data":
+      return "application/octet-stream";
+    case "png":
+      return "image/png";
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "webp":
+      return "image/webp";
+    case "svg":
+      return "image/svg+xml";
+    case "mp3":
+      return "audio/mpeg";
+    case "ogg":
+      return "audio/ogg";
+    case "wav":
+      return "audio/wav";
+    default:
+      return "application/octet-stream";
+  }
+}
+
 function GameUploadFields({
   gameZipFile,
   coverImageFile,
@@ -767,7 +999,7 @@ function GameUploadFields({
           onChange={(event) => setGameZipFile(event.target.files?.[0] ?? null)}
         />
         <span className="text-xs font-normal text-uniblex-gray">
-          {gameZipFile ? gameZipFile.name : "Uploads extract to public/games/{slug}/ and set iframe_url automatically."}
+          {gameZipFile ? gameZipFile.name : "Extracts in your browser, uploads to Supabase Storage, and sets iframe_url automatically."}
         </span>
       </label>
       <label className="grid gap-2 text-sm font-bold">

@@ -64,7 +64,7 @@ The `/admin` route supports:
 
 Public users cannot register in phase 1. Only authenticated Supabase users with active `owner` or `admin` records in the `admins` table can access and manage content.
 
-Game records support server-side WebGL ZIP uploads from the admin panel. ZIP files must contain an `index.html`; uploads extract to `public/games/{slug}/` and automatically save `/games/{slug}/index.html` as the iframe URL. Cover image uploads are sent to Cloudinary with the configured cloud name and unsigned upload preset, while manual `iframe_url` and `cover_url` fields remain available as fallbacks.
+Game records support WebGL ZIP uploads from the admin panel. ZIP files must contain an `index.html`; uploads extract in the admin browser, upload the extracted files directly to the public Supabase Storage bucket `webgl-games`, and automatically save the public Storage URL for `{slug}/index.html` as the iframe URL. Cover image uploads are sent to Cloudinary with the configured cloud name and unsigned upload preset, while manual `iframe_url` and `cover_url` fields remain available as fallbacks.
 
 ## Launch Checklist
 
