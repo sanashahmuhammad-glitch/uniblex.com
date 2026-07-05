@@ -22,6 +22,26 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/:path*.js.br",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Content-Encoding", value: "br" }
+        ]
+      },
+      {
+        source: "/:path*.wasm.br",
+        headers: [
+          { key: "Content-Type", value: "application/wasm" },
+          { key: "Content-Encoding", value: "br" }
+        ]
+      },
+      {
+        source: "/:path*.data.br",
+        headers: [
+          { key: "Content-Type", value: "application/octet-stream" }
+        ]
+      },
+      {
         source: "/(.*)",
         headers: [
           { key: "X-DNS-Prefetch-Control", value: "on" },
