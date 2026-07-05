@@ -52,7 +52,7 @@ const resources: ResourceConfig[] = [
       { key: "slug", label: "Slug", kind: "text", placeholder: "Generated from title if empty" },
       { key: "category_id", label: "Category ID", kind: "text", placeholder: "Optional category uuid" },
       { key: "genre", label: "Genre", kind: "text" },
-      { key: "status", label: "Status", kind: "select", options: ["draft", "published", "coming_soon", "archived"], required: true },
+      { key: "status", label: "Status", kind: "select", options: ["draft", "published", "archived"], required: true },
       { key: "description", label: "Description", kind: "textarea", required: true },
       { key: "cover_url", label: "Cover URL", kind: "text" },
       { key: "iframe_url", label: "Iframe URL", kind: "text" },

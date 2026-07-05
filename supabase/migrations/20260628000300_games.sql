@@ -4,7 +4,7 @@ create table if not exists public.games (
   title text not null,
   slug text not null unique,
   genre text,
-  status text not null default 'draft' check (status in ('draft', 'published', 'coming_soon', 'archived')),
+  status text not null default 'draft' check (status in ('draft', 'published', 'archived')),
   description text not null,
   cover_url text,
   iframe_url text,

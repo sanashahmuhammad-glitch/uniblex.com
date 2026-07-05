@@ -15,9 +15,10 @@ type GameRow = {
 };
 
 const accents = ["#00B2FF", "#7A3CFF", "#FF4DDB", "#26E6D0"];
+const fallbackPublishedGames = fallbackGames.filter((game) => game.status === "Published");
 
 export async function getPublishedGames() {
-  if (!supabase) return fallbackGames;
+  if (!supabase) return fallbackPublishedGames;
 
   const { data, error } = await supabase
     .from("games")
@@ -26,13 +27,13 @@ export async function getPublishedGames() {
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false });
 
-  if (error || !data?.length) return fallbackGames;
+  if (error || !data?.length) return fallbackPublishedGames;
 
   return (data as GameRow[]).map(mapGameRow);
 }
 
 export async function getPublishedGame(slug: string) {
-  if (!supabase) return fallbackGames.find((game) => game.slug === slug);
+  if (!supabase) return fallbackPublishedGames.find((game) => game.slug === slug);
 
   const { data, error } = await supabase
     .from("games")
@@ -41,7 +42,7 @@ export async function getPublishedGame(slug: string) {
     .eq("slug", slug)
     .maybeSingle();
 
-  if (error || !data) return fallbackGames.find((game) => game.slug === slug);
+  if (error || !data) return fallbackPublishedGames.find((game) => game.slug === slug);
 
   return mapGameRow(data as GameRow);
 }
