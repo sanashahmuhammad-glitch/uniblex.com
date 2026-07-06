@@ -1,0 +1,22 @@
+{
+  "name": "Uniblex",
+  "short_name": "Uniblex",
+  "description": "Play free WebGL browser games and read game development articles.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0D1118",
+  "theme_color": "#0D1118",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
