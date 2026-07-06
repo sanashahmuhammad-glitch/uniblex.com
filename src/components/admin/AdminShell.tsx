@@ -275,6 +275,8 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [previewGameUrl, setPreviewGameUrl] = useState("");
+  const [successGameSlug, setSuccessGameSlug] = useState("");
 
   const activeConfig = useMemo(() => resources.find((resource) => resource.table === activeTable) ?? resources[0], [activeTable]);
   const isAuthorized = Boolean(user && adminProfile);
@@ -400,6 +402,8 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
     setFormValues(buildEmptyForm(activeConfig));
     setGameZipFile(null);
     setCoverImageFile(null);
+    setPreviewGameUrl("");
+    setSuccessGameSlug("");
     setFormOpen(true);
     setNotice("");
   }
@@ -413,6 +417,8 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
     setFormValues(nextValues);
     setGameZipFile(null);
     setCoverImageFile(null);
+    setPreviewGameUrl("");
+    setSuccessGameSlug("");
     setFormOpen(true);
     setNotice("");
   }
@@ -444,10 +450,17 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
         return;
       }
 
-      setNotice(`${activeConfig.label} ${editingId ? "updated" : "created"}.${uploadSummary ? ` ${uploadSummary}` : ""}`);
+      if (activeConfig.table === "games") {
+        setNotice(`Game Published Successfully${uploadSummary ? ` ${uploadSummary}` : ""}`);
+        setSuccessGameSlug(String(payload.slug ?? ""));
+      } else {
+        setNotice(`${activeConfig.label} ${editingId ? "updated" : "created"}.${uploadSummary ? ` ${uploadSummary}` : ""}`);
+        setSuccessGameSlug("");
+      }
       setFormOpen(false);
       setGameZipFile(null);
       setCoverImageFile(null);
+      setPreviewGameUrl("");
       await loadRows(activeConfig);
       await loadCounts();
     } catch (error) {
@@ -463,16 +476,40 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
     const title = String(values.title ?? "").trim();
     const currentSlug = String(values.slug ?? "").trim();
     const generatedSlug = slugify(currentSlug || title);
+    const iframeUrl = String(values.iframe_url ?? "").trim();
 
+    if (!title) {
+      throw new Error("Title is required.");
+    }
     if (!generatedSlug) {
       throw new Error("Enter a title or slug before saving a game.");
     }
+    if (!editingId && !gameZipFile && !iframeUrl) {
+      throw new Error("Please provide either a WebGL ZIP or an iframe URL.");
+    }
+    if (editingId && !gameZipFile && !iframeUrl) {
+      throw new Error("Please provide either a WebGL ZIP or an iframe URL.");
+    }
+    if (iframeUrl && !isValidHttpUrl(iframeUrl)) {
+      throw new Error("Iframe URL must be a valid http or https URL.");
+    }
 
-    const nextValues: FormValues = { ...values, slug: generatedSlug };
+    const nextValues: FormValues = {
+      ...values,
+      slug: generatedSlug,
+      status: String(values.status ?? "").trim() || "draft",
+      sort_order: String(values.sort_order ?? "").trim() || "0"
+    };
+
+    if (String(nextValues.status) === "published" && !String(nextValues.published_at ?? "").trim()) {
+      nextValues.published_at = toDatetimeLocalValue(new Date());
+    }
+
+    await ensureUniqueGameSlug(generatedSlug);
 
     if (!gameZipFile && !coverImageFile) {
       setFormValues(nextValues);
-      return { values: nextValues, message: "Manual iframe_url and cover_url values were used." };
+      return { values: nextValues, message: iframeUrl ? "External iframe URL saved." : "" };
     }
 
     if (gameZipFile && !gameZipFile.name.toLowerCase().endsWith(".zip")) {
@@ -488,13 +525,24 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
     }
 
     if (coverImageFile) {
-      nextValues.cover_url = await uploadCoverToCloudinary(coverImageFile, generatedSlug);
+      nextValues.cover_url = await uploadCoverViaAdminRoute(coverImageFile, generatedSlug, title);
       messages.push("Cover image uploaded to Cloudinary.");
     }
 
     const message = messages.join(" ");
     setFormValues(nextValues);
     return { values: nextValues, message };
+  }
+
+  async function ensureUniqueGameSlug(slug: string) {
+    if (!supabase || activeConfig.table !== "games") return;
+
+    let query = supabase.from("games").select("id").eq("slug", slug).limit(1);
+    if (editingId) query = query.neq("id", editingId);
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    if (data?.length) throw new Error("Slug already exists.");
   }
 
   async function deleteRecord(row: RowData) {
@@ -622,7 +670,16 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                 <button className="btn-secondary px-4 py-2 text-sm" onClick={() => void loadRows(activeConfig)}>Refresh</button>
               </div>
 
-              {notice ? <div className="border-b border-uniblex-border bg-white/[.03] p-4 text-sm text-uniblex-blue">{notice}</div> : null}
+              {notice ? (
+                <div className="border-b border-uniblex-border bg-white/[.03] p-4 text-sm text-uniblex-blue">
+                  <span>{notice}</span>
+                  {successGameSlug ? (
+                    <a className="ml-3 font-bold text-white underline decoration-uniblex-blue underline-offset-4" href={`/games/${successGameSlug}`} target="_blank" rel="noreferrer">
+                      View Game
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
 
               {formOpen ? (
                 <form onSubmit={saveRecord} className="grid gap-4 border-b border-uniblex-border p-5">
@@ -639,14 +696,39 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                         setCoverImageFile={setCoverImageFile}
                       />
                     ) : null}
-                    {activeConfig.fields.map((field) => (
-                      <label key={field.key} className={`grid gap-2 text-sm font-bold ${field.kind === "textarea" || field.kind === "json" ? "md:col-span-2" : ""}`}>
-                        {field.label}
-                        {renderField(field, formValues[field.key], updateField)}
-                      </label>
-                    ))}
+                    {activeConfig.fields.map((field) => {
+                      if (activeConfig.table === "games" && field.key === "iframe_url") {
+                        return (
+                          <GameIframeField
+                            key={field.key}
+                            field={field}
+                            value={String(formValues[field.key] ?? "")}
+                            updateField={updateField}
+                            onPreview={() => setPreviewGameUrl(String(formValues.iframe_url ?? "").trim())}
+                          />
+                        );
+                      }
+
+                      return (
+                        <label key={field.key} className={`grid gap-2 text-sm font-bold ${field.kind === "textarea" || field.kind === "json" ? "md:col-span-2" : ""}`}>
+                          {field.label}
+                          {renderField(field, formValues[field.key], updateField)}
+                        </label>
+                      );
+                    })}
                   </div>
-                  <div className="flex justify-end">
+                  {activeConfig.table === "games" && previewGameUrl ? (
+                    <div className="grid gap-2">
+                      <p className="text-sm font-bold">Game Preview</p>
+                      <iframe className="h-[420px] w-full rounded-lg border border-uniblex-border bg-black" src={previewGameUrl} title="Game preview" allowFullScreen />
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap justify-end gap-3">
+                    {activeConfig.table === "games" ? (
+                      <button className="btn-secondary" disabled={uploadLoading} type="button" onClick={() => setPreviewGameUrl(String(formValues.iframe_url ?? "").trim())}>
+                        Preview Game
+                      </button>
+                    ) : null}
                     <button className="btn-primary" disabled={uploadLoading} type="submit">
                       {uploadLoading ? "Saving..." : `Save ${activeConfig.label}`}
                     </button>
@@ -904,31 +986,46 @@ function stripZipPrefix(name: string, prefix: string) {
   return name === prefix ? "" : name.startsWith(`${prefix}/`) ? name.slice(prefix.length + 1) : name;
 }
 
-async function uploadCoverToCloudinary(file: File, slug: string) {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim();
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET?.trim();
+function isValidHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
-  if (!cloudName || !uploadPreset) {
-    throw new Error("Cloudinary cloud name and upload preset are not configured.");
+function toDatetimeLocalValue(date: Date) {
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+async function uploadCoverViaAdminRoute(file: File, slug: string, title: string) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) {
+    throw new Error("Admin session expired. Sign in again before uploading a cover image.");
   }
 
-  const cloudinaryData = new FormData();
-  cloudinaryData.set("file", file);
-  cloudinaryData.set("upload_preset", uploadPreset);
-  cloudinaryData.set("folder", "uniblex/game-covers");
-  cloudinaryData.set("public_id", slug);
+  const formData = new FormData();
+  formData.set("title", title);
+  formData.set("slug", slug);
+  formData.set("coverImage", file);
 
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+  const response = await fetch("/api/admin/uploads/game", {
     method: "POST",
-    body: cloudinaryData
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData
   });
-  const payload = await parseUploadResponse(response, "Cloudinary upload failed.");
+  const payload = await parseUploadResponse(response, "Cover upload failed.");
 
-  if (!response.ok || typeof payload.secure_url !== "string") {
-    throw new Error(typeof payload.error?.message === "string" ? payload.error.message : "Cloudinary upload failed.");
+  if (!response.ok || typeof payload.coverUrl !== "string") {
+    throw new Error(typeof payload.error === "string" ? payload.error : "Cover upload failed.");
   }
 
-  return payload.secure_url as string;
+  return payload.coverUrl as string;
 }
 
 async function parseUploadResponse(response: Response, fallbackMessage: string) {
@@ -990,8 +1087,16 @@ function GameUploadFields({
 }) {
   return (
     <div className="grid gap-4 rounded-lg border border-uniblex-border bg-white/[.02] p-4 md:col-span-2 md:grid-cols-2">
+      <div className="md:col-span-2">
+        <p className="text-sm font-bold text-white">Publishing Mode</p>
+        <p className="mt-1 text-xs text-uniblex-gray">Use iframe URL for games hosted on Cloudflare R2. ZIP upload is optional.</p>
+      </div>
+      <div className="rounded-lg border border-uniblex-border bg-white/[.02] p-3 text-sm font-bold">
+        Mode A: External Hosted Game URL
+        <p className="mt-1 text-xs font-normal text-uniblex-gray">Paste the full R2 index.html URL in the Iframe URL field below.</p>
+      </div>
       <label className="grid gap-2 text-sm font-bold">
-        WebGL ZIP Upload
+        Mode B: Upload WebGL ZIP
         <input
           className="rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-sm text-white file:mr-4 file:rounded-md file:border-0 file:bg-uniblex-blue file:px-3 file:py-2 file:font-bold file:text-white"
           accept=".zip,application/zip,application/x-zip-compressed"
@@ -1015,5 +1120,51 @@ function GameUploadFields({
         </span>
       </label>
     </div>
+  );
+}
+
+function GameIframeField({
+  field,
+  value,
+  updateField,
+  onPreview
+}: {
+  field: FieldConfig;
+  value: string;
+  updateField: (key: string, value: string | boolean) => void;
+  onPreview: () => void;
+}) {
+  const trimmedUrl = value.trim();
+
+  return (
+    <label className="grid gap-2 text-sm font-bold md:col-span-2">
+      {field.label}
+      <span className="flex flex-col gap-2 sm:flex-row">
+        <input
+          className="min-w-0 flex-1 rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-white outline-none transition focus:border-uniblex-blue"
+          value={value}
+          onChange={(event) => updateField(field.key, event.target.value)}
+          placeholder="https://pub-...r2.dev/game/index.html"
+          type="url"
+        />
+        <button
+          className="btn-secondary min-h-0 px-4 py-3 text-sm"
+          disabled={!trimmedUrl}
+          onClick={() => window.open(trimmedUrl, "_blank", "noopener,noreferrer")}
+          type="button"
+        >
+          Test URL
+        </button>
+        <button
+          className="btn-secondary min-h-0 px-4 py-3 text-sm"
+          disabled={!trimmedUrl}
+          onClick={onPreview}
+          type="button"
+        >
+          Preview Game
+        </button>
+      </span>
+      <span className="text-xs font-normal text-uniblex-gray">Use iframe URL for games hosted on Cloudflare R2. ZIP upload is optional.</span>
+    </label>
   );
 }

@@ -29,6 +29,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
 NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=
+CLOUDINARY_CLOUD_NAME=dktp3tqgl
+CLOUDINARY_UPLOAD_PRESET=uniblex_uploads
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 ```
 
 ## Supabase Setup
@@ -64,7 +68,7 @@ The `/admin` route supports:
 
 Public users cannot register in phase 1. Only authenticated Supabase users with active `owner` or `admin` records in the `admins` table can access and manage content.
 
-Game records support WebGL ZIP uploads from the admin panel. ZIP files must contain an `index.html`; uploads extract in the admin browser, upload the extracted files directly to the public Supabase Storage bucket `webgl-games`, and automatically save the public Storage URL for `{slug}/index.html` as the iframe URL. Cover image uploads are sent to Cloudinary with the configured cloud name and unsigned upload preset, while manual `iframe_url` and `cover_url` fields remain available as fallbacks.
+Game records support either external hosted iframe URLs or WebGL ZIP uploads from the admin panel. Use `iframe_url` for Cloudflare R2-hosted builds such as `https://...r2.dev/game/index.html`; no ZIP is required in that mode. ZIP files remain supported when selected, must contain an `index.html`, extract in the admin browser, upload directly to the public Supabase Storage bucket `webgl-games`, and automatically save the public Storage URL for `{slug}/index.html` as the iframe URL. Cover image uploads are sent through the authenticated admin upload API to Cloudinary with the configured cloud name and unsigned upload preset, while manual `iframe_url` and `cover_url` fields remain available as fallbacks.
 
 ## Launch Checklist
 
