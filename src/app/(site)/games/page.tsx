@@ -1,13 +1,25 @@
 import type { Metadata } from "next";
-import { GameCard } from "@/components/site/GameCard";
 import { AdZone } from "@/components/site/AdZone";
+import { GamesExplorer } from "@/components/site/GamesExplorer";
 import { getPublishedGames } from "@/lib/publicGames";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "WebGL Browser Games",
-  description: "Play Uniblex WebGL browser games instantly with no installs."
+  title: "Play Free WebGL Games Online | Uniblex",
+  description: "Explore free WebGL games, racing games, arcade games, and more on Uniblex.",
+  alternates: { canonical: "/games" },
+  openGraph: {
+    title: "Play Free WebGL Games Online | Uniblex",
+    description: "Explore free WebGL games, racing games, arcade games, and more on Uniblex.",
+    url: "/games",
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Play Free WebGL Games Online | Uniblex",
+    description: "Explore free WebGL games, racing games, arcade games, and more on Uniblex."
+  }
 };
 
 export default async function GamesPage() {
@@ -15,18 +27,18 @@ export default async function GamesPage() {
 
   return (
     <main className="container-pad py-12 md:py-16">
-      <div className="mb-10 max-w-3xl">
+      <div className="mb-10 max-w-4xl">
         <p className="text-uniblex-blue">Game Library</p>
-        <h1 className="font-heading text-4xl leading-tight md:text-5xl">WebGL Games</h1>
+        <h1 className="font-heading text-4xl leading-tight md:text-5xl">Play Free WebGL Games Online</h1>
         <p className="mt-4 text-lg leading-8 text-uniblex-gray">
-          Explore browser-based games with fast loading pages, clean descriptions, screenshots, play buttons, controls, and SEO-friendly game detail pages.
+          Explore browser-based racing games, arcade games, driving games, and creator-built WebGL experiences with no installs.
         </p>
       </div>
 
       <AdZone label="Games Page Header" size="leaderboard" />
 
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {games.map((game) => <GameCard key={game.slug} game={game} />)}
+      <div className="mt-10">
+        <GamesExplorer games={games} />
       </div>
     </main>
   );

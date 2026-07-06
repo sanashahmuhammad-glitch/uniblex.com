@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
-import { games } from "@/data/games";
 import { posts } from "@/data/posts";
+import { getPublishedGames } from "@/lib/publicGames";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://uniblex.com";
+  const games = await getPublishedGames();
   const staticRoutes = ["", "/games", "/blog", "/about", "/contact", "/privacy-policy", "/terms-of-service"].map((route) => ({
     url: `${siteUrl}${route}`,
     lastModified: new Date()

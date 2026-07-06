@@ -3,7 +3,8 @@ import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 
 export const metadata: Metadata = {
   title: "Admin | Uniblex",
-  description: "Uniblex admin dashboard UI."
+  description: "Uniblex admin dashboard UI.",
+  robots: { index: false, follow: false }
 };
 
 export default function AdminPage() {

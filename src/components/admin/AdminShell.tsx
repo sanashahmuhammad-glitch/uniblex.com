@@ -565,7 +565,19 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
   }
 
   function updateField(key: string, value: string | boolean) {
-    setFormValues((current) => ({ ...current, [key]: value }));
+    setFormValues((current) => {
+      const next = { ...current, [key]: value };
+      if (activeConfig.table === "games" && key === "title" && !editingId && !String(current.slug ?? "").trim()) {
+        next.slug = slugify(String(value));
+      }
+      return next;
+    });
+  }
+
+  async function copyText(value: string, message: string) {
+    if (!value) return;
+    await navigator.clipboard?.writeText(value).catch(() => undefined);
+    setNotice(message);
   }
 
   if (!supabase) {
@@ -692,6 +704,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                       <GameUploadFields
                         gameZipFile={gameZipFile}
                         coverImageFile={coverImageFile}
+                        coverUrl={String(formValues.cover_url ?? "")}
                         setGameZipFile={setGameZipFile}
                         setCoverImageFile={setCoverImageFile}
                       />
@@ -755,7 +768,14 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                         <td className="px-5 py-4 text-uniblex-gray">{formatValue(row.status ?? row.role ?? row.type ?? row.is_active)}</td>
                         <td className="px-5 py-4 text-uniblex-gray">{formatValue(row.updated_at ?? row.created_at)}</td>
                         <td className="px-5 py-4">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-wrap justify-end gap-2">
+                            {activeConfig.table === "games" ? (
+                              <>
+                                <a className="btn-secondary min-h-0 rounded-xl px-3 py-2 text-xs" href={`/games/${row.slug}`} target="_blank" rel="noreferrer">View Game</a>
+                                <button className="btn-secondary min-h-0 rounded-xl px-3 py-2 text-xs" onClick={() => void copyText(`${window.location.origin}/games/${row.slug}`, "Game URL copied.")}>Copy Game URL</button>
+                                <button className="btn-secondary min-h-0 rounded-xl px-3 py-2 text-xs" disabled={!row.iframe_url} onClick={() => void copyText(String(row.iframe_url ?? ""), "Iframe URL copied.")}>Copy Iframe URL</button>
+                              </>
+                            ) : null}
                             <button className="btn-secondary min-h-0 rounded-xl px-3 py-2 text-xs" onClick={() => startEdit(row)}>Manage</button>
                             <button className="rounded-xl border border-red-500/30 px-3 py-2 text-xs font-bold text-red-200 transition hover:bg-red-500/10" onClick={() => void deleteRecord(row)}>Delete</button>
                           </div>
@@ -1077,14 +1097,29 @@ function getContentType(name: string) {
 function GameUploadFields({
   gameZipFile,
   coverImageFile,
+  coverUrl,
   setGameZipFile,
   setCoverImageFile
 }: {
   gameZipFile: File | null;
   coverImageFile: File | null;
+  coverUrl: string;
   setGameZipFile: (file: File | null) => void;
   setCoverImageFile: (file: File | null) => void;
 }) {
+  const [coverPreview, setCoverPreview] = useState("");
+
+  useEffect(() => {
+    if (!coverImageFile) {
+      setCoverPreview(coverUrl);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(coverImageFile);
+    setCoverPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [coverImageFile, coverUrl]);
+
   return (
     <div className="grid gap-4 rounded-lg border border-uniblex-border bg-white/[.02] p-4 md:col-span-2 md:grid-cols-2">
       <div className="md:col-span-2">
@@ -1119,6 +1154,15 @@ function GameUploadFields({
           {coverImageFile ? coverImageFile.name : "Uploads to Cloudinary and saves secure_url as cover_url."}
         </span>
       </label>
+      {coverPreview ? (
+        <div className="md:col-span-2">
+          <p className="mb-2 text-sm font-bold">Cover Preview</p>
+          <div className="aspect-[16/9] max-w-md overflow-hidden rounded-lg border border-uniblex-border bg-black">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={coverPreview} alt="Selected game cover preview" className="h-full w-full object-cover" />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
