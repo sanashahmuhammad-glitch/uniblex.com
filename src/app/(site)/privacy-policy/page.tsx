@@ -1,8 +1,29 @@
 import type { Metadata } from "next";
+import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Uniblex privacy policy for analytics, contact forms, ads, and website usage."
+  description: "Uniblex privacy policy for analytics, contact forms, ads, and website usage.",
+  keywords: pageKeywords("Uniblex privacy policy", "website privacy", "analytics privacy"),
+  authors: defaultAuthors,
+  robots: defaultRobots,
+  alternates: { canonical: canonicalUrl("/privacy-policy") },
+  openGraph: {
+    title: "Privacy Policy | Uniblex",
+    description: "Uniblex privacy policy for analytics, contact forms, ads, and website usage.",
+    url: canonicalUrl("/privacy-policy"),
+    siteName: siteConfig.name,
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: "Uniblex privacy policy" }],
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: siteConfig.twitter,
+    creator: siteConfig.twitter,
+    title: "Privacy Policy | Uniblex",
+    description: "Uniblex privacy policy for analytics, contact forms, ads, and website usage.",
+    images: [siteConfig.ogImage]
+  }
 };
 
 export default function PrivacyPolicyPage() {

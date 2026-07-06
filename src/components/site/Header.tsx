@@ -42,6 +42,7 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={active ? "page" : undefined}
                 className={`rounded-full px-4 py-2 text-sm font-bold transition ${
                   active
                     ? "bg-gradient-to-r from-uniblex-blue/20 to-uniblex-purple/20 text-white ring-1 ring-uniblex-blue/40"
@@ -72,6 +73,7 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
+              aria-current={isActive(link.href) ? "page" : undefined}
               onClick={() => setOpen(false)}
               className={`rounded-lg px-4 py-2 text-sm font-bold transition ${isActive(link.href) ? "bg-uniblex-blue/10 text-uniblex-blue" : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"}`}
             >

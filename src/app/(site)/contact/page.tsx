@@ -1,10 +1,31 @@
 import type { Metadata } from "next";
 import { Mail, MapPin, MessageCircle } from "lucide-react";
 import { ContactForm } from "@/components/site/ContactForm";
+import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Contact Uniblex for games, articles, feedback and collaboration."
+  description: "Contact Uniblex for games, articles, feedback and collaboration.",
+  keywords: pageKeywords("contact Uniblex", "game collaboration", "browser game feedback"),
+  authors: defaultAuthors,
+  robots: defaultRobots,
+  alternates: { canonical: canonicalUrl("/contact") },
+  openGraph: {
+    title: "Contact Uniblex",
+    description: "Contact Uniblex for games, articles, feedback and collaboration.",
+    url: canonicalUrl("/contact"),
+    siteName: siteConfig.name,
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: "Contact Uniblex" }],
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: siteConfig.twitter,
+    creator: siteConfig.twitter,
+    title: "Contact Uniblex",
+    description: "Contact Uniblex for games, articles, feedback and collaboration.",
+    images: [siteConfig.ogImage]
+  }
 };
 
 export default function ContactPage() {

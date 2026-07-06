@@ -2,23 +2,32 @@ import type { Metadata } from "next";
 import { AdZone } from "@/components/site/AdZone";
 import { GamesExplorer } from "@/components/site/GamesExplorer";
 import { getPublishedGames } from "@/lib/publicGames";
+import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Play Free WebGL Games Online | Uniblex",
   description: "Explore free WebGL games, racing games, arcade games, and more on Uniblex.",
-  alternates: { canonical: "/games" },
+  keywords: pageKeywords("free WebGL games", "online racing games", "arcade browser games"),
+  authors: defaultAuthors,
+  robots: defaultRobots,
+  alternates: { canonical: canonicalUrl("/games") },
   openGraph: {
     title: "Play Free WebGL Games Online | Uniblex",
     description: "Explore free WebGL games, racing games, arcade games, and more on Uniblex.",
-    url: "/games",
+    url: canonicalUrl("/games"),
+    siteName: siteConfig.name,
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: "Play free WebGL games on Uniblex" }],
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
+    site: siteConfig.twitter,
+    creator: siteConfig.twitter,
     title: "Play Free WebGL Games Online | Uniblex",
-    description: "Explore free WebGL games, racing games, arcade games, and more on Uniblex."
+    description: "Explore free WebGL games, racing games, arcade games, and more on Uniblex.",
+    images: [siteConfig.ogImage]
   }
 };
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpenText, Gauge, Gamepad2, LayoutDashboard, Play, Search, ShieldCheck, Sparkles, Zap } from "lucide-react";
@@ -8,6 +9,32 @@ import { games } from "@/data/games";
 import { posts } from "@/data/posts";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AuthorizedAdminLink } from "@/components/admin/AuthorizedAdminLink";
+import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Uniblex - Play Free WebGL Games & Read Game Dev Articles",
+  description: siteConfig.description,
+  keywords: pageKeywords("play WebGL games", "browser gaming platform", "game dev articles"),
+  authors: defaultAuthors,
+  robots: defaultRobots,
+  alternates: { canonical: canonicalUrl("/") },
+  openGraph: {
+    title: "Uniblex - Play Free WebGL Games & Read Game Dev Articles",
+    description: siteConfig.description,
+    url: canonicalUrl("/"),
+    siteName: siteConfig.name,
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: "Uniblex browser games and creator content" }],
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: siteConfig.twitter,
+    creator: siteConfig.twitter,
+    title: "Uniblex - Play Free WebGL Games & Read Game Dev Articles",
+    description: siteConfig.description,
+    images: [siteConfig.ogImage]
+  }
+};
 
 const stats = [
   { value: `${games.length}+`, label: "Game pages" },

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Orbitron, Exo_2 } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { canonicalUrl, defaultAuthors, defaultRobots, siteConfig } from "@/lib/seo";
 import "./globals.css";
 
 const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron", display: "swap" });
 const exo = Exo_2({ subsets: ["latin"], variable: "--font-exo", display: "swap" });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://uniblex.com";
+const siteUrl = siteConfig.url;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -15,20 +17,28 @@ export const metadata: Metadata = {
     template: "%s | Uniblex"
   },
   description: "Discover WebGL browser games, tutorials, and game dev articles. Play instantly, no installs.",
-  alternates: { canonical: siteUrl },
+  keywords: siteConfig.keywords,
+  authors: defaultAuthors,
+  creator: siteConfig.author,
+  publisher: siteConfig.name,
+  robots: defaultRobots,
+  alternates: { canonical: canonicalUrl("/") },
   openGraph: {
     title: "Uniblex - Browser Games & Game Dev Content",
     description: "Play WebGL games instantly. Read game dev tutorials and articles by Mohsin Shah.",
     url: siteUrl,
     siteName: "Uniblex",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: "Uniblex browser games and game development content" }],
+    locale: "en_US",
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
     site: "@uniblexhq",
+    creator: "@uniblexhq",
     title: "Uniblex - Create, Play, Inspire",
-    description: "Discover WebGL browser games, tutorials, and game dev articles."
+    description: "Discover WebGL browser games, tutorials, and game dev articles.",
+    images: [siteConfig.ogImage]
   },
   icons: {
     icon: ["/favicon.png", "/favicon-16.png"],
@@ -41,7 +51,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en" className={`${orbitron.variable} ${exo.variable}`}>
-      <body>{children}</body>
+      <body>
+        <JsonLd data={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: siteConfig.name,
+          url: siteUrl,
+          logo: canonicalUrl("/icon-512.png"),
+          founder: { "@type": "Person", name: siteConfig.author },
+          sameAs: [
+            "https://youtube.com/@uniblex",
+            "https://facebook.com/uniblex",
+            "https://linkedin.com/company/uniblex",
+            "https://instagram.com/uniblexhq"
+          ]
+        }} />
+        <JsonLd data={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: siteConfig.name,
+          url: siteUrl,
+          description: siteConfig.description,
+          publisher: { "@type": "Organization", name: siteConfig.name }
+        }} />
+        {children}
+      </body>
       {gaId ? <GoogleAnalytics gaId={gaId} /> : null}
     </html>
   );

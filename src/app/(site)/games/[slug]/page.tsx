@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { GameThumbnail } from "@/components/site/VisualThumb";
 import { games } from "@/data/games";
 import { getPublishedGame, getPublishedGames } from "@/lib/publicGames";
+import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -21,21 +22,27 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!game) return {};
 
   const title = `${game.title} - Play Free WebGL Game | Uniblex`;
-  const url = `/games/${game.slug}`;
+  const url = canonicalUrl(`/games/${game.slug}`);
 
   return {
     title,
     description: game.description,
+    keywords: pageKeywords(game.title, game.genre, ...game.tags),
+    authors: defaultAuthors,
+    robots: defaultRobots,
     alternates: { canonical: url },
     openGraph: {
       title,
       description: game.description,
       url,
+      siteName: siteConfig.name,
       type: "website",
-      images: [{ url: game.cover, alt: `${game.title} cover` }]
+      images: [{ url: game.cover, width: 1200, height: 630, alt: `${game.title} cover` }]
     },
     twitter: {
       card: "summary_large_image",
+      site: siteConfig.twitter,
+      creator: siteConfig.twitter,
       title,
       description: game.description,
       images: [game.cover]
@@ -48,8 +55,8 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
   if (!game) return notFound();
 
   const relatedGames = getRelatedGames(game, publishedGames);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://uniblex.com";
-  const gameUrl = `${siteUrl}/games/${game.slug}`;
+  const siteUrl = siteConfig.url;
+  const gameUrl = canonicalUrl(`/games/${game.slug}`);
 
   return (
     <main className="container-pad py-10 md:py-14">
@@ -61,6 +68,8 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         description: game.description,
         image: game.cover,
         url: gameUrl,
+        author: { "@type": "Organization", name: siteConfig.name },
+        publisher: { "@type": "Organization", name: siteConfig.name },
         applicationCategory: "Game",
         operatingSystem: "Web browser",
         playMode: game.players,

@@ -1,10 +1,31 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Brush, Gamepad2, Sparkles } from "lucide-react";
+import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Learn about Uniblex, a WebGL games and game development content platform by Mohsin Shah."
+  description: "Learn about Uniblex, a WebGL games and game development content platform by Mohsin Shah.",
+  keywords: pageKeywords("about Uniblex", "Mohsin Shah", "WebGL game platform"),
+  authors: defaultAuthors,
+  robots: defaultRobots,
+  alternates: { canonical: canonicalUrl("/about") },
+  openGraph: {
+    title: "About Uniblex",
+    description: "Learn about Uniblex, a WebGL games and game development content platform by Mohsin Shah.",
+    url: canonicalUrl("/about"),
+    siteName: siteConfig.name,
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: "About Uniblex" }],
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: siteConfig.twitter,
+    creator: siteConfig.twitter,
+    title: "About Uniblex",
+    description: "Learn about Uniblex, a WebGL games and game development content platform by Mohsin Shah.",
+    images: [siteConfig.ogImage]
+  }
 };
 
 export default function AboutPage() {

@@ -1,8 +1,29 @@
 import type { Metadata } from "next";
+import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Uniblex terms of service for games, articles, and website use."
+  description: "Uniblex terms of service for games, articles, and website use.",
+  keywords: pageKeywords("Uniblex terms", "terms of service", "browser games terms"),
+  authors: defaultAuthors,
+  robots: defaultRobots,
+  alternates: { canonical: canonicalUrl("/terms-of-service") },
+  openGraph: {
+    title: "Terms of Service | Uniblex",
+    description: "Uniblex terms of service for games, articles, and website use.",
+    url: canonicalUrl("/terms-of-service"),
+    siteName: siteConfig.name,
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: "Uniblex terms of service" }],
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: siteConfig.twitter,
+    creator: siteConfig.twitter,
+    title: "Terms of Service | Uniblex",
+    description: "Uniblex terms of service for games, articles, and website use.",
+    images: [siteConfig.ogImage]
+  }
 };
 
 export default function TermsPage() {

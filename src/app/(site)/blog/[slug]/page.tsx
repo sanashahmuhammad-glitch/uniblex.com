@@ -6,6 +6,7 @@ import { AdZone } from "@/components/site/AdZone";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PostThumbnail } from "@/components/site/VisualThumb";
 import { getPost, getRelatedPosts, posts } from "@/data/posts";
+import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export function generateStaticParams() {
   return posts.map((post) => ({ slug: post.slug }));
@@ -18,11 +19,27 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   return {
     title: post.title,
     description: post.excerpt,
-    alternates: { canonical: `/blog/${post.slug}` },
+    keywords: pageKeywords(post.category, post.title, "game development article"),
+    authors: defaultAuthors,
+    robots: defaultRobots,
+    alternates: { canonical: canonicalUrl(`/blog/${post.slug}`) },
     openGraph: {
       title: `${post.title} | Uniblex`,
       description: post.excerpt,
-      images: [{ url: post.image }]
+      url: canonicalUrl(`/blog/${post.slug}`),
+      siteName: siteConfig.name,
+      type: "article",
+      publishedTime: post.publishedAt,
+      authors: [siteConfig.author],
+      images: [{ url: post.image, width: 1200, height: 630, alt: post.title }]
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: siteConfig.twitter,
+      creator: siteConfig.twitter,
+      title: post.title,
+      description: post.excerpt,
+      images: [post.image]
     }
   };
 }
@@ -32,18 +49,35 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
   if (!post) return notFound();
 
   const relatedPosts = getRelatedPosts(post);
+  const postUrl = canonicalUrl(`/blog/${post.slug}`);
 
   return (
     <main className="container-pad py-12 md:py-16">
       <JsonLd data={{
         "@context": "https://schema.org",
-        "@type": "BlogPosting",
+        "@type": "Article",
         headline: post.title,
         description: post.excerpt,
+        mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+        url: postUrl,
         datePublished: post.publishedAt,
+        dateModified: post.publishedAt,
         image: post.image,
         author: { "@type": "Person", name: "Mohsin Shah" },
-        publisher: { "@type": "Organization", name: "Uniblex" }
+        publisher: {
+          "@type": "Organization",
+          name: "Uniblex",
+          logo: { "@type": "ImageObject", url: canonicalUrl("/icon-512.png") }
+        }
+      }} />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: canonicalUrl("/") },
+          { "@type": "ListItem", position: 2, name: "Blog", item: canonicalUrl("/blog") },
+          { "@type": "ListItem", position: 3, name: post.title, item: postUrl }
+        ]
       }} />
 
       <article className="mx-auto max-w-4xl">
