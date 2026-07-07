@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Expand, Minimize2, Play, RotateCcw } from "lucide-react";
+import { Expand, Minimize2, Play, RotateCcw, RotateCw, Smartphone } from "lucide-react";
 
 type GamePlayerProps = {
   title: string;
@@ -75,20 +75,30 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
     <section className="grid gap-4">
       <div
         ref={containerRef}
-        className="relative mx-auto w-full overflow-hidden rounded-lg border border-uniblex-border/80 bg-black shadow-[0_28px_90px_rgba(0,178,255,.14)]"
+        className="relative mx-auto w-full overflow-hidden rounded-lg border border-uniblex-blue/25 bg-[#05070b] shadow-[0_28px_90px_rgba(0,178,255,.16)]"
       >
-        <div className="relative aspect-video min-h-[360px] w-full overflow-hidden bg-black md:min-h-[560px]">
+        <div className="flex min-h-[44px] items-center justify-between gap-3 border-b border-white/10 bg-white/[.035] px-3 py-2 sm:px-4">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-white">{title}</p>
+            <p className="hidden text-xs text-uniblex-gray sm:block">WebGL player</p>
+          </div>
+          <button className="btn-secondary min-h-0 shrink-0 rounded-md px-3 py-2 text-xs" onClick={toggleFullscreen} type="button">
+            {isFullscreen ? <Minimize2 size={15} /> : <Expand size={15} />}
+            <span className="hidden sm:inline">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+          </button>
+        </div>
+        <div className="relative h-[min(58svh,680px)] min-h-[250px] w-full overflow-hidden bg-black sm:h-[min(66vh,720px)] sm:min-h-[420px] lg:min-h-[560px]">
           {!started ? (
             <div className="absolute inset-0 grid place-items-center overflow-hidden">
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${cover}')` }} />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-uniblex-bg/70 to-black/25" />
-              <div className="relative z-10 max-w-2xl p-6 text-center">
-                <p className="mb-3 text-sm font-bold uppercase tracking-[.24em] text-uniblex-blue">Uniblex WebGL Player</p>
+              <div className="relative z-10 max-w-2xl p-5 text-center">
+                <p className="mb-2 text-xs font-bold uppercase tracking-[.24em] text-uniblex-blue sm:text-sm">Uniblex WebGL Player</p>
                 <h2 className="font-heading text-3xl leading-tight md:text-5xl">{title}</h2>
-                <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-uniblex-gray md:text-base">
+                <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-uniblex-gray md:text-base">
                   WebGL loads only when you click Play for better speed.
                 </p>
-                <button className="btn-primary mx-auto mt-7 text-lg" onClick={startGame} type="button">
+                <button className="btn-primary mx-auto mt-5 text-base sm:mt-7 sm:text-lg" onClick={startGame} type="button">
                   <Play size={22} fill="currentColor" /> Play Now
                 </button>
               </div>
@@ -96,13 +106,13 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
           ) : (
             <>
               {!loaded ? (
-                <div className="absolute inset-0 z-20 grid place-items-center bg-uniblex-bg/95 p-6 text-center">
+                <div className="absolute inset-0 z-20 grid place-items-center bg-[#05070b]/95 p-6 text-center">
                   <div className="w-full max-w-sm">
                     <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full border border-uniblex-blue/40 bg-uniblex-blue/10">
                       <RotateCcw className="animate-spin text-uniblex-blue" size={28} />
                     </div>
-                    <h3 className="font-heading text-3xl">Loading Game...</h3>
-                    <p className="mt-2 text-uniblex-gray">Preparing WebGL...</p>
+                    <h3 className="font-heading text-2xl sm:text-3xl">Loading Game...</h3>
+                    <p className="mt-2 text-sm text-uniblex-gray">Preparing the WebGL canvas. Large builds can take a moment.</p>
                     <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
                       <div className="h-full w-2/3 animate-pulse rounded-full bg-gradient-to-r from-uniblex-blue to-uniblex-purple" />
                     </div>
@@ -110,15 +120,15 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
                 </div>
               ) : null}
               {isPortrait ? (
-                <div className="pointer-events-none absolute inset-x-4 top-4 z-30 rounded-lg border border-uniblex-blue/30 bg-black/75 p-3 text-center text-sm text-white backdrop-blur md:hidden">
-                  Rotate your device for the best experience.
+                <div className="pointer-events-none absolute inset-x-3 top-3 z-30 flex items-center justify-center gap-2 rounded-md border border-uniblex-blue/30 bg-black/80 px-3 py-2 text-center text-xs font-bold text-white backdrop-blur md:hidden">
+                  <RotateCw size={15} className="text-uniblex-blue" /> Rotate for best play
                 </div>
               ) : null}
               <iframe
                 ref={iframeRef}
                 title={title}
                 src={iframeUrl}
-                className="block h-full min-h-[360px] w-full border-0 bg-black outline-none md:min-h-[560px]"
+                className="block h-full w-full border-0 bg-black outline-none"
                 allow="fullscreen; gamepad; autoplay; xr-spatial-tracking"
                 loading="eager"
                 scrolling="no"
@@ -134,14 +144,13 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-uniblex-border bg-white/[.025] p-4">
-        <p className="text-sm text-uniblex-gray">
-          Click inside the game once if keyboard controls do not respond. <span className="md:hidden">Use on-screen controls if available.</span>
+      <div className="grid gap-3 rounded-lg border border-uniblex-border bg-white/[.025] p-4 text-sm text-uniblex-gray md:grid-cols-[1fr_auto] md:items-center">
+        <p>
+          Click inside the game once if keyboard controls do not respond.
         </p>
-        <button className="btn-secondary min-h-0 px-4 py-2 text-sm" onClick={toggleFullscreen} type="button">
-          {isFullscreen ? <Minimize2 size={16} /> : <Expand size={16} />}
-          {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-        </button>
+        <p className="inline-flex items-center gap-2 font-bold text-white md:hidden">
+          <Smartphone size={16} className="text-uniblex-blue" /> Rotate screen and use in-game touch controls.
+        </p>
       </div>
 
       <div className="hidden grid-cols-3 gap-3 md:grid">

@@ -59,7 +59,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
   const gameUrl = canonicalUrl(`/games/${game.slug}`);
 
   return (
-    <main className="container-pad py-10 md:py-14">
+    <main className="container-pad py-8 md:py-12">
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "GameApplication",
@@ -86,15 +86,15 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         { name: game.title, url: gameUrl }
       ])} />
 
-      <section className="grid gap-8 lg:grid-cols-[1fr_420px] lg:items-center">
+      <section className="grid gap-7 lg:grid-cols-[1fr_380px] lg:items-center">
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full border border-uniblex-blue/30 bg-uniblex-blue/10 px-4 py-2 text-sm font-bold text-uniblex-blue">{game.genre}</span>
             <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-200">{game.status}</span>
           </div>
           <h1 className="mt-5 font-heading text-4xl leading-tight md:text-6xl">{game.title}</h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-uniblex-gray">{game.description}</p>
-          <div className="mt-7 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+          <p className="mt-4 max-w-3xl text-base leading-7 text-uniblex-gray md:text-lg md:leading-8">{game.description}</p>
+          <div className="mt-6 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
             {[
               { icon: Star, label: "Rating", value: game.rating },
               { icon: Trophy, label: "Difficulty", value: game.difficulty },
@@ -105,16 +105,16 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
                 <div className="flex items-center gap-2 text-xs text-uniblex-gray">
                   <item.icon size={14} className="text-uniblex-blue" /> {item.label}
                 </div>
-                <div className="mt-2 font-heading text-lg">{item.value}</div>
+                <div className="mt-2 truncate font-heading text-base sm:text-lg">{item.value}</div>
               </div>
             ))}
           </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {game.tags.map((tag) => <span key={tag} className="rounded-full border border-uniblex-border px-4 py-2 text-sm text-uniblex-gray">{tag}</span>)}
+          <div className="mt-5 flex flex-wrap gap-2">
+            {game.tags.map((tag) => <span key={tag} className="rounded-full border border-uniblex-border px-3 py-1.5 text-xs font-bold text-uniblex-gray sm:text-sm">{tag}</span>)}
           </div>
         </div>
         <div
-          className="relative aspect-[16/11] overflow-hidden rounded-lg border border-uniblex-border bg-white/[.03] shadow-[0_24px_80px_rgba(122,60,255,.16)]"
+          className="relative aspect-[16/10] overflow-hidden rounded-lg border border-uniblex-border bg-white/[.03] shadow-[0_24px_80px_rgba(122,60,255,.16)]"
           style={{
             background: `radial-gradient(circle at 30% 20%, ${game.accent}35, transparent 36%), linear-gradient(135deg, rgba(13,17,24,.96), rgba(17,24,39,.82))`
           }}
@@ -123,7 +123,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         </div>
       </section>
 
-      <section className="mt-10">
+      <section className="mt-8 md:mt-10">
         <GamePlayer title={game.title} slug={game.slug} cover={game.cover} iframeUrl={game.iframeUrl} />
       </section>
 
@@ -133,11 +133,11 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
 
       <GameEngagement game={game} games={publishedGames} />
 
-      <section className="mt-10 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
+      <section className="mt-10 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="card p-6 md:p-8">
           <h2 className="mb-4 font-heading text-3xl">About This Game</h2>
           <p className="leading-8 text-uniblex-gray">{game.playStyle}</p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {game.highlights.map((item) => (
               <div key={item} className="flex gap-3 rounded-lg border border-uniblex-border bg-white/[.025] p-4">
                 <CheckCircle2 className="mt-1 shrink-0 text-uniblex-blue" size={20} />
@@ -147,8 +147,8 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
           </div>
         </div>
 
-        <aside className="grid gap-6">
-          <div className="card p-6">
+        <aside className="grid gap-5">
+          <div className="card p-5 md:p-6">
             <div className="mb-4 flex items-center gap-3">
               <Gamepad2 className="text-uniblex-blue" />
               <h2 className="font-heading text-2xl">How to Play</h2>
@@ -156,13 +156,13 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
             <p className="leading-7 text-uniblex-gray">{getHowToPlay(game.genre)}</p>
           </div>
 
-          <div className="card p-6">
+          <div className="card p-5 md:p-6">
             <div className="mb-4 flex items-center gap-3">
               <Monitor className="text-uniblex-purple" />
               <h2 className="font-heading text-2xl">Controls</h2>
             </div>
-            <div className="grid gap-4">
-              <div>
+            <div className="grid gap-3">
+              <div className="rounded-lg border border-uniblex-border bg-white/[.025] p-4">
                 <div className="mb-2 flex items-center gap-2 text-sm font-bold text-white"><MousePointer2 size={16} /> Desktop</div>
                 <ul className="grid gap-2 text-sm text-uniblex-gray">
                   <li>WASD / Arrow Keys = Move</li>
@@ -170,7 +170,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
                   <li>Mouse = Select</li>
                 </ul>
               </div>
-              <div>
+              <div className="rounded-lg border border-uniblex-border bg-white/[.025] p-4">
                 <div className="mb-2 flex items-center gap-2 text-sm font-bold text-white"><Smartphone size={16} /> Mobile</div>
                 <p className="text-sm leading-6 text-uniblex-gray">Rotate your device and use on-screen controls if available.</p>
               </div>
