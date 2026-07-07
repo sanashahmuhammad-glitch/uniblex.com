@@ -6,7 +6,7 @@ import { AdZone } from "@/components/site/AdZone";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PostThumbnail } from "@/components/site/VisualThumb";
 import { getPost, getRelatedPosts, posts } from "@/data/posts";
-import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export function generateStaticParams() {
   return posts.map((post) => ({ slug: post.slug }));
@@ -55,30 +55,27 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
     <main className="container-pad py-12 md:py-16">
       <JsonLd data={{
         "@context": "https://schema.org",
-        "@type": "Article",
+        "@type": ["Article", "BlogPosting"],
         headline: post.title,
         description: post.excerpt,
         mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
         url: postUrl,
         datePublished: post.publishedAt,
         dateModified: post.publishedAt,
-        image: post.image,
-        author: { "@type": "Person", name: "Mohsin Shah" },
+        image: absoluteUrl(post.image),
+        articleSection: post.category,
+        author: { "@type": "Person", name: siteConfig.author },
         publisher: {
           "@type": "Organization",
-          name: "Uniblex",
-          logo: { "@type": "ImageObject", url: canonicalUrl("/icon-512.png") }
+          name: siteConfig.name,
+          logo: { "@type": "ImageObject", url: canonicalUrl("/android-chrome-512x512.png") }
         }
       }} />
-      <JsonLd data={{
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Home", item: canonicalUrl("/") },
-          { "@type": "ListItem", position: 2, name: "Blog", item: canonicalUrl("/blog") },
-          { "@type": "ListItem", position: 3, name: post.title, item: postUrl }
-        ]
-      }} />
+      <JsonLd data={breadcrumbJsonLd([
+        { name: "Home", url: canonicalUrl("/") },
+        { name: "Blog", url: canonicalUrl("/blog") },
+        { name: post.title, url: postUrl }
+      ])} />
 
       <article className="mx-auto max-w-4xl">
         <p className="text-uniblex-blue">{post.category} | {post.readingTime}</p>

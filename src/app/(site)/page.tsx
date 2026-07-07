@@ -7,7 +7,6 @@ import { GameCard } from "@/components/site/GameCard";
 import { PostCard } from "@/components/site/PostCard";
 import { games } from "@/data/games";
 import { posts } from "@/data/posts";
-import { JsonLd } from "@/components/seo/JsonLd";
 import { AuthorizedAdminLink } from "@/components/admin/AuthorizedAdminLink";
 import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
@@ -56,15 +55,6 @@ export default function HomePage() {
 
   return (
     <main>
-      <JsonLd data={{
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: "Uniblex",
-        url: "https://uniblex.com",
-        description: "Discover WebGL browser games, tutorials, and game dev articles.",
-        publisher: { "@type": "Person", name: "Mohsin Shah" }
-      }} />
-
       <section className="relative overflow-hidden border-b border-uniblex-border/50">
         <div className="soft-grid pointer-events-none absolute inset-0 opacity-70" />
         <div className="container-pad relative grid min-h-[calc(100svh-64px)] items-center gap-10 py-10 md:min-h-[calc(100vh-86px)] md:py-14 lg:grid-cols-[1.05fr_.95fr]">

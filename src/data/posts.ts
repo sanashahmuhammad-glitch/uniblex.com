@@ -300,8 +300,24 @@ export function getPost(slug: string) {
   return posts.find((post) => post.slug === slug);
 }
 
+export function getCategory(slug: string) {
+  return categories.find((category) => slugifyCategory(category) === slug);
+}
+
+export function getPostsByCategory(category: Post["category"]) {
+  return posts.filter((post) => post.category === category);
+}
+
 export function getRelatedPosts(post: Post, limit = 3) {
   return posts
     .filter((candidate) => candidate.slug !== post.slug && candidate.category === post.category)
     .slice(0, limit);
+}
+
+export function slugifyCategory(category: string) {
+  return category
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

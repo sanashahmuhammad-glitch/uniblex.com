@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Orbitron, Exo_2 } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { canonicalUrl, defaultAuthors, defaultRobots, siteConfig } from "@/lib/seo";
+import { canonicalUrl, defaultAuthors, defaultRobots, organizationJsonLd, siteConfig, websiteJsonLd } from "@/lib/seo";
 import "./globals.css";
 
 const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron", display: "swap" });
@@ -13,10 +13,10 @@ const siteUrl = siteConfig.url;
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Uniblex - Create, Play, Inspire",
+    default: siteConfig.displayTitle,
     template: "%s | Uniblex"
   },
-  description: "Discover WebGL browser games, tutorials, and game dev articles. Play instantly, no installs.",
+  description: siteConfig.description,
   keywords: siteConfig.keywords,
   authors: defaultAuthors,
   creator: siteConfig.author,
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
   robots: defaultRobots,
   alternates: { canonical: canonicalUrl("/") },
   openGraph: {
-    title: "Uniblex - Browser Games & Game Dev Content",
-    description: "Play WebGL games instantly. Read game dev tutorials and articles by Mohsin Shah.",
+    title: siteConfig.displayTitle,
+    description: siteConfig.description,
     url: siteUrl,
     siteName: "Uniblex",
     images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: "Uniblex browser games and game development content" }],
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@uniblexhq",
     creator: "@uniblexhq",
-    title: "Uniblex - Create, Play, Inspire",
-    description: "Discover WebGL browser games, tutorials, and game dev articles.",
+    title: siteConfig.displayTitle,
+    description: siteConfig.description,
     images: [siteConfig.ogImage]
   },
   icons: {
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
       { rel: "icon", url: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" }
     ]
   },
-  manifest: "/site.webmanifest"
+  manifest: "/manifest.webmanifest"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -62,28 +62,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${orbitron.variable} ${exo.variable}`}>
       <body>
-        <JsonLd data={{
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: siteConfig.name,
-          url: siteUrl,
-          logo: canonicalUrl("/icon-512.png"),
-          founder: { "@type": "Person", name: siteConfig.author },
-          sameAs: [
-            "https://youtube.com/@uniblex",
-            "https://facebook.com/uniblex",
-            "https://linkedin.com/company/uniblex",
-            "https://instagram.com/uniblexhq"
-          ]
-        }} />
-        <JsonLd data={{
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: siteConfig.name,
-          url: siteUrl,
-          description: siteConfig.description,
-          publisher: { "@type": "Organization", name: siteConfig.name }
-        }} />
+        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
         {children}
       </body>
       {gaId ? <GoogleAnalytics gaId={gaId} /> : null}

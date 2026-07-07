@@ -9,7 +9,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { GameThumbnail } from "@/components/site/VisualThumb";
 import { games } from "@/data/games";
 import { getPublishedGame, getPublishedGames } from "@/lib/publicGames";
-import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -62,16 +62,17 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
     <main className="container-pad py-10 md:py-14">
       <JsonLd data={{
         "@context": "https://schema.org",
-        "@type": "VideoGame",
+        "@type": "GameApplication",
         name: game.title,
         genre: game.genre,
         description: game.description,
-        image: game.cover,
+        image: absoluteUrl(game.cover),
         url: gameUrl,
         author: { "@type": "Organization", name: siteConfig.name },
         publisher: { "@type": "Organization", name: siteConfig.name },
-        applicationCategory: "Game",
+        applicationCategory: "GameApplication",
         operatingSystem: "Web browser",
+        browserRequirements: "Requires a modern WebGL-enabled browser",
         playMode: game.players,
         aggregateRating: {
           "@type": "AggregateRating",
@@ -79,15 +80,11 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
           ratingCount: Math.max(12, Number(game.playCount ?? 0) || 12)
         }
       }} />
-      <JsonLd data={{
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
-          { "@type": "ListItem", position: 2, name: "Games", item: `${siteUrl}/games` },
-          { "@type": "ListItem", position: 3, name: game.title, item: gameUrl }
-        ]
-      }} />
+      <JsonLd data={breadcrumbJsonLd([
+        { name: "Home", url: siteUrl },
+        { name: "Games", url: `${siteUrl}/games` },
+        { name: game.title, url: gameUrl }
+      ])} />
 
       <section className="grid gap-8 lg:grid-cols-[1fr_420px] lg:items-center">
         <div>
