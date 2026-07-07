@@ -1,0 +1,13 @@
+﻿Supabase CLI was not available in this environment, so no automated database schema backup was created.
+
+Manual Supabase database export steps:
+1. Open https://supabase.com/dashboard and select the Uniblex project.
+2. Go to Project Settings > Database and note the connection details if needed.
+3. Go to SQL Editor and export schema manually, or use Database > Backups if backups are enabled on the plan.
+4. Recommended schema-only export with pg_dump from a local machine that has PostgreSQL tools installed:
+   pg_dump --schema-only --no-owner --no-privileges --file uniblex-schema-backup-before-seo.sql "postgresql://postgres:<PASSWORD>@<HOST>:5432/postgres"
+5. Recommended full database backup if needed:
+   pg_dump --format=custom --no-owner --no-privileges --file uniblex-full-backup-before-seo.dump "postgresql://postgres:<PASSWORD>@<HOST>:5432/postgres"
+6. Store the exported .sql or .dump file somewhere safe outside the deployed app repository.
+
+Do not commit database dumps or secrets to Git.
