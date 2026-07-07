@@ -627,21 +627,21 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
 
   return (
     <main className="min-h-screen bg-uniblex-bg">
-      <div className="container-pad py-8">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
+      <div className="container-pad py-6 md:py-8">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between md:mb-8">
+          <div className="min-w-0">
             <p className="text-sm text-uniblex-gray">Signed in as {formatValue(adminProfile?.email)} | {formatValue(adminProfile?.role)}</p>
-            <h1 className="font-heading text-4xl gradient-text">Uniblex Admin</h1>
+            <h1 className="gradient-text font-heading text-3xl sm:text-4xl">Uniblex Admin</h1>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <button className="btn-primary" onClick={startCreate}>Create {activeConfig.label}</button>
-            <button className="btn-secondary" onClick={handleSignOut}>Sign Out</button>
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+            <button className="btn-primary px-3 text-sm sm:px-6 sm:text-base" onClick={startCreate}>Create {activeConfig.label}</button>
+            <button className="btn-secondary px-3 text-sm sm:px-6 sm:text-base" onClick={handleSignOut}>Sign Out</button>
           </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[250px_1fr]">
-          <aside className="card p-3">
-            <div className="grid gap-2">
+          <aside className="card overflow-hidden p-2 lg:p-3">
+            <div className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:overflow-visible lg:pb-0">
               {resources.map((resource) => {
                 const active = resource.table === activeTable;
                 return (
@@ -651,7 +651,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                       setActiveTable(resource.table);
                       setFormOpen(false);
                     }}
-                    className={`rounded-lg px-4 py-3 text-left text-sm font-semibold transition ${active ? "bg-uniblex-blue/10 text-uniblex-blue ring-1 ring-uniblex-blue/30" : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"}`}
+                    className={`shrink-0 rounded-lg px-4 py-3 text-left text-sm font-semibold transition lg:w-full ${active ? "bg-uniblex-blue/10 text-uniblex-blue ring-1 ring-uniblex-blue/30" : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"}`}
                   >
                     <span className="flex items-center justify-between gap-3">
                       {resource.plural}
@@ -664,22 +664,22 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
           </aside>
 
           <section className="grid gap-6">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {resources.slice(0, 4).map((resource) => (
-                <button key={resource.table} onClick={() => setActiveTable(resource.table)} className="card p-5 text-left transition hover:border-uniblex-blue/60">
+                <button key={resource.table} onClick={() => setActiveTable(resource.table)} className="card p-4 text-left transition hover:border-uniblex-blue/60 sm:p-5">
                   <p className="text-sm text-uniblex-gray">{resource.plural}</p>
-                  <p className="mt-2 font-heading text-4xl">{counts[resource.table] ?? 0}</p>
+                  <p className="mt-2 font-heading text-3xl sm:text-4xl">{counts[resource.table] ?? 0}</p>
                 </button>
               ))}
             </div>
 
             <div className="card overflow-hidden">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-uniblex-border p-5">
-                <div>
+              <div className="flex flex-col gap-4 border-b border-uniblex-border p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div className="min-w-0">
                   <h2 className="font-heading text-2xl">{activeConfig.plural}</h2>
                   <p className="mt-1 text-sm text-uniblex-gray">{activeConfig.description}</p>
                 </div>
-                <button className="btn-secondary px-4 py-2 text-sm" onClick={() => void loadRows(activeConfig)}>Refresh</button>
+                <button className="btn-secondary min-h-0 px-4 py-2 text-sm" onClick={() => void loadRows(activeConfig)}>Refresh</button>
               </div>
 
               {notice ? (
@@ -694,7 +694,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
               ) : null}
 
               {formOpen ? (
-                <form onSubmit={saveRecord} className="grid gap-4 border-b border-uniblex-border p-5">
+                <form onSubmit={saveRecord} className="grid gap-4 border-b border-uniblex-border p-4 sm:p-5">
                   <div className="flex items-center justify-between gap-4">
                     <h3 className="font-heading text-xl">{editingId ? "Edit" : "Create"} {activeConfig.label}</h3>
                     <button type="button" className="text-sm font-bold text-uniblex-gray hover:text-white" onClick={() => setFormOpen(false)}>Cancel</button>
@@ -736,7 +736,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                       <iframe className="h-[420px] w-full rounded-lg border border-uniblex-border bg-black" src={previewGameUrl} title="Game preview" allowFullScreen />
                     </div>
                   ) : null}
-                  <div className="flex flex-wrap justify-end gap-3">
+                  <div className="grid gap-3 sm:flex sm:flex-wrap sm:justify-end">
                     {activeConfig.table === "games" ? (
                       <button className="btn-secondary" disabled={uploadLoading} type="button" onClick={() => setPreviewGameUrl(String(formValues.iframe_url ?? "").trim())}>
                         Preview Game
@@ -749,7 +749,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                 </form>
               ) : null}
 
-              <div className="overflow-x-auto">
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[760px] border-collapse text-left text-sm">
                   <thead className="bg-white/[.03] text-xs uppercase tracking-[.18em] text-uniblex-gray">
                     <tr>
@@ -786,6 +786,33 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                     )}
                   </tbody>
                 </table>
+              </div>
+              <div className="grid gap-3 p-4 md:hidden">
+                {loadingRows ? (
+                  <div className="rounded-lg border border-uniblex-border bg-white/[.025] p-4 text-sm text-uniblex-gray">Loading...</div>
+                ) : rows.length ? rows.map((row) => (
+                  <div key={String(row.id)} className="rounded-lg border border-uniblex-border bg-white/[.025] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-bold">{formatValue(row[activeConfig.primary])}</p>
+                        <p className="mt-1 text-xs text-uniblex-gray">{formatValue(row.status ?? row.role ?? row.type ?? row.is_active)}</p>
+                      </div>
+                      <p className="shrink-0 text-right text-[11px] text-uniblex-gray">{formatValue(row.updated_at ?? row.created_at)}</p>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      {activeConfig.table === "games" ? (
+                        <>
+                          <a className="btn-secondary min-h-0 rounded-md px-3 py-2 text-xs" href={`/games/${row.slug}`} target="_blank" rel="noreferrer">View</a>
+                          <button className="btn-secondary min-h-0 rounded-md px-3 py-2 text-xs" onClick={() => void copyText(`${window.location.origin}/games/${row.slug}`, "Game URL copied.")}>Copy URL</button>
+                        </>
+                      ) : null}
+                      <button className="btn-secondary min-h-0 rounded-md px-3 py-2 text-xs" onClick={() => startEdit(row)}>Manage</button>
+                      <button className="rounded-md border border-red-500/30 px-3 py-2 text-xs font-bold text-red-200 transition hover:bg-red-500/10" onClick={() => void deleteRecord(row)}>Delete</button>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="rounded-lg border border-uniblex-border bg-white/[.025] p-4 text-sm text-uniblex-gray">No records found.</div>
+                )}
               </div>
             </div>
           </section>

@@ -43,13 +43,13 @@ export function GamesExplorer({ games }: { games: Game[] }) {
       });
   }, [games, genre, search, sort, tag]);
 
-  const featuredGames = games.slice(0, 6);
+  const featuredGames = games.slice(0, 1);
   const newGames = games.slice(0, 6);
   const racingGames = games.filter((game) => /racing|bike|driving|car/i.test(`${game.genre} ${game.tags.join(" ")}`)).slice(0, 6);
 
   return (
-    <div className="grid gap-12">
-      <section className="grid gap-4 rounded-lg border border-uniblex-border bg-white/[.025] p-4 lg:grid-cols-[1fr_180px_180px_160px]">
+    <div className="grid gap-8 md:gap-10">
+      <section className="grid gap-3 rounded-lg border border-uniblex-border bg-white/[.025] p-3 sm:p-4 lg:grid-cols-[1fr_180px_180px_160px]">
         <input
           className="rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-white outline-none transition focus:border-uniblex-blue"
           value={search}
@@ -72,9 +72,9 @@ export function GamesExplorer({ games }: { games: Game[] }) {
       </section>
 
       {recentlyPlayed.length ? <GameShelf title="Recently Played" games={recentlyPlayed} /> : null}
-      <GameShelf title="Featured Games" games={featuredGames} />
+      <GameShelf title="Featured Game" games={featuredGames} featured />
       <GameShelf title="New Games" games={newGames} />
-      {racingGames.length ? <GameShelf title="Racing Games" games={racingGames} /> : null}
+      {racingGames.length && racingGames.length !== newGames.length ? <GameShelf title="Racing Games" games={racingGames} /> : null}
 
       <section>
         <div className="mb-5 flex items-end justify-between gap-4">
@@ -85,7 +85,7 @@ export function GamesExplorer({ games }: { games: Game[] }) {
           <p className="text-sm text-uniblex-gray">{filteredGames.length} game{filteredGames.length === 1 ? "" : "s"}</p>
         </div>
         {filteredGames.length ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredGames.map((game) => <GameCard key={game.slug} game={game} />)}
           </div>
         ) : (
@@ -99,13 +99,16 @@ export function GamesExplorer({ games }: { games: Game[] }) {
   );
 }
 
-function GameShelf({ title, games }: { title: string; games: Game[] }) {
+function GameShelf({ title, games, featured = false }: { title: string; games: Game[]; featured?: boolean }) {
   if (!games.length) return null;
 
   return (
     <section>
-      <h2 className="mb-5 font-heading text-3xl">{title}</h2>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <h2 className="font-heading text-2xl md:text-3xl">{title}</h2>
+        <p className="text-sm text-uniblex-gray">{games.length} game{games.length === 1 ? "" : "s"}</p>
+      </div>
+      <div className={`grid gap-4 ${featured ? "lg:grid-cols-1" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
         {games.map((game) => <GameCard key={`${title}-${game.slug}`} game={game} />)}
       </div>
     </section>
