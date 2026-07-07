@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Orbitron, Exo_2 } from "next/font/google";
-import { GoogleAnalytics } from "@next/third-parties/google";
+import Script from "next/script";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { canonicalUrl, defaultAuthors, defaultRobots, organizationJsonLd, siteConfig, websiteJsonLd } from "@/lib/seo";
 import "./globals.css";
@@ -9,6 +9,8 @@ const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron", dis
 const exo = Exo_2({ subsets: ["latin"], variable: "--font-exo", display: "swap" });
 
 const siteUrl = siteConfig.url;
+const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+const bingSiteVerification = process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -53,11 +55,15 @@ export const metadata: Metadata = {
       { rel: "icon", url: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" }
     ]
   },
-  manifest: "/manifest.webmanifest"
+  manifest: "/manifest.webmanifest",
+  verification: {
+    ...(googleSiteVerification ? { google: googleSiteVerification } : {}),
+    ...(bingSiteVerification ? { other: { "msvalidate.01": bingSiteVerification } } : {})
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
   return (
     <html lang="en" className={`${orbitron.variable} ${exo.variable}`}>
@@ -65,8 +71,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
         {children}
+        {gaId ? (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}');
+              `}
+            </Script>
+          </>
+        ) : null}
       </body>
-      {gaId ? <GoogleAnalytics gaId={gaId} /> : null}
     </html>
   );
 }

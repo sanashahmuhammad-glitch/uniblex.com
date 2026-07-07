@@ -8,7 +8,7 @@ Uniblex is a Next.js, Tailwind CSS, and Supabase platform for WebGL browser game
 - Tailwind CSS brand system
 - Supabase Auth and PostgreSQL
 - Supabase RLS policies for admin-only writes
-- Google Analytics 4 via `NEXT_PUBLIC_GA_ID`
+- Google Analytics 4 via `NEXT_PUBLIC_GA_MEASUREMENT_ID`
 - Dynamic sitemap, robots.txt, Open Graph metadata, and JSON-LD schema
 
 ## Local Setup
@@ -21,8 +21,10 @@ pnpm dev
 Create `.env.local` from `.env.example`:
 
 ```bash
-NEXT_PUBLIC_SITE_URL=https://uniblex.com
-NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_SITE_URL=https://www.uniblex.com
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=
+NEXT_PUBLIC_BING_SITE_VERIFICATION=
 NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-XXXXXXXXXXXXXXXX
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -74,7 +76,8 @@ Game records support either external hosted iframe URLs or WebGL ZIP uploads fro
 
 - Configure domain `uniblex.com` in Vercel.
 - Add GA4 measurement ID.
-- Add Search Console verification through DNS or Vercel meta/file method.
+- Add Search Console verification through DNS or the `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` meta tag.
+- Add Bing Webmaster verification through the optional `NEXT_PUBLIC_BING_SITE_VERIFICATION` meta tag.
 - Publish at least 15 to 20 original pages before AdSense submission.
 - Replace example game iframe URLs with hosted WebGL builds.
 - Keep each game build compressed and ideally under 100MB.
