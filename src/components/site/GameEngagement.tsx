@@ -17,7 +17,7 @@ export function GameEngagement({ game, games }: GameEngagementProps) {
   const [recentSlugs, setRecentSlugs] = useState<string[]>([]);
 
   const gameUrl = useMemo(() => {
-    if (typeof window === "undefined") return `https://www.uniblex.com/games/${game.slug}`;
+    if (typeof window === "undefined") return `https://uniblex.com/games/${game.slug}`;
     return `${window.location.origin}/games/${game.slug}`;
   }, [game.slug]);
 

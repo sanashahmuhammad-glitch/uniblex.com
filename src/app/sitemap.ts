@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { categories, posts, slugifyCategory } from "@/data/posts";
+import { posts } from "@/data/posts";
 import { getPublishedGames } from "@/lib/publicGames";
 import { canonicalUrl } from "@/lib/seo";
 
@@ -26,12 +26,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6
   }));
 
-  const categoryRoutes = categories.map((category) => ({
-    url: canonicalUrl(`/blog/category/${slugifyCategory(category)}`),
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.65
-  }));
-
-  return [...staticRoutes, ...gameRoutes, ...categoryRoutes, ...blogRoutes];
+  return [...staticRoutes, ...gameRoutes, ...blogRoutes];
 }
