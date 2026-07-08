@@ -42,22 +42,22 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card grid gap-4 p-6">
+    <form onSubmit={handleSubmit} className="grid gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.07] via-uniblex-card/75 to-black/25 p-5 shadow-[0_24px_90px_rgba(0,0,0,.22)] backdrop-blur md:p-6">
       <label className="grid gap-2 text-sm font-bold">
         Name
-        <input name="name" className="rounded-lg border border-uniblex-border bg-uniblex-bg px-4 py-3 outline-none focus:border-uniblex-blue" placeholder="Your name" required />
+        <input name="name" className="rounded-lg border border-white/10 bg-black/25 px-4 py-3 outline-none transition focus:border-uniblex-blue" placeholder="Your name" required />
       </label>
       <label className="grid gap-2 text-sm font-bold">
         Email
-        <input name="email" type="email" className="rounded-lg border border-uniblex-border bg-uniblex-bg px-4 py-3 outline-none focus:border-uniblex-blue" placeholder="Email address" required />
+        <input name="email" type="email" className="rounded-lg border border-white/10 bg-black/25 px-4 py-3 outline-none transition focus:border-uniblex-blue" placeholder="Email address" required />
       </label>
       <label className="grid gap-2 text-sm font-bold">
         Subject
-        <input name="subject" className="rounded-lg border border-uniblex-border bg-uniblex-bg px-4 py-3 outline-none focus:border-uniblex-blue" placeholder="Feedback, collaboration, support" />
+        <input name="subject" className="rounded-lg border border-white/10 bg-black/25 px-4 py-3 outline-none transition focus:border-uniblex-blue" placeholder="Feedback, collaboration, support" />
       </label>
       <label className="grid gap-2 text-sm font-bold">
         Message
-        <textarea name="message" rows={6} className="rounded-lg border border-uniblex-border bg-uniblex-bg px-4 py-3 outline-none focus:border-uniblex-blue" placeholder="Write your message" required />
+        <textarea name="message" rows={6} className="rounded-lg border border-white/10 bg-black/25 px-4 py-3 outline-none transition focus:border-uniblex-blue" placeholder="Write your message" required />
       </label>
       {message ? (
         <p className={`rounded-lg border p-3 text-sm ${status === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-red-500/30 bg-red-500/10 text-red-200"}`}>

@@ -59,7 +59,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
   const gameUrl = canonicalUrl(`/games/${game.slug}`);
 
   return (
-    <main className="container-pad py-8 md:py-12">
+    <main className="container-pad py-6 md:py-10">
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "GameApplication",
@@ -86,22 +86,23 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         { name: game.title, url: gameUrl }
       ])} />
 
-      <section className="grid gap-7 lg:grid-cols-[1fr_380px] lg:items-center">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full border border-uniblex-blue/30 bg-uniblex-blue/10 px-4 py-2 text-sm font-bold text-uniblex-blue">{game.genre}</span>
-            <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-200">{game.status}</span>
+      <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.065] via-uniblex-card/65 to-black/30 p-5 shadow-[0_24px_90px_rgba(0,0,0,.22)] md:p-7 lg:grid lg:grid-cols-[1fr_320px] lg:items-center lg:gap-7">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_8%,rgba(0,178,255,.18),transparent_30%),radial-gradient(circle_at_82%_12%,rgba(122,60,255,.18),transparent_28%)]" />
+        <div className="relative">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-uniblex-blue/30 bg-uniblex-blue/10 px-3 py-1.5 text-xs font-bold text-uniblex-blue sm:text-sm">{game.genre}</span>
+            <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1.5 text-xs font-bold text-emerald-200 sm:text-sm">{game.status}</span>
           </div>
-          <h1 className="mt-5 font-heading text-4xl leading-tight md:text-6xl">{game.title}</h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-uniblex-gray md:text-lg md:leading-8">{game.description}</p>
-          <div className="mt-6 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+          <h1 className="mt-4 font-heading text-3xl leading-tight sm:text-4xl md:text-5xl">{game.title}</h1>
+          <p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-uniblex-gray md:text-base md:leading-7">{game.description}</p>
+          <div className="mt-5 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4">
             {[
               { icon: Star, label: "Rating", value: game.rating },
               { icon: Trophy, label: "Difficulty", value: game.difficulty },
               { icon: Clock3, label: "Session", value: game.sessionLength },
               { icon: Users, label: "Players", value: game.players }
             ].map((item) => (
-              <div key={item.label} className="rounded-lg border border-uniblex-border bg-white/[.03] p-4">
+              <div key={item.label} className="rounded-lg border border-white/10 bg-white/[.04] p-3">
                 <div className="flex items-center gap-2 text-xs text-uniblex-gray">
                   <item.icon size={14} className="text-uniblex-blue" /> {item.label}
                 </div>
@@ -109,12 +110,12 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
               </div>
             ))}
           </div>
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {game.tags.map((tag) => <span key={tag} className="rounded-full border border-uniblex-border px-3 py-1.5 text-xs font-bold text-uniblex-gray sm:text-sm">{tag}</span>)}
           </div>
         </div>
         <div
-          className="relative aspect-[16/10] overflow-hidden rounded-lg border border-uniblex-border bg-white/[.03] shadow-[0_24px_80px_rgba(122,60,255,.16)]"
+          className="relative mt-5 hidden aspect-[16/10] overflow-hidden rounded-xl border border-white/10 bg-white/[.03] shadow-[0_24px_80px_rgba(122,60,255,.16)] sm:block lg:mt-0"
           style={{
             background: `radial-gradient(circle at 30% 20%, ${game.accent}35, transparent 36%), linear-gradient(135deg, rgba(13,17,24,.96), rgba(17,24,39,.82))`
           }}
@@ -123,7 +124,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         </div>
       </section>
 
-      <section className="mt-8 md:mt-10">
+      <section className="mt-5 md:mt-8">
         <GamePlayer title={game.title} slug={game.slug} cover={game.cover} iframeUrl={game.iframeUrl} />
       </section>
 
