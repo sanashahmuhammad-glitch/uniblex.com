@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpenText, Gauge, Gamepad2, LayoutDashboard, Play, Search, ShieldCheck, Sparkles, Star, Trophy, Zap } from "lucide-react";
+import { ArrowRight, BookOpenText, Flame, Gauge, Gamepad2, LayoutDashboard, Play, Search, ShieldCheck, Sparkles, Star, Trophy, Zap } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
 import { GameCard } from "@/components/site/GameCard";
 import { PostCard } from "@/components/site/PostCard";
@@ -36,17 +36,17 @@ export const metadata: Metadata = {
 };
 
 const stats = [
-  { value: `${games.length}+`, label: "Game pages" },
-  { value: `${posts.length}+`, label: "Original articles" },
-  { value: "4", label: "Ad zones" },
-  { value: "80+", label: "Lighthouse target" }
+  { value: `${games.length}`, label: "Live games" },
+  { value: `${posts.length}`, label: "Game dev articles" },
+  { value: games[0]?.rating ?? "-", label: "Featured rating" },
+  { value: games[0]?.genre ?? "WebGL", label: "Featured genre" }
 ];
 
 const platform = [
-  { icon: Gamepad2, title: "WebGL Showcase", text: "Dedicated game pages with controls, tags, schema, and lazy loaded iframe players." },
-  { icon: BookOpenText, title: "Content Engine", text: "Original articles for game dev, 3D art, tutorials, and industry topics." },
-  { icon: Search, title: "SEO Foundation", text: "Dynamic metadata, sitemap, robots.txt, Open Graph, canonical URLs, and JSON-LD." },
-  { icon: LayoutDashboard, title: "Admin CMS", text: "Supabase-backed management for games, blogs, categories, ads, contacts, and SEO." }
+  { icon: Gamepad2, title: "Arcade Player", text: "Dedicated WebGL pages with a dark player shell, fullscreen controls, and fast play entry." },
+  { icon: BookOpenText, title: "Creator Guides", text: "Game dev and 3D art articles that support players, artists, and browser game creators." },
+  { icon: Search, title: "Discovery Flow", text: "Featured picks, library shelves, filters, and compact cards for quick game browsing." },
+  { icon: LayoutDashboard, title: "Publishing Tools", text: "Admin controls for managing games, articles, categories, messages, and platform content." }
 ];
 
 export default function HomePage() {
@@ -129,26 +129,13 @@ export default function HomePage() {
         <AdZone label="Header Leaderboard" size="leaderboard" />
       </section>
 
-      <section className="container-pad py-12 md:py-16">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="font-bold text-uniblex-blue">Featured Games</p>
-            <h2 className="section-title">Play in Browser</h2>
-          </div>
-          <Link href="/games" className="inline-flex items-center gap-2 font-bold text-uniblex-blue">
-            View All <ArrowRight size={17} />
-          </Link>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          {featuredGames.map((game) => <GameCard key={game.slug} game={game} />)}
-        </div>
-      </section>
+      <HomeGameSpotlight games={featuredGames} />
 
       <section className="border-y border-white/10 bg-gradient-to-r from-white/[.035] via-uniblex-card/25 to-white/[.025] py-12 md:py-16">
         <div className="container-pad">
           <div className="mb-8 max-w-3xl">
-            <p className="font-bold text-uniblex-blue">Platform System</p>
-            <h2 className="section-title">Frontend, Backend, SEO, Monetization</h2>
+            <p className="font-bold text-uniblex-blue">Platform Feel</p>
+            <h2 className="section-title">Built Like a Browser Game Hub</h2>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {platform.map((item) => (
@@ -191,5 +178,57 @@ export default function HomePage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function HomeGameSpotlight({ games: spotlightGames }: { games: typeof games }) {
+  const [primaryGame, ...queueGames] = spotlightGames;
+  if (!primaryGame) return null;
+
+  return (
+    <section className="container-pad py-10 md:py-14">
+      <div className="mb-7 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-sm font-black uppercase tracking-[.24em] text-uniblex-blue">Featured Arena</p>
+          <h2 className="section-title">Start Playing Fast</h2>
+        </div>
+        <Link href="/games" className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[.045] px-4 py-3 text-sm font-black text-uniblex-blue transition hover:border-uniblex-blue/40 hover:bg-uniblex-blue/10 hover:text-white">
+          Open Game Library <ArrowRight size={17} />
+        </Link>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
+        <Link href={`/games/${primaryGame.slug}`} className="group relative min-h-[360px] overflow-hidden rounded-2xl border border-uniblex-blue/25 bg-black shadow-[0_30px_110px_rgba(0,178,255,.16)]">
+          <GameThumbnail game={primaryGame} />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/88 via-black/42 to-black/10" />
+          <div className="absolute inset-x-5 bottom-5 top-5 flex max-w-xl flex-col justify-end">
+            <div className="mb-auto inline-flex w-fit items-center gap-2 rounded-full border border-uniblex-blue/30 bg-uniblex-blue/10 px-3 py-1 text-xs font-black uppercase tracking-[.18em] text-uniblex-blue backdrop-blur">
+              <Flame size={14} /> Play Pick
+            </div>
+            <h3 className="font-heading text-4xl leading-tight md:text-6xl">{primaryGame.title}</h3>
+            <p className="mt-3 line-clamp-2 text-sm leading-6 text-uniblex-gray md:text-base">{primaryGame.description}</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {[primaryGame.genre, primaryGame.difficulty, primaryGame.sessionLength].map((item) => (
+                <span key={item} className="rounded-full border border-white/10 bg-black/45 px-3 py-1 text-xs font-black text-white backdrop-blur">{item}</span>
+              ))}
+            </div>
+            <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-lg bg-gradient-to-r from-uniblex-blue to-uniblex-purple px-5 py-3 text-sm font-black text-white shadow-[0_16px_40px_rgba(0,178,255,.26)] transition group-hover:scale-[1.02]">
+              <Play size={18} fill="currentColor" /> Play Now
+            </span>
+          </div>
+        </Link>
+
+        <div className="grid gap-4">
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.07] via-uniblex-card/75 to-black/25 p-5 shadow-[0_22px_80px_rgba(0,0,0,.2)]">
+            <p className="text-xs font-black uppercase tracking-[.22em] text-uniblex-blue">Discovery Queue</p>
+            <h3 className="mt-2 font-heading text-3xl">More to Try</h3>
+            <p className="mt-2 text-sm leading-6 text-uniblex-gray">Real games from the Uniblex library, grouped for quick browsing.</p>
+          </div>
+          {queueGames.length ? queueGames.map((game) => <GameCard key={game.slug} game={game} />) : (
+            <GameCard game={primaryGame} />
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
