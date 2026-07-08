@@ -54,47 +54,47 @@ export function GameEngagement({ game, games }: GameEngagementProps) {
 
   return (
     <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
-      <div className="card p-5">
+      <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[.06] via-uniblex-card/75 to-black/25 p-5 shadow-[0_18px_70px_rgba(0,0,0,.2)] backdrop-blur">
         <div className="flex flex-wrap gap-3">
-          <button className="btn-secondary min-h-0 px-4 py-3" onClick={toggleFavorite} type="button">
+          <button className="btn-secondary min-h-0 rounded-md px-4 py-3" onClick={toggleFavorite} type="button">
             <Heart size={18} fill={favorite ? "currentColor" : "none"} /> {favorite ? "Favorited" : "Favorite"}
           </button>
-          <button className="btn-secondary min-h-0 px-4 py-3" disabled={liked} onClick={likeGame} type="button">
+          <button className="btn-secondary min-h-0 rounded-md px-4 py-3" disabled={liked} onClick={likeGame} type="button">
             <ThumbsUp size={18} fill={liked ? "currentColor" : "none"} /> {liked ? "Liked" : "Like"}
           </button>
           {typeof game.viewCount === "number" ? (
-            <span className="rounded-lg border border-uniblex-border bg-white/[.025] px-4 py-3 text-sm text-uniblex-gray">Views: {game.viewCount.toLocaleString()}</span>
+            <span className="rounded-md border border-white/10 bg-white/[.04] px-4 py-3 text-sm text-uniblex-gray">Views: {game.viewCount.toLocaleString()}</span>
           ) : null}
           {typeof game.playCount === "number" ? (
-            <span className="rounded-lg border border-uniblex-border bg-white/[.025] px-4 py-3 text-sm text-uniblex-gray">Plays: {game.playCount.toLocaleString()}</span>
+            <span className="rounded-md border border-white/10 bg-white/[.04] px-4 py-3 text-sm text-uniblex-gray">Plays: {game.playCount.toLocaleString()}</span>
           ) : null}
         </div>
 
         <div className="mt-6">
           <h2 className="font-heading text-2xl">Share this game</h2>
           <div className="mt-4 flex flex-wrap gap-3">
-            <button className="btn-secondary min-h-0 px-4 py-3" onClick={copyLink} type="button">
+            <button className="btn-secondary min-h-0 rounded-md px-4 py-3" onClick={copyLink} type="button">
               {copied ? <Check size={17} /> : <Copy size={17} />} {copied ? "Copied" : "Copy Link"}
             </button>
-            <a className="btn-secondary min-h-0 px-4 py-3" href={`https://wa.me/?text=${encodeURIComponent(`${game.title} ${gameUrl}`)}`} target="_blank" rel="noreferrer">
+            <a className="btn-secondary min-h-0 rounded-md px-4 py-3" href={`https://wa.me/?text=${encodeURIComponent(`${game.title} ${gameUrl}`)}`} target="_blank" rel="noreferrer">
               <MessageCircle size={17} /> WhatsApp
             </a>
-            <a className="btn-secondary min-h-0 px-4 py-3" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(gameUrl)}`} target="_blank" rel="noreferrer">
+            <a className="btn-secondary min-h-0 rounded-md px-4 py-3" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(gameUrl)}`} target="_blank" rel="noreferrer">
               <Facebook size={17} /> Facebook
             </a>
-            <a className="btn-secondary min-h-0 px-4 py-3" href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(gameUrl)}&text=${encodeURIComponent(game.title)}`} target="_blank" rel="noreferrer">
+            <a className="btn-secondary min-h-0 rounded-md px-4 py-3" href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(gameUrl)}&text=${encodeURIComponent(game.title)}`} target="_blank" rel="noreferrer">
               <Twitter size={17} /> X/Twitter
             </a>
           </div>
         </div>
       </div>
 
-      <aside className="card p-5">
+      <aside className="rounded-xl border border-white/10 bg-white/[.04] p-5 shadow-[0_18px_70px_rgba(0,0,0,.18)] backdrop-blur">
         <h2 className="font-heading text-2xl">Recently Played</h2>
         {recentGames.length ? (
           <div className="mt-4 grid gap-3">
             {recentGames.map((recent) => (
-              <Link key={recent.slug} href={`/games/${recent.slug}`} className="rounded-lg border border-uniblex-border bg-white/[.025] p-3 transition hover:border-uniblex-blue/50">
+              <Link key={recent.slug} href={`/games/${recent.slug}`} className="rounded-lg border border-white/10 bg-white/[.035] p-3 transition hover:border-uniblex-blue/50 hover:bg-uniblex-blue/10">
                 <p className="font-bold">{recent.title}</p>
                 <p className="mt-1 text-sm text-uniblex-gray">{recent.genre}</p>
               </Link>
