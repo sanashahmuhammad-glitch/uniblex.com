@@ -72,79 +72,87 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
   }
 
   return (
-    <section className="grid gap-4">
+    <section className="grid gap-3 md:gap-4">
       <div
         ref={containerRef}
-        className="relative mx-auto w-full overflow-hidden rounded-lg border border-uniblex-blue/25 bg-[#05070b] shadow-[0_28px_90px_rgba(0,178,255,.16)]"
+        className="relative mx-auto w-full overflow-hidden rounded-2xl border border-uniblex-blue/30 bg-[#04070d] p-1 shadow-[0_34px_120px_rgba(0,178,255,.18)]"
       >
-        <div className="flex min-h-[44px] items-center justify-between gap-3 border-b border-white/10 bg-white/[.035] px-3 py-2 sm:px-4">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-white">{title}</p>
-            <p className="hidden text-xs text-uniblex-gray sm:block">WebGL player</p>
-          </div>
-          <button className="btn-secondary min-h-0 shrink-0 rounded-md px-3 py-2 text-xs" onClick={toggleFullscreen} type="button">
-            {isFullscreen ? <Minimize2 size={15} /> : <Expand size={15} />}
-            <span className="hidden sm:inline">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
-          </button>
-        </div>
-        <div className="relative h-[min(58svh,680px)] min-h-[250px] w-full overflow-hidden bg-black sm:h-[min(66vh,720px)] sm:min-h-[420px] lg:min-h-[560px]">
-          {!started ? (
-            <div className="absolute inset-0 grid place-items-center overflow-hidden">
-              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${cover}')` }} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-uniblex-bg/70 to-black/25" />
-              <div className="relative z-10 max-w-2xl p-5 text-center">
-                <p className="mb-2 text-xs font-bold uppercase tracking-[.24em] text-uniblex-blue sm:text-sm">Uniblex WebGL Player</p>
-                <h2 className="font-heading text-3xl leading-tight md:text-5xl">{title}</h2>
-                <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-uniblex-gray md:text-base">
-                  WebGL loads only when you click Play for better speed.
-                </p>
-                <button className="btn-primary mx-auto mt-5 text-base sm:mt-7 sm:text-lg" onClick={startGame} type="button">
-                  <Play size={22} fill="currentColor" /> Play Now
-                </button>
+        <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_20%_0%,rgba(0,178,255,.22),transparent_30%),radial-gradient(circle_at_86%_0%,rgba(122,60,255,.2),transparent_28%)]" />
+        <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black">
+          <div className="flex min-h-[52px] items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-r from-white/[.08] via-white/[.035] to-uniblex-purple/10 px-3 py-2 sm:px-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="hidden h-3 w-3 rounded-full bg-red-400/80 sm:block" />
+              <span className="hidden h-3 w-3 rounded-full bg-yellow-300/80 sm:block" />
+              <span className="hidden h-3 w-3 rounded-full bg-emerald-400/80 sm:block" />
+              <div className="min-w-0">
+                <p className="truncate font-heading text-lg leading-none text-white sm:text-xl">{title}</p>
+                <p className="mt-1 hidden text-xs font-bold uppercase tracking-[.18em] text-uniblex-blue sm:block">Uniblex Player</p>
               </div>
             </div>
-          ) : (
-            <>
-              {!loaded ? (
-                <div className="absolute inset-0 z-20 grid place-items-center bg-[#05070b]/95 p-6 text-center">
-                  <div className="w-full max-w-sm">
-                    <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full border border-uniblex-blue/40 bg-uniblex-blue/10">
-                      <RotateCcw className="animate-spin text-uniblex-blue" size={28} />
-                    </div>
-                    <h3 className="font-heading text-2xl sm:text-3xl">Loading Game...</h3>
-                    <p className="mt-2 text-sm text-uniblex-gray">Preparing the WebGL canvas. Large builds can take a moment.</p>
-                    <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
-                      <div className="h-full w-2/3 animate-pulse rounded-full bg-gradient-to-r from-uniblex-blue to-uniblex-purple" />
+            <button className="inline-flex min-h-[38px] shrink-0 items-center justify-center gap-2 rounded-md border border-uniblex-blue/35 bg-uniblex-blue/10 px-3 py-2 text-xs font-black text-white transition hover:bg-uniblex-blue/20" onClick={toggleFullscreen} type="button">
+              {isFullscreen ? <Minimize2 size={15} /> : <Expand size={15} />}
+              <span className="hidden sm:inline">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+            </button>
+          </div>
+          <div className="relative h-[min(56svh,660px)] min-h-[235px] w-full overflow-hidden bg-black sm:h-[min(68vh,760px)] sm:min-h-[430px] lg:min-h-[590px]">
+            {!started ? (
+              <div className="absolute inset-0 grid place-items-center overflow-hidden">
+                <div className="absolute inset-0 scale-105 bg-cover bg-center blur-[1px]" style={{ backgroundImage: `url('${cover}')` }} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/68 to-black/25" />
+                <div className="relative z-10 max-w-2xl p-5 text-center">
+                  <p className="mb-2 text-xs font-black uppercase tracking-[.24em] text-uniblex-blue sm:text-sm">Ready To Play</p>
+                  <h2 className="font-heading text-3xl leading-tight md:text-5xl">{title}</h2>
+                  <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-uniblex-gray md:text-base">
+                    Click play to load the WebGL build inside the Uniblex game frame.
+                  </p>
+                  <button className="btn-primary mx-auto mt-5 text-base sm:mt-7 sm:text-lg" onClick={startGame} type="button">
+                    <Play size={22} fill="currentColor" /> Play Now
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {!loaded ? (
+                  <div className="absolute inset-0 z-20 grid place-items-center bg-[#05070b]/95 p-5 text-center">
+                    <div className="w-full max-w-sm">
+                      <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full border border-uniblex-blue/40 bg-uniblex-blue/10">
+                        <RotateCcw className="animate-spin text-uniblex-blue" size={25} />
+                      </div>
+                      <h3 className="font-heading text-2xl sm:text-3xl">Loading Game...</h3>
+                      <p className="mt-2 text-sm text-uniblex-gray">Preparing the WebGL canvas.</p>
+                      <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-full w-2/3 animate-pulse rounded-full bg-gradient-to-r from-uniblex-blue to-uniblex-purple" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : null}
-              {isPortrait ? (
-                <div className="pointer-events-none absolute inset-x-3 top-3 z-30 flex items-center justify-center gap-2 rounded-md border border-uniblex-blue/30 bg-black/80 px-3 py-2 text-center text-xs font-bold text-white backdrop-blur md:hidden">
-                  <RotateCw size={15} className="text-uniblex-blue" /> Rotate for best play
-                </div>
-              ) : null}
-              <iframe
-                ref={iframeRef}
-                title={title}
-                src={iframeUrl}
-                className="block h-full w-full border-0 bg-black outline-none"
-                allow="fullscreen; gamepad; autoplay; xr-spatial-tracking"
-                loading="eager"
-                scrolling="no"
-                tabIndex={0}
-                onClick={() => iframeRef.current?.focus()}
-                onLoad={() => {
-                  setLoaded(true);
-                  window.setTimeout(() => iframeRef.current?.focus(), 100);
-                }}
-              />
-            </>
-          )}
+                ) : null}
+                {isPortrait ? (
+                  <div className="pointer-events-none absolute inset-x-3 top-3 z-30 flex items-center justify-center gap-2 rounded-md border border-uniblex-blue/30 bg-black/80 px-3 py-2 text-center text-xs font-bold text-white backdrop-blur md:hidden">
+                    <RotateCw size={15} className="text-uniblex-blue" /> Rotate for best play
+                  </div>
+                ) : null}
+                <iframe
+                  ref={iframeRef}
+                  title={title}
+                  src={iframeUrl}
+                  className="block h-full w-full border-0 bg-black outline-none"
+                  allow="fullscreen; gamepad; autoplay; xr-spatial-tracking"
+                  loading="eager"
+                  scrolling="no"
+                  tabIndex={0}
+                  onClick={() => iframeRef.current?.focus()}
+                  onLoad={() => {
+                    setLoaded(true);
+                    window.setTimeout(() => iframeRef.current?.focus(), 100);
+                  }}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-3 rounded-lg border border-uniblex-border bg-white/[.025] p-4 text-sm text-uniblex-gray md:grid-cols-[1fr_auto] md:items-center">
+      <div className="grid gap-3 rounded-lg border border-white/10 bg-white/[.04] p-3 text-sm text-uniblex-gray md:grid-cols-[1fr_auto] md:items-center md:p-4">
         <p>
           Click inside the game once if keyboard controls do not respond.
         </p>

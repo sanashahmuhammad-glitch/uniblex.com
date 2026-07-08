@@ -35,18 +35,26 @@ export default async function GamesPage() {
   const games = await getPublishedGames();
 
   return (
-    <main className="container-pad py-12 md:py-16">
-      <div className="mb-10 max-w-4xl">
-        <p className="text-uniblex-blue">Game Library</p>
-        <h1 className="font-heading text-4xl leading-tight md:text-5xl">Play Free WebGL Games Online</h1>
-        <p className="mt-4 text-lg leading-8 text-uniblex-gray">
-          Explore browser-based racing games, arcade games, driving games, and creator-built WebGL experiences with no installs.
-        </p>
+    <main className="container-pad py-8 md:py-12">
+      <div className="relative mb-8 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.075] via-uniblex-card/70 to-black/30 p-5 shadow-[0_24px_90px_rgba(0,0,0,.25)] md:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(0,178,255,.22),transparent_32%),radial-gradient(circle_at_80%_20%,rgba(122,60,255,.2),transparent_28%)]" />
+        <div className="relative max-w-4xl">
+          <p className="text-sm font-black uppercase tracking-[.24em] text-uniblex-blue">Game Library</p>
+          <h1 className="mt-3 font-heading text-4xl leading-tight md:text-6xl">Play Free WebGL Games Online</h1>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-uniblex-gray md:text-lg md:leading-8">
+            Fast browser games with premium pages, clean player controls, and no installs.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-uniblex-gray">
+            <span className="rounded-full border border-white/10 bg-white/[.035] px-3 py-1">Instant play</span>
+            <span className="rounded-full border border-white/10 bg-white/[.035] px-3 py-1">{games.length} live game{games.length === 1 ? "" : "s"}</span>
+            <span className="rounded-full border border-white/10 bg-white/[.035] px-3 py-1">WebGL ready</span>
+          </div>
+        </div>
       </div>
 
       <AdZone label="Games Page Header" size="leaderboard" />
 
-      <div className="mt-10">
+      <div className="mt-8 md:mt-10">
         <GamesExplorer games={games} />
       </div>
     </main>
