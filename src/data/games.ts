@@ -67,7 +67,7 @@ export const games: Game[] = [
     status: "Published",
     description: "Ride powerful motorcycles, complete exciting racing challenges, unlock new bikes, and become the ultimate bike racing champion in this realistic 3D WebGL racing game.",
     cover,
-    iframeUrl: "https://pub-70c119e225fe4cea8f65d78d6337a74a.r2.dev/bike-game/index.html",
+    iframeUrl: "/games/moto-rider-3d-bike-race-game-webgl-v2/index.html",
     tags: ["WebGL", "Racing", "Bike", "Motorcycle", "3D", "Driving", "Arcade"],
     playStyle: "Fast 3D motorcycle racing with road challenges, bike handling, rewards, and quick replayable sessions.",
     controls: ["WASD or Arrow Keys to control the bike", "Space for brake or action", "Mouse to select menus"],

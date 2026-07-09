@@ -24,7 +24,7 @@ const nextConfig = {
       {
         source: "/:path*.js.br",
         headers: [
-          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Content-Type", value: "application/javascript" },
           { key: "Content-Encoding", value: "br" }
         ]
       },
@@ -38,7 +38,8 @@ const nextConfig = {
       {
         source: "/:path*.data.br",
         headers: [
-          { key: "Content-Type", value: "application/octet-stream" }
+          { key: "Content-Type", value: "application/octet-stream" },
+          { key: "Content-Encoding", value: "br" }
         ]
       },
       {
