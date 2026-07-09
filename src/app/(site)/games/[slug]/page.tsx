@@ -124,7 +124,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         </div>
       </section>
 
-      <section className="mt-5 grid gap-5 md:mt-8 xl:grid-cols-[1fr_300px]">
+      <section className="relative left-1/2 mt-5 grid w-screen max-w-[1600px] -translate-x-1/2 gap-4 px-4 md:mt-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:px-8 2xl:grid-cols-[minmax(0,1fr)_300px]">
         <GamePlayer title={game.title} slug={game.slug} cover={game.cover} iframeUrl={game.iframeUrl} />
         <aside className="grid gap-4 xl:sticky xl:top-32 xl:self-start">
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.07] via-uniblex-card/75 to-black/25 p-5 shadow-[0_22px_80px_rgba(0,0,0,.22)]">
