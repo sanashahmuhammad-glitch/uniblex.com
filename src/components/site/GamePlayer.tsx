@@ -52,6 +52,10 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
     );
   }
 
+  function focusIframe() {
+    iframeRef.current?.focus();
+  }
+
   async function toggleFullscreen() {
     const container = containerRef.current;
     if (!container) return;
@@ -75,26 +79,22 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
     <section className="grid gap-3 md:gap-4">
       <div
         ref={containerRef}
-        className="relative mx-auto w-full overflow-hidden rounded-2xl border border-uniblex-blue/30 bg-[#04070d] p-1 shadow-[0_34px_120px_rgba(0,178,255,.18)]"
+        className="group relative mx-auto w-full overflow-hidden rounded-lg border border-white/10 bg-black shadow-[0_34px_120px_rgba(0,0,0,.45)] focus-within:border-uniblex-blue/50"
+        onClick={focusIframe}
+        onPointerDown={focusIframe}
+        tabIndex={-1}
       >
-        <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_20%_0%,rgba(0,178,255,.22),transparent_30%),radial-gradient(circle_at_86%_0%,rgba(122,60,255,.2),transparent_28%)]" />
-        <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black">
-          <div className="flex min-h-[52px] items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-r from-white/[.08] via-white/[.035] to-uniblex-purple/10 px-3 py-2 sm:px-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="hidden h-3 w-3 rounded-full bg-red-400/80 sm:block" />
-              <span className="hidden h-3 w-3 rounded-full bg-yellow-300/80 sm:block" />
-              <span className="hidden h-3 w-3 rounded-full bg-emerald-400/80 sm:block" />
-              <div className="min-w-0">
-                <p className="truncate font-heading text-lg leading-none text-white sm:text-xl">{title}</p>
-                <p className="mt-1 hidden text-xs font-bold uppercase tracking-[.18em] text-uniblex-blue sm:block">Uniblex Player</p>
-              </div>
+        <div className="relative overflow-hidden bg-black">
+          <div className="absolute right-2 top-2 z-40 flex items-center gap-2 sm:right-3 sm:top-3">
+            <div className="hidden rounded-md bg-black/70 px-3 py-2 text-xs font-bold text-white/80 backdrop-blur md:block">
+              Click game to focus controls
             </div>
-            <button className="inline-flex min-h-[38px] shrink-0 items-center justify-center gap-2 rounded-md border border-uniblex-blue/35 bg-uniblex-blue/10 px-3 py-2 text-xs font-black text-white transition hover:bg-uniblex-blue/20" onClick={toggleFullscreen} type="button">
+            <button className="inline-flex min-h-[38px] shrink-0 items-center justify-center gap-2 rounded-md border border-white/15 bg-black/70 px-3 py-2 text-xs font-black text-white backdrop-blur transition hover:border-uniblex-blue/50 hover:bg-uniblex-blue/20" onClick={toggleFullscreen} type="button">
               {isFullscreen ? <Minimize2 size={15} /> : <Expand size={15} />}
               <span className="hidden sm:inline">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
             </button>
           </div>
-          <div className="relative h-[min(56svh,660px)] min-h-[235px] w-full overflow-hidden bg-black sm:h-[min(68vh,760px)] sm:min-h-[430px] lg:min-h-[590px]">
+          <div className={isFullscreen ? "relative h-screen w-screen overflow-hidden bg-black" : "relative aspect-video w-full overflow-hidden bg-black"}>
             {!started ? (
               <div className="absolute inset-0 grid place-items-center overflow-hidden">
                 <div className="absolute inset-0 scale-105 bg-cover bg-center blur-[1px]" style={{ backgroundImage: `url('${cover}')` }} />
@@ -140,10 +140,11 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
                   loading="eager"
                   scrolling="no"
                   tabIndex={0}
-                  onClick={() => iframeRef.current?.focus()}
+                  onClick={focusIframe}
+                  onPointerDown={focusIframe}
                   onLoad={() => {
                     setLoaded(true);
-                    window.setTimeout(() => iframeRef.current?.focus(), 100);
+                    window.setTimeout(focusIframe, 100);
                   }}
                 />
               </>
@@ -152,7 +153,7 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
         </div>
       </div>
 
-      <div className="grid gap-3 rounded-lg border border-white/10 bg-white/[.04] p-3 text-sm text-uniblex-gray md:grid-cols-[1fr_auto] md:items-center md:p-4">
+      <div className="grid gap-3 rounded-lg border border-white/10 bg-white/[.035] p-3 text-sm text-uniblex-gray md:grid-cols-[1fr_auto] md:items-center md:p-4">
         <p>
           Click inside the game once if keyboard controls do not respond.
         </p>
