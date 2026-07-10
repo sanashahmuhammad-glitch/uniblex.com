@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { games as fallbackGames, type Game } from "@/data/games";
+import { MOTO_RIDER_IFRAME_URL, MOTO_RIDER_SLUG } from "@/lib/gameIframeUrls";
 
 type GameRow = {
   id?: string;
@@ -62,7 +63,7 @@ function mapGameRow(row: GameRow): Game {
     status: "Published",
     description: row.description,
     cover: row.cover_url || "/cards/game-cover-sprite.png",
-    iframeUrl: row.iframe_url || undefined,
+    iframeUrl: row.slug === MOTO_RIDER_SLUG ? MOTO_RIDER_IFRAME_URL : row.iframe_url || undefined,
     tags,
     playStyle: row.description,
     controls: ["Use the in-game controls after pressing Play."],

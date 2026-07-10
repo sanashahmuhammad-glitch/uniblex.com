@@ -1,3 +1,5 @@
+import { MOTO_RIDER_IFRAME_URL } from "@/lib/gameIframeUrls";
+
 export type Game = {
   title: string;
   slug: string;
@@ -67,12 +69,12 @@ export const games: Game[] = [
     status: "Published",
     description: "Ride powerful motorcycles, complete exciting racing challenges, unlock new bikes, and become the ultimate bike racing champion in this realistic 3D WebGL racing game.",
     cover,
-    iframeUrl: "/games/moto-rider-3d-bike-race-game-webgl-v2/index.html",
+    iframeUrl: MOTO_RIDER_IFRAME_URL,
     tags: ["WebGL", "Racing", "Bike", "Motorcycle", "3D", "Driving", "Arcade"],
     playStyle: "Fast 3D motorcycle racing with road challenges, bike handling, rewards, and quick replayable sessions.",
     controls: ["WASD or Arrow Keys to control the bike", "Space for brake or action", "Mouse to select menus"],
-    highlights: ["Playable from Cloudflare R2", "Lazy loaded WebGL iframe", "Bike racing experience with no install"],
-    technicalNotes: ["External iframe URL is saved in Supabase metadata.", "The R2-hosted WebGL build loads only after Play Now."],
+    highlights: ["Playable from local WebGL build", "Lazy loaded WebGL iframe", "Bike racing experience with no install"],
+    technicalNotes: ["Local iframe URL is saved in game metadata.", "The uncompressed WebGL build loads only after Play Now."],
     difficulty: "Medium",
     sessionLength: "5-10 min",
     players: "Solo",
