@@ -56,10 +56,15 @@ const resources: ResourceConfig[] = [
       { key: "slug", label: "Slug", kind: "text", placeholder: "Generated from title if empty" },
       { key: "category_id", label: "Category ID", kind: "text", placeholder: "Optional category uuid" },
       { key: "genre", label: "Genre", kind: "text" },
-      { key: "status", label: "Status", kind: "select", options: ["draft", "published", "archived"], required: true },
+      { key: "status", label: "Status", kind: "select", options: ["draft", "preview", "published", "archived"], required: true },
       { key: "description", label: "Description", kind: "textarea", required: true },
       { key: "cover_url", label: "Cover URL", kind: "text" },
       { key: "iframe_url", label: "Iframe URL", kind: "text" },
+      { key: "thumbnail_url", label: "Thumbnail URL", kind: "text" },
+      { key: "screenshot_urls", label: "Screenshot URLs", kind: "tags", placeholder: "https://..., https://..." },
+      { key: "aspect_ratio", label: "Aspect Ratio", kind: "select", options: ["16/9", "16/10", "4/3", "9/16", "1/1"], required: true },
+      { key: "desktop_controls", label: "Desktop Controls JSON", kind: "json", placeholder: "[\"WASD / Arrow Keys = Move\"]" },
+      { key: "mobile_controls", label: "Mobile Controls JSON", kind: "json", placeholder: "[\"Use on-screen controls\"]" },
       { key: "tags", label: "Tags", kind: "tags", placeholder: "WebGL, Arcade, Runner" },
       { key: "sort_order", label: "Sort Order", kind: "number" },
       { key: "published_at", label: "Published At", kind: "datetime" }
@@ -78,7 +83,7 @@ const resources: ResourceConfig[] = [
       { key: "category_id", label: "Category ID", kind: "text", placeholder: "Optional category uuid" },
       { key: "excerpt", label: "Excerpt", kind: "textarea", required: true },
       { key: "content", label: "Content JSON", kind: "json", placeholder: "[\"Paragraph one\", \"Paragraph two\"]" },
-      { key: "status", label: "Status", kind: "select", options: ["draft", "published", "archived"], required: true },
+      { key: "status", label: "Status", kind: "select", options: ["draft", "preview", "published", "archived"], required: true },
       { key: "reading_time", label: "Reading Time", kind: "text" },
       { key: "image_url", label: "Image URL", kind: "text" },
       { key: "author_name", label: "Author Name", kind: "text" },
@@ -170,10 +175,13 @@ const defaultValues: Partial<Record<string, string | boolean>> = {
   type: "game",
   is_published: false,
   sort_order: "0",
+  aspect_ratio: "16/9",
   tags: "",
   content: "[]",
   metadata: "{}",
   structured_data: "{}",
+  desktop_controls: "[]",
+  mobile_controls: "[]",
   noindex: false
 };
 
@@ -273,6 +281,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
   const [gameZipFile, setGameZipFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [previewGameUrl, setPreviewGameUrl] = useState("");
@@ -430,18 +439,21 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
 
     try {
       setUploadLoading(true);
+      setUploadProgress(0);
       let nextValues = { ...formValues };
       let uploadSummary = "";
+      let persistedGameId = editingId;
 
       if (activeConfig.table === "games") {
         const prepared = await prepareGameValues(nextValues);
         nextValues = prepared.values;
         uploadSummary = prepared.message;
+        persistedGameId = prepared.gameId ?? persistedGameId;
       }
 
       const payload = normalizePayload(activeConfig, nextValues);
-      const query = editingId
-        ? client.from(activeConfig.table).update(payload).eq("id", editingId)
+      const query = persistedGameId
+        ? client.from(activeConfig.table).update(payload).eq("id", persistedGameId)
         : client.from(activeConfig.table).insert(payload);
       const { error } = await query;
 
@@ -467,6 +479,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
       setNotice(error instanceof Error ? error.message : "Unable to save record.");
     } finally {
       setUploadLoading(false);
+      setUploadProgress(0);
     }
   }
 
@@ -517,10 +530,12 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
     }
 
     const messages: string[] = [];
+    let persistedGameId: string | undefined;
 
     if (gameZipFile) {
-      const uploadResult = await uploadWebglZipToStorage(gameZipFile, generatedSlug);
+      const uploadResult = await uploadWebglZipToR2(gameZipFile, generatedSlug, title, editingId, String(values.description ?? ""), setUploadProgress);
       nextValues.iframe_url = uploadResult.iframeUrl;
+      persistedGameId = uploadResult.gameId;
       messages.push(uploadResult.message);
     }
 
@@ -531,7 +546,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
 
     const message = messages.join(" ");
     setFormValues(nextValues);
-    return { values: nextValues, message };
+    return { values: nextValues, message, gameId: persistedGameId };
   }
 
   async function ensureUniqueGameSlug(slug: string) {
@@ -549,11 +564,13 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
     if (!supabase) return;
     const client = supabase;
     const label = formatValue(row[activeConfig.primary]);
-    const deleteNote = activeConfig.table === "games" ? " Uploaded game files and Cloudinary covers will not be deleted." : "";
+    const deleteNote = activeConfig.table === "games" ? " R2 cleanup will be requested for this game." : "";
     const confirmed = window.confirm(`Delete ${activeConfig.label.toLowerCase()} "${label}"?${deleteNote}`);
     if (!confirmed) return;
 
-    const { error } = await client.from(activeConfig.table).delete().eq("id", String(row.id));
+    const { error } = activeConfig.table === "games"
+      ? await runGameAction("delete", String(row.id))
+      : await client.from(activeConfig.table).delete().eq("id", String(row.id));
     if (error) {
       setNotice(error.message);
       return;
@@ -564,6 +581,22 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
     await loadCounts();
   }
 
+  async function runGameAction(action: "publish" | "preview" | "unpublish" | "delete" | "rollback", gameId: string, buildId?: string) {
+    if (!supabase) return { error: new Error("Supabase is not configured.") };
+
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return { error: new Error("Admin session expired. Sign in again.") };
+
+    const response = await fetch("/api/admin/games/actions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action, gameId, buildId })
+    });
+    const payload = await parseUploadResponse(response, "Game action failed.");
+
+    return response.ok ? { error: null } : { error: new Error(String(payload.error ?? "Game action failed.")) };
+  }
   function updateField(key: string, value: string | boolean) {
     setFormValues((current) => {
       const next = { ...current, [key]: value };
@@ -705,6 +738,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                         gameZipFile={gameZipFile}
                         coverImageFile={coverImageFile}
                         coverUrl={String(formValues.cover_url ?? "")}
+                        uploadProgress={uploadProgress}
                         setGameZipFile={setGameZipFile}
                         setCoverImageFile={setCoverImageFile}
                       />
@@ -864,6 +898,103 @@ function renderField(field: FieldConfig, value: string | boolean | undefined, up
   );
 }
 
+async function uploadWebglZipToR2(
+  file: File,
+  slug: string,
+  title: string,
+  gameId: string | null,
+  description: string,
+  onProgress: (progress: number) => void
+) {
+  if (!supabase) throw new Error("Supabase is not configured.");
+
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Admin session expired. Sign in again before uploading a build.");
+
+  const partSize = 8 * 1024 * 1024;
+  const partCount = Math.ceil(file.size / partSize);
+  const initiateResponse = await fetch("/api/admin/games/builds/initiate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ slug, title, gameId, description, fileName: file.name, fileSize: file.size, partCount })
+  });
+  const initiatePayload = await parseUploadResponse(initiateResponse, "Unable to prepare R2 upload.");
+
+  if (!initiateResponse.ok) {
+    throw new Error(typeof initiatePayload.error === "string" ? initiatePayload.error : "Unable to prepare R2 upload.");
+  }
+
+  const uploadState = {
+    buildId: String(initiatePayload.buildId),
+    gameId: String(initiatePayload.gameId),
+    zipKey: String(initiatePayload.zipKey),
+    uploadId: String(initiatePayload.uploadId)
+  };
+  const partUrls = (initiatePayload.partUrls ?? []) as Array<{ partNumber: number; url: string }>;
+  const completed: Array<{ partNumber: number; etag: string }> = [];
+  const uploadedByPart = new Map<number, number>();
+
+  try {
+    for (const part of partUrls) {
+      const start = (part.partNumber - 1) * partSize;
+      const chunk = file.slice(start, Math.min(start + partSize, file.size));
+      const etag = await uploadPartToR2(part.url, chunk, (loaded) => {
+        uploadedByPart.set(part.partNumber, loaded);
+        const uploaded = Array.from(uploadedByPart.values()).reduce((sum, value) => sum + value, 0);
+        onProgress(Math.max(1, Math.min(99, Math.round((uploaded / file.size) * 100))));
+      });
+      uploadedByPart.set(part.partNumber, chunk.size);
+      completed.push({ partNumber: part.partNumber, etag });
+    }
+
+    onProgress(99);
+    const completeResponse = await fetch("/api/admin/games/builds/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ ...uploadState, parts: completed })
+    });
+    const completePayload = await parseUploadResponse(completeResponse, "Unable to complete R2 upload.");
+
+    if (!completeResponse.ok) {
+      throw new Error(typeof completePayload.error === "string" ? completePayload.error : "Unable to complete R2 upload.");
+    }
+
+    onProgress(100);
+    return {
+      gameId: uploadState.gameId,
+      iframeUrl: String(completePayload.indexUrl ?? initiatePayload.indexUrl),
+      message: `Uploaded ${file.name} directly to Cloudflare R2 and extracted build v${initiatePayload.version}.`
+    };
+  } catch (error) {
+    await fetch("/api/admin/games/builds/abort", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ ...uploadState, error: error instanceof Error ? error.message : "Upload failed." })
+    }).catch(() => undefined);
+    throw error;
+  }
+}
+
+function uploadPartToR2(url: string, chunk: Blob, onProgress: (loaded: number) => void) {
+  return new Promise<string>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("PUT", url);
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(event.loaded);
+    };
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        const etag = request.getResponseHeader("ETag") || request.getResponseHeader("etag") || "";
+        resolve(etag.replace(/^\"|\"$/g, ""));
+      } else {
+        reject(new Error(request.responseText || `R2 part upload failed with status ${request.status}.`));
+      }
+    };
+    request.onerror = () => reject(new Error("Network error while uploading a ZIP part to R2."));
+    request.send(chunk);
+  });
+}
 async function uploadWebglZipToStorage(file: File, slug: string) {
   if (!supabase) throw new Error("Supabase is not configured.");
 
@@ -1125,12 +1256,14 @@ function GameUploadFields({
   gameZipFile,
   coverImageFile,
   coverUrl,
+  uploadProgress,
   setGameZipFile,
   setCoverImageFile
 }: {
   gameZipFile: File | null;
   coverImageFile: File | null;
   coverUrl: string;
+  uploadProgress: number;
   setGameZipFile: (file: File | null) => void;
   setCoverImageFile: (file: File | null) => void;
 }) {
@@ -1166,9 +1299,15 @@ function GameUploadFields({
           onChange={(event) => setGameZipFile(event.target.files?.[0] ?? null)}
         />
         <span className="text-xs font-normal text-uniblex-gray">
-          {gameZipFile ? gameZipFile.name : "Extracts in your browser, uploads to Supabase Storage, and sets iframe_url automatically."}
+          {gameZipFile ? gameZipFile.name : "Uploads directly to Cloudflare R2, then a Worker validates and extracts the build."}
         </span>
       </label>
+      {uploadProgress > 0 ? (
+        <div className="md:col-span-2 rounded-lg border border-uniblex-blue/30 bg-uniblex-blue/10 p-3">
+          <div className="mb-2 flex items-center justify-between text-xs font-bold text-uniblex-blue"><span>R2 upload and extraction</span><span>{uploadProgress}%</span></div>
+          <div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-uniblex-blue transition-all" style={{ width: `${uploadProgress}%` }} /></div>
+        </div>
+      ) : null}
       <label className="grid gap-2 text-sm font-bold">
         Cover Image Upload
         <input

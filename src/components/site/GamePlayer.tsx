@@ -8,14 +8,20 @@ type GamePlayerProps = {
   slug: string;
   cover: string;
   iframeUrl?: string;
+  aspectRatio?: string;
+  desktopControls?: string[];
+  mobileControls?: string[];
 };
 
-export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
+export function GamePlayer({ title, slug, cover, iframeUrl, aspectRatio = "16/9", desktopControls, mobileControls }: GamePlayerProps) {
   const [started, setStarted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const aspectClass = getAspectClass(aspectRatio);
+  const desktopControlList = desktopControls?.length ? desktopControls : ["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"];
+  const mobileControlList = mobileControls?.length ? mobileControls : ["Rotate screen", "Use in-game touch controls"];
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -94,7 +100,7 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
               <span className="hidden sm:inline">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
             </button>
           </div>
-          <div className={isFullscreen ? "relative h-screen w-screen overflow-hidden bg-black" : "relative aspect-video w-full overflow-hidden bg-black"}>
+          <div className={isFullscreen ? "relative h-screen w-screen overflow-hidden bg-black" : `relative ${aspectClass} w-full overflow-hidden bg-black`}>
             {!started ? (
               <div className="absolute inset-0 grid place-items-center overflow-hidden">
                 <div className="absolute inset-0 scale-105 bg-cover bg-center blur-[1px]" style={{ backgroundImage: `url('${cover}')` }} />
@@ -158,12 +164,12 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
           Click inside the game once if keyboard controls do not respond.
         </p>
         <p className="inline-flex items-center gap-2 font-bold text-white md:hidden">
-          <Smartphone size={16} className="text-uniblex-blue" /> Rotate screen and use in-game touch controls.
+          <Smartphone size={16} className="text-uniblex-blue" /> {mobileControlList.join(" / ")}
         </p>
       </div>
 
       <div className="hidden grid-cols-3 gap-3 md:grid">
-        {["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"].map((control) => (
+        {desktopControlList.map((control) => (
           <div key={control} className="rounded-lg border border-uniblex-border bg-white/[.025] px-4 py-3 text-center text-sm font-bold text-uniblex-gray">
             {control}
           </div>
@@ -171,6 +177,21 @@ export function GamePlayer({ title, slug, cover, iframeUrl }: GamePlayerProps) {
       </div>
     </section>
   );
+}
+
+function getAspectClass(aspectRatio: string) {
+  switch (aspectRatio) {
+    case "16/10":
+      return "aspect-[16/10]";
+    case "4/3":
+      return "aspect-[4/3]";
+    case "9/16":
+      return "aspect-[9/16] max-h-[80vh] mx-auto";
+    case "1/1":
+      return "aspect-square max-h-[80vh] mx-auto";
+    default:
+      return "aspect-video";
+  }
 }
 
 function rememberRecentGame(slug: string) {

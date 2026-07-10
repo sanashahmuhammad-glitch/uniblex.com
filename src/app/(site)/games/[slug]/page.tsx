@@ -125,7 +125,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
       </section>
 
       <section className="relative left-1/2 mt-5 grid w-screen max-w-[1600px] -translate-x-1/2 gap-4 px-4 md:mt-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:px-8 2xl:grid-cols-[minmax(0,1fr)_300px]">
-        <GamePlayer title={game.title} slug={game.slug} cover={game.cover} iframeUrl={game.iframeUrl} />
+        <GamePlayer title={game.title} slug={game.slug} cover={game.cover} iframeUrl={game.iframeUrl} aspectRatio={game.aspectRatio} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
         <aside className="grid gap-4 xl:sticky xl:top-32 xl:self-start">
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.07] via-uniblex-card/75 to-black/25 p-5 shadow-[0_22px_80px_rgba(0,0,0,.22)]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(0,178,255,.16),transparent_34%)]" />
@@ -197,14 +197,12 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
               <div className="rounded-lg border border-uniblex-border bg-white/[.025] p-4">
                 <div className="mb-2 flex items-center gap-2 text-sm font-bold text-white"><MousePointer2 size={16} /> Desktop</div>
                 <ul className="grid gap-2 text-sm text-uniblex-gray">
-                  <li>WASD / Arrow Keys = Move</li>
-                  <li>Space = Brake / Action</li>
-                  <li>Mouse = Select</li>
+                  {(game.desktopControls ?? game.controls).map((control) => <li key={control}>{control}</li>)}
                 </ul>
               </div>
               <div className="rounded-lg border border-uniblex-border bg-white/[.025] p-4">
                 <div className="mb-2 flex items-center gap-2 text-sm font-bold text-white"><Smartphone size={16} /> Mobile</div>
-                <p className="text-sm leading-6 text-uniblex-gray">Rotate your device and use on-screen controls if available.</p>
+                <p className="text-sm leading-6 text-uniblex-gray">{(game.mobileControls ?? ["Rotate your device and use on-screen controls if available."]).join(" / ")}</p>
               </div>
             </div>
           </div>

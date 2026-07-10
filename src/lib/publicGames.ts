@@ -11,6 +11,11 @@ type GameRow = {
   description: string;
   cover_url: string | null;
   iframe_url: string | null;
+  thumbnail_url?: string | null;
+  screenshot_urls?: string[] | null;
+  desktop_controls?: unknown;
+  mobile_controls?: unknown;
+  aspect_ratio?: string | null;
   tags: string[] | null;
   sort_order: number | null;
   published_at: string | null;
@@ -26,7 +31,7 @@ export async function getPublishedGames() {
 
   const { data, error } = await supabase
     .from("games")
-    .select("title,slug,genre,status,description,cover_url,iframe_url,tags,sort_order,published_at")
+    .select("title,slug,genre,status,description,cover_url,iframe_url,thumbnail_url,screenshot_urls,desktop_controls,mobile_controls,aspect_ratio,tags,sort_order,published_at")
     .eq("status", "published")
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false });
@@ -42,7 +47,7 @@ export async function getPublishedGame(slug: string) {
 
   const { data, error } = await supabase
     .from("games")
-    .select("title,slug,genre,status,description,cover_url,iframe_url,tags,sort_order,published_at")
+    .select("title,slug,genre,status,description,cover_url,iframe_url,thumbnail_url,screenshot_urls,desktop_controls,mobile_controls,aspect_ratio,tags,sort_order,published_at")
     .eq("status", "published")
     .eq("slug", slug)
     .maybeSingle();
@@ -64,6 +69,11 @@ function mapGameRow(row: GameRow): Game {
     description: row.description,
     cover: row.cover_url || "/cards/game-cover-sprite.png",
     iframeUrl: row.slug === MOTO_RIDER_SLUG ? MOTO_RIDER_IFRAME_URL : row.iframe_url || undefined,
+    thumbnailUrl: row.thumbnail_url || row.cover_url || undefined,
+    screenshotUrls: row.screenshot_urls?.length ? row.screenshot_urls : [],
+    aspectRatio: row.aspect_ratio || "16/9",
+    desktopControls: normalizeControlList(row.desktop_controls, ["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"]),
+    mobileControls: normalizeControlList(row.mobile_controls, ["Rotate your device", "Use on-screen controls"]),
     tags,
     playStyle: row.description,
     controls: ["Use the in-game controls after pressing Play."],
@@ -119,6 +129,10 @@ async function withOptionalCounter(game: Game) {
     viewCount: typeof row.view_count === "number" ? row.view_count : null,
     playCount: typeof row.play_count === "number" ? row.play_count : null
   };
+}
+
+function normalizeControlList(value: unknown, fallback: string[]) {
+  return Array.isArray(value) && value.every((item) => typeof item === "string") && value.length ? value : fallback;
 }
 
 function hashCode(value: string) {

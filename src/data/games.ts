@@ -8,6 +8,11 @@ export type Game = {
   description: string;
   cover: string;
   iframeUrl?: string;
+  thumbnailUrl?: string;
+  screenshotUrls?: string[];
+  aspectRatio?: string;
+  desktopControls?: string[];
+  mobileControls?: string[];
   tags: string[];
   playStyle: string;
   controls: string[];
