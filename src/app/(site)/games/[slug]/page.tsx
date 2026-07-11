@@ -129,7 +129,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
 
       <section className="relative left-1/2 mt-5 grid w-screen max-w-[1600px] -translate-x-1/2 gap-4 px-4 md:mt-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:px-8 2xl:grid-cols-[minmax(0,1fr)_300px]">
         {isMotoRider && game.iframeUrl ? (
-          <MotoRiderPlayer title={game.title} slug={game.slug} poster={game.thumbnailUrl || game.screenshotUrls?.[0] || game.cover} iframeUrl={game.iframeUrl} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
+          <MotoRiderPlayer title={game.title} slug={game.slug} iframeUrl={game.iframeUrl} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
         ) : (
           <GamePlayer title={game.title} slug={game.slug} cover={game.cover} iframeUrl={game.iframeUrl} aspectRatio={game.aspectRatio} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
         )}

@@ -9,13 +9,15 @@ import {
 type Props = {
   title: string;
   slug: string;
-  poster: string;
   iframeUrl: string;
   desktopControls?: string[];
   mobileControls?: string[];
 };
 
-export function MotoRiderPlayer({ title, slug, poster, iframeUrl, desktopControls, mobileControls }: Props) {
+const MOTO_RIDER_COVER = "/Images/games/moto-rider-cover.png";
+
+export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobileControls }: Props) {
+  const poster = MOTO_RIDER_COVER;
   const [started, setStarted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -120,7 +122,7 @@ export function MotoRiderPlayer({ title, slug, poster, iframeUrl, desktopControl
                 <div className="absolute inset-0 z-20 grid place-items-center overflow-hidden bg-[#050711] text-center">
                   <div className="absolute inset-0 scale-110 bg-cover bg-center opacity-25 blur-xl" style={{ backgroundImage: `url('${poster}')` }} />
                   <div className="relative w-full max-w-md px-6">
-                    <img src={poster} alt="" className="mx-auto h-20 w-20 rounded-2xl border border-white/15 object-cover shadow-2xl" />
+                    <img src={poster} alt="" className="mx-auto aspect-[3/2] w-32 rounded-2xl border border-white/15 object-cover shadow-2xl sm:w-40" />
                     <h2 className="mt-4 font-heading text-2xl sm:text-3xl">Loading {title}</h2>
                     <p className="mt-2 text-sm text-uniblex-gray">{progress}% prepared · Download size appears in the game loader when available</p>
                     <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
@@ -176,7 +178,7 @@ function Poster({ title, poster, portrait, onPlay, onFullscreen }: { title: stri
       <div className="relative z-10 flex max-w-xl flex-col items-center px-5 text-center">
         <div className="relative">
           <div className="absolute -inset-3 rounded-3xl bg-gradient-to-r from-uniblex-blue/45 to-uniblex-purple/45 blur-xl" />
-          <img src={poster} alt={`${title} thumbnail`} className="relative h-20 w-20 rounded-2xl border border-white/20 object-cover shadow-2xl sm:h-24 sm:w-24" />
+          <img src={poster} alt={`${title} thumbnail`} className="relative aspect-[3/2] w-36 rounded-2xl border border-white/20 object-cover shadow-2xl sm:w-44" />
         </div>
         {portrait ? <RotateCw className="mt-4 text-uniblex-blue" size={28} /> : null}
         <p className="mt-4 text-xs font-black uppercase tracking-[.24em] text-cyan-300">{portrait ? "Rotate to landscape" : "Uniblex WebGL"}</p>
