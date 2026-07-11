@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Clock3, Gamepad2, Monitor, MousePointer2, Smartphone, Star, Trophy, Users } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
 import { GamePlayer } from "@/components/site/GamePlayer";
+import { MotoRiderPlayer } from "@/components/site/MotoRiderPlayer";
 import { GameCard } from "@/components/site/GameCard";
 import { GameEngagement } from "@/components/site/GameEngagement";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GameThumbnail } from "@/components/site/VisualThumb";
 import { games } from "@/data/games";
 import { getPublishedGame, getPublishedGames } from "@/lib/publicGames";
+import { MOTO_RIDER_SLUG } from "@/lib/gameIframeUrls";
 import { absoluteUrl, breadcrumbJsonLd, canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +59,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
   const relatedGames = getRelatedGames(game, publishedGames);
   const siteUrl = siteConfig.url;
   const gameUrl = canonicalUrl(`/games/${game.slug}`);
+  const isMotoRider = game.slug === MOTO_RIDER_SLUG;
 
   return (
     <main className="container-pad py-6 md:py-10">
@@ -125,8 +128,13 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
       </section>
 
       <section className="relative left-1/2 mt-5 grid w-screen max-w-[1600px] -translate-x-1/2 gap-4 px-4 md:mt-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:px-8 2xl:grid-cols-[minmax(0,1fr)_300px]">
-        <GamePlayer title={game.title} slug={game.slug} cover={game.cover} iframeUrl={game.iframeUrl} aspectRatio={game.aspectRatio} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
+        {isMotoRider && game.iframeUrl ? (
+          <MotoRiderPlayer title={game.title} slug={game.slug} poster={game.thumbnailUrl || game.screenshotUrls?.[0] || game.cover} iframeUrl={game.iframeUrl} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
+        ) : (
+          <GamePlayer title={game.title} slug={game.slug} cover={game.cover} iframeUrl={game.iframeUrl} aspectRatio={game.aspectRatio} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
+        )}
         <aside className="grid gap-4 xl:sticky xl:top-32 xl:self-start">
+          {isMotoRider ? <div className="hidden xl:block"><AdZone label="Advertisement" size="rectangle" /></div> : null}
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.07] via-uniblex-card/75 to-black/25 p-5 shadow-[0_22px_80px_rgba(0,0,0,.22)]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(0,178,255,.16),transparent_34%)]" />
             <div className="relative">
@@ -159,8 +167,8 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         </aside>
       </section>
 
-      <div className="my-10">
-        <AdZone label="Below Game Player" size="game-bottom" />
+      <div className="my-6 md:my-10">
+        <AdZone label={isMotoRider ? "Advertisement" : "Below Game Player"} size="game-bottom" />
       </div>
 
       <GameEngagement game={game} games={publishedGames} />

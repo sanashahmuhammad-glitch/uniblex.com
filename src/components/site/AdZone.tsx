@@ -12,11 +12,12 @@ export function AdZone({ label, size }: Props) {
     "in-content": "min-h-[120px] w-full",
     "game-bottom": "min-h-[120px] w-full"
   };
+  const displayLabel = label === "Advertisement" ? label : `${label} Ad Zone`;
 
   return (
     <div className={`mx-auto flex ${classes[size]} items-center justify-center gap-3 rounded-lg border border-dashed border-uniblex-border bg-uniblex-card/35 p-4 text-center text-xs uppercase tracking-[.22em] text-uniblex-gray backdrop-blur`}>
       <CreditCard size={20} className="opacity-70" />
-      {label} Ad Zone
+      {displayLabel}
     </div>
   );
 }
