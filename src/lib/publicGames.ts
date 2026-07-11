@@ -1,6 +1,6 @@
 ﻿import { supabase } from "@/lib/supabase";
 import { games as fallbackGames, type Game } from "@/data/games";
-import { MOTO_RIDER_COVER_URL, MOTO_RIDER_IFRAME_URL, MOTO_RIDER_SLUG } from "@/lib/gameIframeUrls";
+import { MOTO_RIDER_IFRAME_URL, MOTO_RIDER_SLUG, MOTO_RIDER_THUMBNAIL_URL } from "@/lib/gameIframeUrls";
 
 type GameRow = {
   id?: string;
@@ -68,9 +68,9 @@ function mapGameRow(row: GameRow): Game {
     genre,
     status: "Published",
     description: row.description,
-    cover: isMotoRider ? MOTO_RIDER_COVER_URL : row.cover_url || "/cards/game-cover-sprite.png",
+    cover: isMotoRider ? MOTO_RIDER_THUMBNAIL_URL : row.cover_url || "/cards/game-cover-sprite.png",
     iframeUrl: isMotoRider ? MOTO_RIDER_IFRAME_URL : row.iframe_url || undefined,
-    thumbnailUrl: isMotoRider ? MOTO_RIDER_COVER_URL : row.thumbnail_url || row.cover_url || undefined,
+    thumbnailUrl: isMotoRider ? MOTO_RIDER_THUMBNAIL_URL : row.thumbnail_url || row.cover_url || undefined,
     screenshotUrls: row.screenshot_urls?.length ? row.screenshot_urls : [],
     aspectRatio: row.aspect_ratio || "16/9",
     desktopControls: normalizeControlList(row.desktop_controls, ["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"]),

@@ -1,4 +1,4 @@
-﻿import { MOTO_RIDER_COVER_URL, MOTO_RIDER_IFRAME_URL } from "@/lib/gameIframeUrls";
+﻿import { MOTO_RIDER_IFRAME_URL, MOTO_RIDER_THUMBNAIL_URL } from "@/lib/gameIframeUrls";
 
 export type Game = {
   title: string;
@@ -73,8 +73,8 @@ export const games: Game[] = [
     genre: "Racing",
     status: "Published",
     description: "Ride powerful motorcycles, complete exciting racing challenges, unlock new bikes, and become the ultimate bike racing champion in this realistic 3D WebGL racing game.",
-    cover: MOTO_RIDER_COVER_URL,
-    thumbnailUrl: MOTO_RIDER_COVER_URL,
+    cover: MOTO_RIDER_THUMBNAIL_URL,
+    thumbnailUrl: MOTO_RIDER_THUMBNAIL_URL,
     iframeUrl: MOTO_RIDER_IFRAME_URL,
     tags: ["WebGL", "Racing", "Bike", "Motorcycle", "3D", "Driving", "Arcade"],
     playStyle: "Fast 3D motorcycle racing with road challenges, bike handling, rewards, and quick replayable sessions.",

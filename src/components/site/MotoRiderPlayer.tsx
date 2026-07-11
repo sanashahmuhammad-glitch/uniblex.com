@@ -5,7 +5,7 @@ import {
   AlertTriangle, Expand, Gamepad2, Heart, Maximize2, Minimize2, Play, RotateCw,
   Share2, ThumbsDown, ThumbsUp, Volume2, VolumeX
 } from "lucide-react";
-import { MOTO_RIDER_COVER_URL } from "@/lib/gameIframeUrls";
+import { MOTO_RIDER_COVER_URL, MOTO_RIDER_THUMBNAIL_URL } from "@/lib/gameIframeUrls";
 
 type Props = {
   title: string;
@@ -104,7 +104,7 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
       <div ref={containerRef} className={`relative w-full overflow-hidden rounded-xl border border-white/10 bg-black shadow-[0_30px_100px_rgba(0,0,0,.5)] focus-within:border-uniblex-blue/60 ${isFullscreen ? "h-screen w-screen" : "aspect-video"}`}>
         <div className="absolute inset-0 h-full w-full bg-black">
           {!started ? (
-            <Poster title={title} poster={poster} portrait={isPortrait} onPlay={startGame} onFullscreen={() => void toggleFullscreen(true)} />
+            <Poster title={title} poster={poster} thumbnail={MOTO_RIDER_THUMBNAIL_URL} portrait={isPortrait} onPlay={startGame} onFullscreen={() => void toggleFullscreen(true)} />
           ) : (
             <iframe
                 ref={iframeRef}
@@ -144,7 +144,7 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
   );
 }
 
-function Poster({ title, poster, portrait, onPlay, onFullscreen }: { title: string; poster: string; portrait: boolean; onPlay: () => void; onFullscreen: () => void }) {
+function Poster({ title, poster, thumbnail, portrait, onPlay, onFullscreen }: { title: string; poster: string; thumbnail: string; portrait: boolean; onPlay: () => void; onFullscreen: () => void }) {
   return (
     <div className="absolute inset-0 grid place-items-center overflow-hidden">
       <div className="absolute inset-0 scale-110 bg-cover bg-center opacity-55 blur-md" style={{ backgroundImage: `url('${poster}')` }} />
@@ -152,7 +152,7 @@ function Poster({ title, poster, portrait, onPlay, onFullscreen }: { title: stri
       <div className="relative z-10 flex max-w-xl flex-col items-center px-5 text-center">
         <div className="relative">
           <div className="absolute -inset-3 rounded-3xl bg-gradient-to-r from-uniblex-blue/45 to-uniblex-purple/45 blur-xl" />
-          <img src={poster} alt={`${title} thumbnail`} className="relative aspect-[3/2] w-36 rounded-2xl border border-white/20 object-cover shadow-2xl sm:w-44" />
+          <img src={thumbnail} alt={`${title} thumbnail`} className="relative aspect-video w-36 rounded-2xl border border-white/20 object-cover shadow-2xl sm:w-44" />
         </div>
         {portrait ? <RotateCw className="mt-4 text-uniblex-blue" size={28} /> : null}
         <p className="mt-4 text-xs font-black uppercase tracking-[.24em] text-cyan-300">{portrait ? "Rotate to landscape" : "Uniblex WebGL"}</p>
