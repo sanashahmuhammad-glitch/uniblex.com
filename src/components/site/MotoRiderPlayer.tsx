@@ -18,8 +18,6 @@ type Props = {
 export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobileControls }: Props) {
   const poster = MOTO_RIDER_COVER_URL;
   const [started, setStarted] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
@@ -54,13 +52,6 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
   }, []);
 
   useEffect(() => {
-    if (!started || loaded) return;
-    setProgress(8);
-    const timer = window.setInterval(() => setProgress((value) => Math.min(92, value + Math.max(1, Math.round((92 - value) / 9)))), 450);
-    return () => window.clearInterval(timer);
-  }, [started, loaded]);
-
-  useEffect(() => {
     if (!started) return;
     const timer = window.setTimeout(() => iframeRef.current?.focus(), 180);
     return () => window.clearTimeout(timer);
@@ -76,7 +67,6 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
 
   function startGame() {
     setStarted(true);
-    setLoaded(false);
     rememberRecentGame(slug);
     void incrementCounter(slug);
   }
@@ -116,21 +106,7 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
           {!started ? (
             <Poster title={title} poster={poster} portrait={isPortrait} onPlay={startGame} onFullscreen={() => void toggleFullscreen(true)} />
           ) : (
-            <>
-              {!loaded && (
-                <div className="absolute inset-0 z-20 grid place-items-center overflow-hidden bg-[#050711] text-center">
-                  <div className="absolute inset-0 scale-110 bg-cover bg-center opacity-25 blur-xl" style={{ backgroundImage: `url('${poster}')` }} />
-                  <div className="relative w-full max-w-md px-6">
-                    <img src={poster} alt="" className="mx-auto aspect-[3/2] w-32 rounded-2xl border border-white/15 object-cover shadow-2xl sm:w-40" />
-                    <h2 className="mt-4 font-heading text-2xl sm:text-3xl">Loading {title}</h2>
-                    <p className="mt-2 text-sm text-uniblex-gray">{progress}% prepared · Download size appears in the game loader when available</p>
-                    <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
-                      <div className="h-full rounded-full bg-gradient-to-r from-uniblex-blue via-cyan-300 to-uniblex-purple transition-[width] duration-500" style={{ width: `${progress}%` }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <iframe
+            <iframe
                 ref={iframeRef}
                 title={title}
                 src={iframeUrl}
@@ -140,9 +116,8 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
                 scrolling="no"
                 tabIndex={0}
                 onPointerDown={() => iframeRef.current?.focus()}
-                onLoad={() => { setProgress(100); setLoaded(true); window.setTimeout(() => iframeRef.current?.focus(), 100); }}
+                onLoad={() => window.setTimeout(() => iframeRef.current?.focus(), 100)}
               />
-            </>
           )}
         </div>
       </div>
@@ -184,8 +159,8 @@ function Poster({ title, poster, portrait, onPlay, onFullscreen }: { title: stri
         <h2 className="mt-2 font-heading text-2xl leading-tight sm:text-4xl">{title}</h2>
         <p className="mt-2 max-w-md text-xs leading-5 text-uniblex-gray sm:text-sm">{portrait ? "For the best controls and a full 16:9 view, rotate your phone before starting." : "Ready when you are. The game downloads only after you press play."}</p>
         <div className="mt-4 flex flex-wrap justify-center gap-2 sm:mt-6">
-          <button type="button" onClick={onPlay} className="btn-primary min-h-0 px-5 py-3 text-sm sm:text-base"><Play size={19} fill="currentColor" /> {portrait ? "Play in landscape" : "Play game"}</button>
-          <button type="button" onClick={onFullscreen} className="btn-secondary min-h-0 px-4 py-3 text-sm" aria-label="Enter fullscreen and play" title="Enter fullscreen and play"><Maximize2 size={18} /> Enter fullscreen</button>
+          <button type="button" onClick={onPlay} className="btn-primary min-h-0 px-5 py-3 text-sm sm:text-base"><Play size={19} fill="currentColor" /> Play Game</button>
+          <button type="button" onClick={onFullscreen} className="btn-secondary min-h-0 px-4 py-3 text-sm" aria-label="Enter Fullscreen" title="Enter Fullscreen"><Maximize2 size={18} /> Enter Fullscreen</button>
         </div>
       </div>
     </div>
