@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -147,7 +147,7 @@ export function GamesExplorer({ games }: { games: Game[] }) {
             <p className="text-sm text-uniblex-gray">{filteredGames.length} game{filteredGames.length === 1 ? "" : "s"}</p>
           </div>
           {filteredGames.length ? (
-            <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {filteredGames.map((game) => <GameCard key={game.slug} game={game} />)}
             </div>
           ) : (
@@ -211,7 +211,7 @@ function GameShelf({ title, games }: { title: string; games: Game[] }) {
         <h2 className="font-heading text-2xl md:text-3xl">{title}</h2>
         <p className="text-sm text-uniblex-gray">{games.length} game{games.length === 1 ? "" : "s"}</p>
       </div>
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {games.map((game) => <GameCard key={`${title}-${game.slug}`} game={game} />)}
       </div>
     </section>

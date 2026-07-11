@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle, Expand, Gamepad2, Heart, Maximize2, Minimize2, Play, RotateCw,
   Share2, ThumbsDown, ThumbsUp, Volume2, VolumeX
 } from "lucide-react";
+import { MOTO_RIDER_COVER_URL } from "@/lib/gameIframeUrls";
 
 type Props = {
   title: string;
@@ -14,10 +15,8 @@ type Props = {
   mobileControls?: string[];
 };
 
-const MOTO_RIDER_COVER = "/Images/games/moto-rider-cover.png";
-
 export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobileControls }: Props) {
-  const poster = MOTO_RIDER_COVER;
+  const poster = MOTO_RIDER_COVER_URL;
   const [started, setStarted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -111,9 +110,9 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
     : desktopControls?.length ? desktopControls : ["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"];
 
   return (
-    <section className="grid min-w-0 gap-3">
-      <div ref={containerRef} className="relative overflow-hidden rounded-xl border border-white/10 bg-black shadow-[0_30px_100px_rgba(0,0,0,.5)] focus-within:border-uniblex-blue/60">
-        <div className={isFullscreen ? "relative h-screen w-screen bg-black" : "relative aspect-video w-full bg-black"}>
+    <section className="grid min-w-0 self-start gap-3">
+      <div ref={containerRef} className={`relative w-full overflow-hidden rounded-xl border border-white/10 bg-black shadow-[0_30px_100px_rgba(0,0,0,.5)] focus-within:border-uniblex-blue/60 ${isFullscreen ? "h-screen w-screen" : "aspect-video"}`}>
+        <div className="absolute inset-0 h-full w-full bg-black">
           {!started ? (
             <Poster title={title} poster={poster} portrait={isPortrait} onPlay={startGame} onFullscreen={() => void toggleFullscreen(true)} />
           ) : (

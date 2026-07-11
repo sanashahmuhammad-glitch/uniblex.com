@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#070b12">
+  <title>Moto Rider 3D Bike Race Game | Uniblex</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="game-shell" aria-label="Moto Rider 3D Bike Race Game">
+    <section id="game-stage">
+      <canvas id="unity-canvas" tabindex="0" aria-label="Game canvas"></canvas>
+
+      <div id="unity-loading" role="status" aria-live="polite">
+        <div class="loader-card">
+          <div class="brand-mark">U</div>
+          <div class="loader-copy">
+            <p class="eyebrow">UNIBLEX GAME LAUNCHER</p>
+            <h1>Moto Rider 3D Bike Race Game</h1>
+            <p id="loading-status">Preparing game filesâ€¦</p>
+          </div>
+
+          <div class="progress-track" aria-hidden="true">
+            <div id="unity-progress-bar"></div>
+          </div>
+
+          <div class="progress-meta">
+            <strong id="progress-percent">0%</strong>
+            <span id="progress-size">Calculating download sizeâ€¦</span>
+          </div>
+
+          <p class="loader-tip">First launch may take longer. Future loads will be faster.</p>
+        </div>
+      </div>
+
+      <div id="rotate-device">
+        <div class="rotate-icon">â†»</div>
+        <strong>Rotate your device</strong>
+        <span>This game is designed for landscape play.</span>
+      </div>
+
+      <button id="fullscreen-button" type="button" aria-label="Enter fullscreen">
+        <span>â›¶</span>
+        <span class="fullscreen-label">Fullscreen</span>
+      </button>
+
+      <div id="unity-warning"></div>
+    </section>
+  </main>
+
+  <script src="Build/bike-racing-game-final controls 1.1.loader.js"></script>
+  <script>
+    const BUILD_BASE = "Build/";
+    const BUILD_FILES = [
+      "bike-racing-game-final controls 1.1.data",
+      "bike-racing-game-final controls 1.1.framework.js",
+      "bike-racing-game-final controls 1.1.wasm"
+    ];
+
+    const shell = document.querySelector("#game-shell");
+    const stage = document.querySelector("#game-stage");
+    const canvas = document.querySelector("#unity-canvas");
+    const loading = document.querySelector("#unity-loading");
+    const progressBar = document.querySelector("#unity-progress-bar");
+    const progressPercent = document.querySelector("#progress-percent");
+    const progressSize = document.querySelector("#progress-size");
+    const loadingStatus = document.querySelector("#loading-status");
+    const warning = document.querySelector("#unity-warning");
+    const fullscreenButton = document.querySelector("#fullscreen-button");
+    const rotateDevice = document.querySelector("#rotate-device");
+
+    // Exact combined size of .data + .framework.js + .wasm for this build.
+    // R2/Worker HEAD responses do not always expose Content-Length reliably,
+    // so keep a fixed production fallback for the loader counter.
+    const FALLBACK_TOTAL_BYTES = 114311168;
+    let totalBytes = FALLBACK_TOTAL_BYTES;
+    let unityInstance = null;
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes) || bytes <= 0) return "â€”";
+      const mb = bytes / (1024 * 1024);
+      return `${mb.toFixed(mb >= 100 ? 0 : 1)} MB`;
+    }
+
+    async function calculateBuildSize() {
+      try {
+        const sizes = await Promise.all(
+          BUILD_FILES.map(async (file) => {
+            const response = await fetch(BUILD_BASE + file, {
+              method: "HEAD",
+              cache: "no-store"
+            });
+            return Number(response.headers.get("content-length")) || 0;
+          })
+        );
+
+        const detectedTotal = sizes.reduce((sum, value) => sum + value, 0);
+
+        // Use detected size only when all important files reported valid lengths.
+        if (detectedTotal > 10 * 1024 * 1024) {
+          totalBytes = detectedTotal;
+        }
+      } catch {
+        totalBytes = FALLBACK_TOTAL_BYTES;
+      }
+
+      progressSize.textContent = `0 MB / ${formatBytes(totalBytes)}`;
+    }
+
+    function updateProgress(progress) {
+      const safeProgress = Math.max(0, Math.min(1, progress || 0));
+      const percent = Math.round(safeProgress * 100);
+      const loadedBytes = totalBytes * safeProgress;
+
+      progressBar.style.width = `${percent}%`;
+      progressPercent.textContent = `${percent}%`;
+      progressSize.textContent = totalBytes
+        ? `${formatBytes(loadedBytes)} / ${formatBytes(totalBytes)}`
+        : "Loading game filesâ€¦";
+
+      if (percent < 10) loadingStatus.textContent = "Connecting to game serverâ€¦";
+      else if (percent < 70) loadingStatus.textContent = "Downloading game dataâ€¦";
+      else if (percent < 95) loadingStatus.textContent = "Starting game engineâ€¦";
+      else loadingStatus.textContent = "Almost readyâ€¦";
+    }
+
+    function unityShowBanner(message, type) {
+      warning.textContent = message;
+      warning.className = type || "";
+      warning.style.display = message ? "block" : "none";
+
+      if (message && type !== "error") {
+        setTimeout(() => {
+          warning.style.display = "none";
+        }, 5000);
+      }
+    }
+
+    function fitStage() {
+      const availableWidth = Math.max(1, shell.clientWidth || window.innerWidth);
+      const availableHeight = Math.max(1, shell.clientHeight || window.innerHeight);
+      const targetRatio = 16 / 9;
+
+      let width = availableWidth;
+      let height = width / targetRatio;
+
+      if (height > availableHeight) {
+        height = availableHeight;
+        width = height * targetRatio;
+      }
+
+      stage.style.width = `${Math.floor(width)}px`;
+      stage.style.height = `${Math.floor(height)}px`;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.width = Math.max(1, Math.floor(width * dpr));
+      canvas.height = Math.max(1, Math.floor(height * dpr));
+
+      const shouldRotate =
+        window.matchMedia("(orientation: portrait)").matches &&
+        Math.min(window.innerWidth, window.innerHeight) < 900;
+
+      rotateDevice.classList.toggle("show", shouldRotate);
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (!document.fullscreenElement) {
+          await stage.requestFullscreen();
+          if (screen.orientation?.lock) {
+            await screen.orientation.lock("landscape").catch(() => {});
+          }
+        } else {
+          await document.exitFullscreen();
+        }
+      } catch (error) {
+        unityShowBanner("Fullscreen is not available in this browser.", "warning");
+      }
+    }
+
+    canvas.addEventListener("pointerdown", () => canvas.focus());
+    fullscreenButton.addEventListener("click", toggleFullscreen);
+    document.addEventListener("fullscreenchange", fitStage);
+    window.addEventListener("resize", fitStage);
+    window.addEventListener("orientationchange", () => setTimeout(fitStage, 250));
+
+    fitStage();
+    calculateBuildSize();
+
+    createUnityInstance(canvas, {
+      dataUrl: BUILD_BASE + "bike-racing-game-final controls 1.1.data",
+      frameworkUrl: BUILD_BASE + "bike-racing-game-final controls 1.1.framework.js",
+      codeUrl: BUILD_BASE + "bike-racing-game-final controls 1.1.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "Uniblex",
+      productName: "Moto Rider 3D Bike Race Game",
+      productVersion: "1.1",
+      showBanner: unityShowBanner,
+      matchWebGLToCanvasSize: false,
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2)
+    }, updateProgress)
+      .then((instance) => {
+        unityInstance = instance;
+        window.unityInstance = instance;
+        loading.classList.add("is-hidden");
+        setTimeout(() => loading.remove(), 500);
+        fitStage();
+        canvas.focus();
+      })
+      .catch((message) => {
+        loadingStatus.textContent = "Unable to start the game";
+        unityShowBanner(String(message), "error");
+        console.error(message);
+      });
+  </script>
+</body>
+</html>

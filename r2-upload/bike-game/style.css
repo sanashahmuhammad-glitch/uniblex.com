@@ -1,0 +1,337 @@
+﻿:root {
+  color-scheme: dark;
+  --bg: #05070c;
+  --panel: rgba(10, 16, 28, 0.94);
+  --line: rgba(255, 255, 255, 0.12);
+  --text: #f7fbff;
+  --muted: #91a0b5;
+  --blue: #00b2ff;
+  --purple: #7a3cff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0, 178, 255, 0.14), transparent 34%),
+    radial-gradient(circle at 80% 80%, rgba(122, 60, 255, 0.16), transparent 38%),
+    var(--bg);
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#game-shell {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+#game-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
+}
+
+#unity-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  outline: none;
+}
+
+#unity-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: clamp(18px, 4vw, 48px);
+  background:
+    linear-gradient(135deg, rgba(0, 178, 255, 0.1), transparent 42%),
+    linear-gradient(315deg, rgba(122, 60, 255, 0.13), transparent 44%),
+    #070b12;
+  opacity: 1;
+  transition: opacity 380ms ease;
+}
+
+#unity-loading.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader-card {
+  width: min(620px, 92%);
+  padding: clamp(22px, 4vw, 38px);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--panel);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(18px);
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  box-shadow: 0 10px 34px rgba(0, 178, 255, 0.24);
+}
+
+.loader-copy {
+  margin-bottom: 26px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.loader-copy h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(24px, 4vw, 40px);
+  line-height: 1.05;
+}
+
+#loading-status {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#unity-progress-bar {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue), var(--purple));
+  box-shadow: 0 0 22px rgba(0, 178, 255, 0.48);
+  transition: width 140ms linear;
+}
+
+.progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+#progress-percent {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.loader-tip {
+  margin: 24px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: #718096;
+  font-size: 12px;
+}
+
+#fullscreen-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  color: #fff;
+  font: 700 12px/1 system-ui, sans-serif;
+  background: rgba(5, 8, 14, 0.72);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+}
+
+#fullscreen-button:hover {
+  background: rgba(20, 29, 48, 0.92);
+}
+
+#rotate-device {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: none;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 28px;
+  text-align: center;
+  color: #fff;
+  background:
+    radial-gradient(circle at center, rgba(0, 178, 255, 0.18), transparent 46%),
+    rgba(4, 7, 13, 0.96);
+}
+
+#rotate-device.show {
+  display: grid;
+}
+
+.rotate-icon {
+  margin-bottom: 8px;
+  font-size: 54px;
+  color: var(--blue);
+}
+
+#rotate-device strong {
+  font-size: 22px;
+}
+
+#rotate-device span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+#unity-warning {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  z-index: 40;
+  display: none;
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: #151515;
+  font: 600 13px/1.4 system-ui, sans-serif;
+  background: #ffd86b;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+#unity-warning.error {
+  color: #fff;
+  background: #b00020;
+}
+
+@media (max-width: 760px) {
+  .fullscreen-label {
+    display: none;
+  }
+
+  #fullscreen-button {
+    min-width: 42px;
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  .loader-card {
+    border-radius: 16px;
+  }
+
+  .progress-meta {
+    font-size: 12px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .loader-card {
+    width: min(680px, 88%);
+    padding: 18px 22px;
+  }
+
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    font-size: 24px;
+  }
+
+  .loader-copy {
+    margin-bottom: 16px;
+  }
+
+  .loader-copy h1 {
+    font-size: 24px;
+  }
+
+  .loader-tip {
+    display: none;
+  }
+}
+/* Moto Rider cover treatment for the custom Uniblex loader. */
+#unity-loading {
+  isolation: isolate;
+  overflow: hidden;
+  background: #030711;
+}
+
+#unity-loading::before {
+  content: "";
+  position: absolute;
+  inset: -24px;
+  z-index: -2;
+  background-image: url("moto-rider-cover.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(10px);
+  opacity: 0.66;
+  transform: scale(1.04);
+}
+
+#unity-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 25% 18%, rgba(0, 178, 255, 0.18), transparent 38%),
+    linear-gradient(135deg, rgba(2, 7, 17, 0.78), rgba(3, 5, 12, 0.9));
+}
+
+#unity-loading .loader-card {
+  position: relative;
+  z-index: 1;
+}

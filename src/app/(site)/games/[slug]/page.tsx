@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Clock3, Gamepad2, Monitor, MousePointer2, Smartphone, Star, Trophy, Users } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
@@ -127,7 +127,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         </div>
       </section>
 
-      <section className="relative left-1/2 mt-5 grid w-screen max-w-[1600px] -translate-x-1/2 gap-4 px-4 md:mt-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:px-8 2xl:grid-cols-[minmax(0,1fr)_300px]">
+      <section className="relative left-1/2 mt-5 grid w-screen max-w-[1600px] -translate-x-1/2 items-start gap-4 px-4 md:mt-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:px-8 2xl:grid-cols-[minmax(0,1fr)_300px]">
         {isMotoRider && game.iframeUrl ? (
           <MotoRiderPlayer title={game.title} slug={game.slug} iframeUrl={game.iframeUrl} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
         ) : (
