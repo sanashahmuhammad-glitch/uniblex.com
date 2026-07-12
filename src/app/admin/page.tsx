@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
+import { areR2GameUploadsEnabled } from "@/lib/r2GameUploads";
 
 export const metadata: Metadata = {
   title: "Admin | Uniblex",
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <AdminAccessGate />;
+  return <AdminAccessGate r2GameUploadsEnabled={areR2GameUploadsEnabled()} />;
 }

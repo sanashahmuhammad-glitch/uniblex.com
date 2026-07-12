@@ -3,6 +3,7 @@ import { verifyAdminRequest } from "@/lib/serverAdminAuth";
 import { createUserSupabaseClient } from "@/lib/serverSupabase";
 import { buildPublicIndexUrl, createBuildKeys, getR2Config, initiateMultipartUpload, presignR2Url } from "@/lib/r2Multipart";
 import { slugify } from "@/lib/slug";
+import { areR2GameUploadsEnabled, r2GameUploadsUnavailableMessage } from "@/lib/r2GameUploads";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,10 @@ const minPartSize = 8 * 1024 * 1024;
 const maxZipSize = 2 * 1024 * 1024 * 1024;
 
 export async function POST(request: Request) {
+  if (!areR2GameUploadsEnabled()) {
+    return NextResponse.json({ error: r2GameUploadsUnavailableMessage }, { status: 503 });
+  }
+
   const auth = await verifyAdminRequest(request);
   if (!auth.authorized || !auth.user) {
     return NextResponse.json({ error: auth.error }, { status: 401 });

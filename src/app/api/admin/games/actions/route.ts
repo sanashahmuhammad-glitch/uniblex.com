@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyAdminRequest } from "@/lib/serverAdminAuth";
 import { createUserSupabaseClient } from "@/lib/serverSupabase";
+import { areR2GameUploadsEnabled, r2GameUploadsUnavailableMessage } from "@/lib/r2GameUploads";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,6 +9,13 @@ export const dynamic = "force-dynamic";
 type Action = "publish" | "preview" | "unpublish" | "delete" | "rollback";
 
 export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const action = String(body.action ?? "") as Action;
+
+  if (["publish", "rollback", "delete"].includes(action) && !areR2GameUploadsEnabled()) {
+    return NextResponse.json({ error: r2GameUploadsUnavailableMessage }, { status: 503 });
+  }
+
   const auth = await verifyAdminRequest(request);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.error }, { status: 401 });
@@ -15,8 +23,6 @@ export async function POST(request: Request) {
 
   try {
     const authorization = request.headers.get("authorization") || "";
-    const body = await request.json();
-    const action = String(body.action ?? "") as Action;
     const gameId = String(body.gameId ?? "");
     const buildId = String(body.buildId ?? "");
 

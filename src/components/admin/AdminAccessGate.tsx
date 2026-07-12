@@ -10,7 +10,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 
 type GateState = "checking" | "authorized" | "denied";
 
-export function AdminAccessGate() {
+export function AdminAccessGate({ r2GameUploadsEnabled }: { r2GameUploadsEnabled: boolean }) {
   const router = useRouter();
   const [state, setState] = useState<GateState>("checking");
   const [user, setUser] = useState<User | null>(null);
@@ -120,5 +120,5 @@ export function AdminAccessGate() {
     );
   }
 
-  return <AdminShell initialAdminProfile={adminProfile} />;
+  return <AdminShell initialAdminProfile={adminProfile} r2GameUploadsEnabled={r2GameUploadsEnabled} />;
 }

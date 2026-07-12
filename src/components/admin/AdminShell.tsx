@@ -262,9 +262,10 @@ function normalizePayload(config: ResourceConfig, values: FormValues) {
 
 type AdminShellProps = {
   initialAdminProfile?: AdminProfile | null;
+  r2GameUploadsEnabled?: boolean;
 };
 
-export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
+export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = false }: AdminShellProps) {
   const [user, setUser] = useState<User | null>(null);
   const [adminProfile, setAdminProfile] = useState<RowData | null>(initialAdminProfile);
   const [authReady, setAuthReady] = useState(false);
@@ -525,6 +526,10 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
       return { values: nextValues, message: iframeUrl ? "External iframe URL saved." : "" };
     }
 
+    if (gameZipFile && !r2GameUploadsEnabled) {
+      throw new Error("WebGL upload automation is temporarily unavailable while security validation is completed.");
+    }
+
     if (gameZipFile && !gameZipFile.name.toLowerCase().endsWith(".zip")) {
       throw new Error("Game upload must be a .zip file.");
     }
@@ -735,6 +740,7 @@ export function AdminShell({ initialAdminProfile = null }: AdminShellProps) {
                   <div className="grid gap-4 md:grid-cols-2">
                     {activeConfig.table === "games" ? (
                       <GameUploadFields
+                        r2GameUploadsEnabled={r2GameUploadsEnabled}
                         gameZipFile={gameZipFile}
                         coverImageFile={coverImageFile}
                         coverUrl={String(formValues.cover_url ?? "")}
@@ -1253,6 +1259,7 @@ function getContentType(name: string) {
 }
 
 function GameUploadFields({
+  r2GameUploadsEnabled,
   gameZipFile,
   coverImageFile,
   coverUrl,
@@ -1260,6 +1267,7 @@ function GameUploadFields({
   setGameZipFile,
   setCoverImageFile
 }: {
+  r2GameUploadsEnabled: boolean;
   gameZipFile: File | null;
   coverImageFile: File | null;
   coverUrl: string;
@@ -1290,18 +1298,24 @@ function GameUploadFields({
         Mode A: External Hosted Game URL
         <p className="mt-1 text-xs font-normal text-uniblex-gray">Paste the full R2 index.html URL in the Iframe URL field below.</p>
       </div>
-      <label className="grid gap-2 text-sm font-bold">
-        Mode B: Upload WebGL ZIP
-        <input
-          className="rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-sm text-white file:mr-4 file:rounded-md file:border-0 file:bg-uniblex-blue file:px-3 file:py-2 file:font-bold file:text-white"
-          accept=".zip,application/zip,application/x-zip-compressed"
-          type="file"
-          onChange={(event) => setGameZipFile(event.target.files?.[0] ?? null)}
-        />
-        <span className="text-xs font-normal text-uniblex-gray">
-          {gameZipFile ? gameZipFile.name : "Uploads directly to Cloudflare R2, then a Worker validates and extracts the build."}
-        </span>
-      </label>
+      {r2GameUploadsEnabled ? (
+        <label className="grid gap-2 text-sm font-bold">
+          Mode B: Upload WebGL ZIP
+          <input
+            className="rounded-lg border border-uniblex-border bg-white/[.03] px-4 py-3 text-sm text-white file:mr-4 file:rounded-md file:border-0 file:bg-uniblex-blue file:px-3 file:py-2 file:font-bold file:text-white"
+            accept=".zip,application/zip,application/x-zip-compressed"
+            type="file"
+            onChange={(event) => setGameZipFile(event.target.files?.[0] ?? null)}
+          />
+          <span className="text-xs font-normal text-uniblex-gray">
+            {gameZipFile ? gameZipFile.name : "Uploads directly to Cloudflare R2, then a Worker validates and extracts the build."}
+          </span>
+        </label>
+      ) : (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+          WebGL upload automation is temporarily unavailable while security validation is completed.
+        </div>
+      )}
       {uploadProgress > 0 ? (
         <div className="md:col-span-2 rounded-lg border border-uniblex-blue/30 bg-uniblex-blue/10 p-3">
           <div className="mb-2 flex items-center justify-between text-xs font-bold text-uniblex-blue"><span>R2 upload and extraction</span><span>{uploadProgress}%</span></div>

@@ -2,11 +2,16 @@ import { NextResponse } from "next/server";
 import { verifyAdminRequest } from "@/lib/serverAdminAuth";
 import { createUserSupabaseClient } from "@/lib/serverSupabase";
 import { completeMultipartUpload, getR2Config, type CompletedPart } from "@/lib/r2Multipart";
+import { areR2GameUploadsEnabled, r2GameUploadsUnavailableMessage } from "@/lib/r2GameUploads";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  if (!areR2GameUploadsEnabled()) {
+    return NextResponse.json({ error: r2GameUploadsUnavailableMessage }, { status: 503 });
+  }
+
   const auth = await verifyAdminRequest(request);
   if (!auth.authorized) {
     return NextResponse.json({ error: auth.error }, { status: 401 });
