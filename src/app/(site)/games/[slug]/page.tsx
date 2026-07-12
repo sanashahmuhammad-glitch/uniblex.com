@@ -1,6 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock3, Gamepad2, Monitor, MousePointer2, Smartphone, Star, Trophy, Users } from "lucide-react";
+import { CheckCircle2, Clock3, Gamepad2, Monitor, MousePointer2, Smartphone, Trophy, Users } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
 import { GamePlayer } from "@/components/site/GamePlayer";
 import { MotoRiderPlayer } from "@/components/site/MotoRiderPlayer";
@@ -76,12 +76,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         applicationCategory: "GameApplication",
         operatingSystem: "Web browser",
         browserRequirements: "Requires a modern WebGL-enabled browser",
-        playMode: game.players,
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: game.rating,
-          ratingCount: Math.max(12, Number(game.playCount ?? 0) || 12)
-        }
+        playMode: game.players
       }} />
       <JsonLd data={breadcrumbJsonLd([
         { name: "Home", url: siteUrl },
@@ -100,10 +95,10 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
           <p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-uniblex-gray md:text-base md:leading-7">{game.description}</p>
           <div className="mt-5 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4">
             {[
-              { icon: Star, label: "Rating", value: game.rating },
               { icon: Trophy, label: "Difficulty", value: game.difficulty },
               { icon: Clock3, label: "Session", value: game.sessionLength },
-              { icon: Users, label: "Players", value: game.players }
+              { icon: Users, label: "Players", value: game.players },
+              { icon: Gamepad2, label: "Platform", value: "WebGL" }
             ].map((item) => (
               <div key={item.label} className="rounded-lg border border-white/10 bg-white/[.04] p-3">
                 <div className="flex items-center gap-2 text-xs text-uniblex-gray">

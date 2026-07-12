@@ -51,6 +51,7 @@ export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": `${siteConfig.url}/#organization`,
     name: siteConfig.name,
     url: siteConfig.url,
     logo: absoluteUrl("/android-chrome-512x512.png"),
@@ -68,10 +69,11 @@ export function websiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": `${siteConfig.url}/#website`,
     name: siteConfig.name,
     url: siteConfig.url,
     description: siteConfig.description,
-    publisher: { "@type": "Organization", name: siteConfig.name },
+    publisher: { "@id": `${siteConfig.url}/#organization` },
     potentialAction: {
       "@type": "SearchAction",
       target: `${canonicalUrl("/games")}?q={search_term_string}`,
@@ -80,6 +82,18 @@ export function websiteJsonLd() {
   };
 }
 
+export function homePageJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${canonicalUrl("/")}#webpage`,
+    url: canonicalUrl("/"),
+    name: siteConfig.displayTitle,
+    description: siteConfig.description,
+    isPartOf: { "@id": `${siteConfig.url}/#website` },
+    about: { "@id": `${siteConfig.url}/#organization` }
+  };
+}
 export function breadcrumbJsonLd(items: Array<{ name: string; url: string }>) {
   return {
     "@context": "https://schema.org",

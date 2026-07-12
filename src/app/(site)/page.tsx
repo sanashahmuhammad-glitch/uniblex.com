@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpenText, Flame, Gauge, Gamepad2, LayoutDashboard, Play, Search, ShieldCheck, Sparkles, Star, Trophy, Zap } from "lucide-react";
+import { ArrowRight, BookOpenText, Flame, Gauge, Gamepad2, LayoutDashboard, Play, Search, ShieldCheck, Sparkles, Clock3, Trophy, Zap } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
 import { GameCard } from "@/components/site/GameCard";
 import { PostCard } from "@/components/site/PostCard";
@@ -8,7 +8,8 @@ import { GameThumbnail } from "@/components/site/VisualThumb";
 import { games } from "@/data/games";
 import { posts } from "@/data/posts";
 import { AuthorizedAdminLink } from "@/components/admin/AuthorizedAdminLink";
-import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { canonicalUrl, defaultAuthors, defaultRobots, homePageJsonLd, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Uniblex - Play Free WebGL Games & Read Game Dev Articles",
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
 const stats = [
   { value: `${games.length}`, label: "Live games" },
   { value: `${posts.length}`, label: "Game dev articles" },
-  { value: games[0]?.rating ?? "-", label: "Featured rating" },
+  { value: games[0]?.sessionLength ?? "Instant", label: "Session length" },
   { value: games[0]?.genre ?? "WebGL", label: "Featured genre" }
 ];
 
@@ -56,6 +57,7 @@ export default function HomePage() {
 
   return (
     <main>
+      <JsonLd data={homePageJsonLd()} />
       <section className="relative overflow-hidden border-b border-uniblex-border/50 bg-[#070b13]">
         <div className="soft-grid pointer-events-none absolute inset-0 opacity-45" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(0,178,255,.22),transparent_32%),radial-gradient(circle_at_76%_16%,rgba(122,60,255,.24),transparent_30%),linear-gradient(180deg,rgba(13,17,24,.2),rgba(5,7,11,.96))]" />
@@ -100,7 +102,7 @@ export default function HomePage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/10 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4 grid gap-3 sm:grid-cols-3">
                       {[
-                        { icon: Star, text: heroGame.rating },
+                        { icon: Clock3, text: heroGame.sessionLength },
                         { icon: Trophy, text: heroGame.difficulty },
                         { icon: Gamepad2, text: heroGame.players }
                       ].map((item) => (
