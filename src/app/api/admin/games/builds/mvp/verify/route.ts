@@ -49,20 +49,7 @@ export async function POST(request: Request) {
       return { file, object, mismatch: getMvpHeadMismatch({ size: Number(file.size_bytes), sha256: file.sha256 }, object) };
     }));
     const mismatch = checks.find((check) => check.mismatch);
-    if (mismatch) {
-      console.warn("webgl_mvp_head_mismatch", {
-        operationId,
-        path: mismatch.file.path,
-        reason: mismatch.mismatch,
-        status: mismatch.object.status,
-        expectedSize: Number(mismatch.file.size_bytes),
-        actualSize: mismatch.object.size,
-        metadataPresent: Boolean(mismatch.object.sha256),
-        checksumPresent: Boolean(mismatch.object.checksumSha256),
-        headerNames: mismatch.object.headerNames
-      });
-      return NextResponse.json({ error: "Uploaded file failed verification: " + mismatch.file.path }, { status: 422 });
-    }
+    if (mismatch) return NextResponse.json({ error: "Uploaded file failed verification: " + mismatch.file.path }, { status: 422 });
     if (batch.length) {
       const { error: markError } = await serviceDb.rpc("webgl_mvp_mark_verified_files", {
         p_operation_id: operationId,p_owner_id: auth.user.id,p_paths: batch.map((file) => file.path)

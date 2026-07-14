@@ -14,13 +14,13 @@ export type MvpHeadObject = {
   size: number | null;
   sha256: string;
   checksumSha256: string;
-  headerNames: string[];
 };
 
 export type MvpHeadMismatch =
   | "head_status"
   | "missing_size"
   | "missing_metadata"
+  | "missing_checksum"
   | "size_mismatch"
   | "checksum_mismatch"
   | null;
@@ -85,21 +85,17 @@ export async function headMvpObject(config: R2MvpConfig, key: string) {
 }
 
 export function parseMvpHeadResponse(response: Pick<Response, "ok" | "status" | "headers">): MvpHeadObject {
-  const headerNames = [...response.headers.keys()]
-    .filter((name) => name === "content-length" || name.startsWith("x-amz-checksum-") || name.startsWith("x-amz-meta-"))
-    .sort();
   if (!response.ok) {
-    return { exists: false, status: response.status, size: null, sha256: "", checksumSha256: "", headerNames };
+    return { exists: false, status: response.status, size: null, sha256: "", checksumSha256: "" };
   }
-  const contentLength = response.headers.get("content-length");
-  const parsedSize = contentLength === null ? null : Number(contentLength);
+  const sizeHeader = response.headers.get("content-length") ?? response.headers.get("x-amz-meta-size-bytes");
+  const parsedSize = sizeHeader === null ? null : Number(sizeHeader);
   return {
     exists: true,
     status: response.status,
     size: parsedSize !== null && Number.isSafeInteger(parsedSize) && parsedSize >= 0 ? parsedSize : null,
     sha256: normalizeSha256Hex(response.headers.get("x-amz-meta-sha256")),
-    checksumSha256: decodeSha256Base64(response.headers.get("x-amz-checksum-sha256")),
-    headerNames
+    checksumSha256: decodeSha256Base64(response.headers.get("x-amz-checksum-sha256"))
   };
 }
 
@@ -107,10 +103,9 @@ export function getMvpHeadMismatch(expected: { size: number; sha256: string }, a
   if (!actual.exists || actual.status < 200 || actual.status >= 300) return "head_status";
   if (actual.size === null) return "missing_size";
   if (!actual.sha256) return "missing_metadata";
+  if (!actual.checksumSha256) return "missing_checksum";
   if (actual.size !== expected.size) return "size_mismatch";
-  if (actual.sha256 !== expected.sha256 || (actual.checksumSha256 && actual.checksumSha256 !== expected.sha256)) {
-    return "checksum_mismatch";
-  }
+  if (actual.sha256 !== expected.sha256 || actual.checksumSha256 !== expected.sha256) return "checksum_mismatch";
   return null;
 }
 

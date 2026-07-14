@@ -64,6 +64,7 @@ export async function POST(request: Request) {
         "content-type": file.content_type,
         "cache-control": file.cache_control,
         "x-amz-meta-sha256": file.sha256,
+        "x-amz-meta-size-bytes": String(file.size_bytes),
         "x-amz-checksum-sha256": sha256HexToBase64(file.sha256),
         "if-none-match": "*"
       };
