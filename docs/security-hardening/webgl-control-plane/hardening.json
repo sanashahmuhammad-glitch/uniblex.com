@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "scope": "quarantined WebGL upload and publishing pipeline",
+  "starting_commit": "c31d341f56dceaf2c93e4cad73bf70593302f78b",
+  "branch": "webgl-upload-hardening",
+  "selected_option": "supabase-workflow-container-immutable-activation",
+  "production_change": false,
+  "migration_applied": false,
+  "deployment_performed": false,
+  "feature_enabled": false,
+  "controls": [
+    "exact-value fail-closed feature flag",
+    "database-authoritative immutable bindings",
+    "owner-scoped idempotency",
+    "compare-and-set transitions",
+    "expiring hashed execution leases",
+    "operation-owned staging prefixes",
+    "verified immutable publish receipts",
+    "transactional active pointer",
+    "retry-safe scoped cleanup",
+    "sanitized errors and audit events"
+  ],
+  "status": "design_ready_for_independent_review",
+  "blocking_items": [
+    "independent SQL and RLS review",
+    "route contract implementation",
+    "Container authority and R2 adapters",
+    "Workflow and Queue implementation",
+    "isolated staging infrastructure",
+    "fault-injection and scale validation"
+  ]
+}

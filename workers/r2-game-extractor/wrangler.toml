@@ -1,0 +1,15 @@
+name = "uniblex-r2-game-extractor-staging"
+main = "../r2-game-extractor.ts"
+compatibility_date = "2026-07-10"
+workers_dev = false
+
+[vars]
+PUBLIC_R2_BASE_URL = "https://staging-games.invalid"
+
+[[r2_buckets]]
+binding = "GAME_BUILDS_BUCKET"
+bucket_name = "unconfigured-staging-bucket"
+
+# EXTRACT_WORKER_SECRET must be configured with `wrangler secret put` in an
+# isolated staging account. Never add it to this file or deploy this config
+# until the staging bucket placeholder above has been replaced and reviewed.

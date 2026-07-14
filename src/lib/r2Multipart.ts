@@ -125,6 +125,18 @@ export async function abortMultipartUpload(config: R2Config, key: string, upload
   }
 }
 
+export async function getR2ObjectSize(config: R2Config, key: string) {
+  const response = await signedR2Fetch(config, "HEAD", key, {});
+  if (!response.ok) throw new Error("Unable to verify completed R2 object.");
+  const size = Number(response.headers.get("content-length"));
+  if (!Number.isSafeInteger(size) || size < 0) throw new Error("R2 did not return a valid completed object size.");
+  return size;
+}
+
+export async function deleteR2Object(config: R2Config, key: string) {
+  const response = await signedR2Fetch(config, "DELETE", key, {});
+  if (!response.ok && response.status !== 404) throw new Error("Unable to remove invalid R2 object.");
+}
 async function signedR2Fetch(
   config: R2Config,
   method: string,

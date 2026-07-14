@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { verifyAdminRequest } from "@/lib/serverAdminAuth";
 import { createUserSupabaseClient } from "@/lib/serverSupabase";
-import { buildPublicIndexUrl, createBuildKeys, getR2Config, initiateMultipartUpload, presignR2Url } from "@/lib/r2Multipart";
+import { abortMultipartUpload, buildPublicIndexUrl, createBuildKeys, getR2Config, initiateMultipartUpload, presignR2Url } from "@/lib/r2Multipart";
 import { slugify } from "@/lib/slug";
 import { areR2GameUploadsEnabled, r2GameUploadsUnavailableMessage } from "@/lib/r2GameUploads";
+import { createStoredMultipartIdentity, R2_MULTIPART_PART_SIZE, validateMultipartInitiation } from "@/lib/r2UploadValidation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const minPartSize = 8 * 1024 * 1024;
-const maxZipSize = 2 * 1024 * 1024 * 1024;
 
 export async function POST(request: Request) {
   if (!areR2GameUploadsEnabled()) {
@@ -33,18 +31,14 @@ export async function POST(request: Request) {
 
     if (!slug || !title) return NextResponse.json({ error: "Title and slug are required." }, { status: 400 });
     if (!fileName.toLowerCase().endsWith(".zip")) return NextResponse.json({ error: "Upload must be a .zip file." }, { status: 400 });
-    if (!Number.isFinite(fileSize) || fileSize <= 0 || fileSize > maxZipSize) {
-      return NextResponse.json({ error: "ZIP file size is invalid or exceeds the 2 GB limit." }, { status: 400 });
-    }
-    if (!Number.isInteger(partCount) || partCount < 1 || partCount > 10000) {
-      return NextResponse.json({ error: "Multipart part count is invalid." }, { status: 400 });
-    }
+    validateMultipartInitiation(fileSize, partCount);
 
     const supabase = createUserSupabaseClient(authorization);
     const config = getR2Config();
     const version = await getNextBuildVersion(supabase, slug);
     const keys = createBuildKeys(slug, version);
     const uploadId = await initiateMultipartUpload(config, keys.zipKey);
+    const buildId = keys.uploadId;
     const indexUrl = buildPublicIndexUrl(config, keys.extractPrefix);
 
     const { data: game, error: gameError } = gameId
@@ -63,10 +57,12 @@ export async function POST(request: Request) {
         }).select("id").single();
 
     if (gameError || !game) {
+      await abortCreatedUpload(config, keys.zipKey, uploadId);
       return NextResponse.json({ error: gameError?.message || "Unable to prepare game record." }, { status: 400 });
     }
 
     const { data: build, error: buildError } = await supabase.from("game_builds").insert({
+      id: buildId,
       game_id: game.id,
       slug,
       version,
@@ -76,10 +72,26 @@ export async function POST(request: Request) {
       index_url: indexUrl,
       size_bytes: fileSize,
       created_by: auth.user.id,
-      manifest: { fileName, partCount, clientUploadId: keys.uploadId }
+      upload_id: uploadId,
+      expected_size_bytes: fileSize,
+      expected_part_count: partCount,
+      idempotency_key: `initiate:${buildId}`,
+      manifest: {
+        fileName,
+        multipartUpload: createStoredMultipartIdentity({
+          buildId,
+          gameId: game.id,
+          ownerId: auth.user.id,
+          uploadId,
+          objectKey: keys.zipKey,
+          expectedSize: fileSize,
+          expectedPartCount: partCount
+        })
+      }
     }).select("id").single();
 
     if (buildError || !build) {
+      await abortCreatedUpload(config, keys.zipKey, uploadId);
       return NextResponse.json({ error: buildError?.message || "Unable to create build record." }, { status: 400 });
     }
 
@@ -105,7 +117,7 @@ export async function POST(request: Request) {
       zipKey: keys.zipKey,
       extractPrefix: keys.extractPrefix,
       indexUrl,
-      minPartSize,
+      minPartSize: R2_MULTIPART_PART_SIZE,
       partUrls
     });
   } catch (error) {
@@ -113,6 +125,14 @@ export async function POST(request: Request) {
       { error: error instanceof Error ? error.message : "Unable to initiate game build upload." },
       { status: 400 }
     );
+  }
+}
+
+async function abortCreatedUpload(config: ReturnType<typeof getR2Config>, key: string, uploadId: string) {
+  try {
+    await abortMultipartUpload(config, key, uploadId);
+  } catch {
+    throw new Error("Unable to prepare build record and multipart cleanup failed.");
   }
 }
 
