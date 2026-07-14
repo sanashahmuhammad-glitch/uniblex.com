@@ -87,6 +87,20 @@ test("R2 signed PUT binds checksum and create-only condition",()=>{
   equal(signed.includes("if-none-match"),true);
   equal(parsed.pathname.includes("file%281%29.js"),true);
 });
+function head(status,headers={}) {
+  const response=new Response(null,{status,headers});
+  return r2.parseMvpHeadResponse(response);
+}
+const expectedHead={size:68,sha256:"ab".repeat(32)};
+test("R2 HEAD accepts matching size and SHA-256 metadata",()=>{
+  const actual=head(200,{"Content-Length":"68","X-Amz-Meta-SHA256":expectedHead.sha256,"X-Amz-Checksum-SHA256":Buffer.from(expectedHead.sha256,"hex").toString("base64")});
+  equal(r2.getMvpHeadMismatch(expectedHead,actual),null);
+});
+test("R2 HEAD accepts case-insensitive metadata header names",()=>equal(r2.getMvpHeadMismatch(expectedHead,head(200,{"CONTENT-LENGTH":"68","X-AMZ-META-SHA256":expectedHead.sha256})),null));
+test("R2 HEAD rejects missing metadata",()=>equal(r2.getMvpHeadMismatch(expectedHead,head(200,{"content-length":"68"})),"missing_metadata"));
+test("R2 HEAD rejects wrong checksum",()=>equal(r2.getMvpHeadMismatch(expectedHead,head(200,{"content-length":"68","x-amz-meta-sha256":"cd".repeat(32)})),"checksum_mismatch"));
+test("R2 HEAD rejects wrong size",()=>equal(r2.getMvpHeadMismatch(expectedHead,head(200,{"content-length":"67","x-amz-meta-sha256":expectedHead.sha256})),"size_mismatch"));
+for(const status of [403,404,500]) test("R2 HEAD rejects status "+status,()=>equal(r2.getMvpHeadMismatch(expectedHead,head(status)),"head_status"));
 test("migration enforces trusted game guard and signing lease",()=>{
   const first=fs.readFileSync(path.join(root,"supabase/migrations/20260714000100_webgl_client_upload_mvp.sql"),"utf8");
   const finalGuard=fs.readFileSync(path.join(root,"supabase/migrations/20260714000300_webgl_client_upload_game_guard.sql"),"utf8");

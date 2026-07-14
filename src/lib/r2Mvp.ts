@@ -8,6 +8,23 @@ export type R2MvpConfig = {
   publicBaseUrl: string;
 };
 
+export type MvpHeadObject = {
+  exists: boolean;
+  status: number;
+  size: number | null;
+  sha256: string;
+  checksumSha256: string;
+  headerNames: string[];
+};
+
+export type MvpHeadMismatch =
+  | "head_status"
+  | "missing_size"
+  | "missing_metadata"
+  | "size_mismatch"
+  | "checksum_mismatch"
+  | null;
+
 const region = "auto";
 const service = "s3";
 const unsignedPayload = "UNSIGNED-PAYLOAD";
@@ -64,13 +81,37 @@ export function presignMvpPut(
 
 export async function headMvpObject(config: R2MvpConfig, key: string) {
   const response = await signedRequest(config, "HEAD", key, {});
-  if (!response.ok) return { exists: false, status: response.status, size: 0, sha256: "" };
+  return parseMvpHeadResponse(response);
+}
+
+export function parseMvpHeadResponse(response: Pick<Response, "ok" | "status" | "headers">): MvpHeadObject {
+  const headerNames = [...response.headers.keys()]
+    .filter((name) => name === "content-length" || name.startsWith("x-amz-checksum-") || name.startsWith("x-amz-meta-"))
+    .sort();
+  if (!response.ok) {
+    return { exists: false, status: response.status, size: null, sha256: "", checksumSha256: "", headerNames };
+  }
+  const contentLength = response.headers.get("content-length");
+  const parsedSize = contentLength === null ? null : Number(contentLength);
   return {
     exists: true,
     status: response.status,
-    size: Number(response.headers.get("content-length") || "0"),
-    sha256: response.headers.get("x-amz-meta-sha256") || ""
+    size: parsedSize !== null && Number.isSafeInteger(parsedSize) && parsedSize >= 0 ? parsedSize : null,
+    sha256: normalizeSha256Hex(response.headers.get("x-amz-meta-sha256")),
+    checksumSha256: decodeSha256Base64(response.headers.get("x-amz-checksum-sha256")),
+    headerNames
   };
+}
+
+export function getMvpHeadMismatch(expected: { size: number; sha256: string }, actual: MvpHeadObject): MvpHeadMismatch {
+  if (!actual.exists || actual.status < 200 || actual.status >= 300) return "head_status";
+  if (actual.size === null) return "missing_size";
+  if (!actual.sha256) return "missing_metadata";
+  if (actual.size !== expected.size) return "size_mismatch";
+  if (actual.sha256 !== expected.sha256 || (actual.checksumSha256 && actual.checksumSha256 !== expected.sha256)) {
+    return "checksum_mismatch";
+  }
+  return null;
 }
 
 export async function listMvpPrefix(config: R2MvpConfig, prefix: string, maxKeys = 5001) {
@@ -126,6 +167,21 @@ function readEnv(...names: string[]) {
     if (value) return value;
   }
   return "";
+}
+
+function normalizeSha256Hex(value: string | null) {
+  const normalized = value?.trim().toLowerCase() || "";
+  return /^[a-f0-9]{64}$/.test(normalized) ? normalized : "";
+}
+
+function decodeSha256Base64(value: string | null) {
+  if (!value) return "";
+  try {
+    const decoded = Buffer.from(value.trim(), "base64");
+    return decoded.length === 32 ? decoded.toString("hex") : "";
+  } catch {
+    return "";
+  }
 }
 
 function normalizeHeaders(headers: Record<string, string>) {
