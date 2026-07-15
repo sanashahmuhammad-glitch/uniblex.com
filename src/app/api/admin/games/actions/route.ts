@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyAdminRequest } from "@/lib/serverAdminAuth";
 import { createUserSupabaseClient } from "@/lib/serverSupabase";
-import { areR2GameUploadsEnabled, r2GameUploadsUnavailableMessage } from "@/lib/r2GameUploads";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,8 +11,8 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const action = String(body.action ?? "") as Action;
 
-  if (["publish", "rollback", "delete"].includes(action) && !areR2GameUploadsEnabled()) {
-    return NextResponse.json({ error: r2GameUploadsUnavailableMessage }, { status: 503 });
+  if (["publish", "rollback", "delete"].includes(action)) {
+    return NextResponse.json({ error: "Legacy R2 build actions are permanently disabled; use the verified MVP operation route." }, { status: 410 });
   }
 
   const auth = await verifyAdminRequest(request);

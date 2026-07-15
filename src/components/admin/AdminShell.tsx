@@ -1,11 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { AdminProfile } from "@/lib/adminAuth";
 import { allowedAdminRoles } from "@/lib/adminAuth";
 import { slugify } from "@/lib/slug";
+import { uploadWebglMvp, updateWebglMvp, type WebglUploadProgress } from "@/lib/webglMvpClient";
 
 type TableName = "admins" | "categories" | "games" | "blogs" | "contacts" | "ad_zones" | "seo_settings";
 type FieldKind = "text" | "textarea" | "select" | "boolean" | "number" | "tags" | "json" | "datetime";
@@ -283,10 +284,14 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadDetail, setUploadDetail] = useState<WebglUploadProgress | null>(null);
+  const [mvpOperationId, setMvpOperationId] = useState("");
+  const [mvpReady, setMvpReady] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [previewGameUrl, setPreviewGameUrl] = useState("");
   const [successGameSlug, setSuccessGameSlug] = useState("");
+  const uploadAbortRef = useRef<AbortController | null>(null);
 
   const activeConfig = useMemo(() => resources.find((resource) => resource.table === activeTable) ?? resources[0], [activeTable]);
   const isAuthorized = Boolean(user && adminProfile);
@@ -413,6 +418,10 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
     setGameZipFile(null);
     setCoverImageFile(null);
     setPreviewGameUrl("");
+    setUploadDetail(null);
+    setUploadProgress(0);
+    setMvpOperationId("");
+    setMvpReady(false);
     setSuccessGameSlug("");
     setFormOpen(true);
     setNotice("");
@@ -428,6 +437,10 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
     setGameZipFile(null);
     setCoverImageFile(null);
     setPreviewGameUrl("");
+    setUploadDetail(null);
+    setUploadProgress(0);
+    setMvpOperationId("");
+    setMvpReady(false);
     setSuccessGameSlug("");
     setFormOpen(true);
     setNotice("");
@@ -443,12 +456,14 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
       setUploadProgress(0);
       let nextValues = { ...formValues };
       let uploadSummary = "";
+      let mvpUploadPrepared = false;
       let persistedGameId = editingId;
 
       if (activeConfig.table === "games") {
         const prepared = await prepareGameValues(nextValues);
         nextValues = prepared.values;
         uploadSummary = prepared.message;
+        mvpUploadPrepared = Boolean(prepared.mvpUploadPrepared);
         persistedGameId = prepared.gameId ?? persistedGameId;
       }
 
@@ -464,7 +479,10 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
       }
 
       if (activeConfig.table === "games") {
-        setNotice(`Game Published Successfully${uploadSummary ? ` ${uploadSummary}` : ""}`);
+        setNotice(mvpUploadPrepared
+          ? `WebGL build verified and ready for preview.${uploadSummary ? ` ${uploadSummary}` : ""}`
+          : `Game saved successfully.${uploadSummary ? ` ${uploadSummary}` : ""}`
+        );
         setSuccessGameSlug(String(payload.slug ?? ""));
       } else {
         setNotice(`${activeConfig.label} ${editingId ? "updated" : "created"}.${uploadSummary ? ` ${uploadSummary}` : ""}`);
@@ -473,14 +491,12 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
       setFormOpen(false);
       setGameZipFile(null);
       setCoverImageFile(null);
-      setPreviewGameUrl("");
       await loadRows(activeConfig);
       await loadCounts();
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Unable to save record.");
     } finally {
       setUploadLoading(false);
-      setUploadProgress(0);
     }
   }
 
@@ -529,29 +545,50 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
     if (gameZipFile && !r2GameUploadsEnabled) {
       throw new Error("WebGL upload automation is temporarily unavailable while security validation is completed.");
     }
-
-    if (gameZipFile && !gameZipFile.name.toLowerCase().endsWith(".zip")) {
-      throw new Error("Game upload must be a .zip file.");
-    }
+    if (gameZipFile && editingId) throw new Error("The MVP uploader creates new immutable builds only; it cannot replace an existing game.");
+    if (gameZipFile && !coverImageFile && !String(values.cover_url ?? "").trim()) throw new Error("A cover image is required for WebGL upload.");
+    if (gameZipFile && !String(values.category_id ?? "").trim()) throw new Error("A category is required for WebGL upload.");
+    if (gameZipFile && !gameZipFile.name.toLowerCase().endsWith(".zip")) throw new Error("Game upload must be a .zip file.");
 
     const messages: string[] = [];
     let persistedGameId: string | undefined;
-
-    if (gameZipFile) {
-      const uploadResult = await uploadWebglZipToR2(gameZipFile, generatedSlug, title, editingId, String(values.description ?? ""), setUploadProgress);
-      nextValues.iframe_url = uploadResult.iframeUrl;
-      persistedGameId = uploadResult.gameId;
-      messages.push(uploadResult.message);
-    }
-
+    let mvpUploadPrepared = false;
     if (coverImageFile) {
       nextValues.cover_url = await uploadCoverViaAdminRoute(coverImageFile, generatedSlug, title);
       messages.push("Cover image uploaded to Cloudinary.");
     }
-
-    const message = messages.join(" ");
+    if (gameZipFile) {
+      const coverUrl = String(nextValues.cover_url ?? "").trim();
+      const thumbnailUrl = String(nextValues.thumbnail_url ?? "").trim() || cloudinaryThumbnailUrl(coverUrl);
+      nextValues.thumbnail_url = thumbnailUrl;
+      const controller = new AbortController();
+      uploadAbortRef.current = controller;
+      try {
+        const uploadResult = await uploadWebglMvp(gameZipFile, {
+          slug: generatedSlug, title, description: String(values.description ?? "").trim(),
+          categoryId: String(values.category_id ?? "").trim() || undefined, genre: String(values.genre ?? "").trim(),
+          coverUrl, thumbnailUrl, screenshotUrls: parseDelimitedValues(values.screenshot_urls), tags: parseDelimitedValues(values.tags),
+          desktopControls: parseJsonArray(values.desktop_controls), mobileControls: parseJsonArray(values.mobile_controls)
+        }, (progress) => { setUploadDetail(progress); setUploadProgress(Math.max(1, Math.min(100, progress.percentage))); }, controller.signal);
+        nextValues.status = "preview"; nextValues.iframe_url = "";
+        persistedGameId = uploadResult.gameId; setMvpOperationId(uploadResult.operationId); setMvpReady(true);
+        setPreviewGameUrl(uploadResult.previewUrl); mvpUploadPrepared = true;
+        messages.push(`Detected ${uploadResult.manifest.buildType}; uploaded and verified ${uploadResult.manifest.files.length} files.`);
+      } finally { uploadAbortRef.current = null; }
+    }
+    const message = messages.join(" " );
     setFormValues(nextValues);
-    return { values: nextValues, message, gameId: persistedGameId };
+    return { values: nextValues, message, gameId: persistedGameId, mvpUploadPrepared };
+  }
+
+  async function publishPreparedMvp() {
+    if (!mvpOperationId || !mvpReady) return;
+    setUploadLoading(true);
+    try {
+      await updateWebglMvp(mvpOperationId, "publish"); setMvpReady(false); setNotice("WebGL game published successfully.");
+      await loadRows(activeConfig); await loadCounts();
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Unable to publish WebGL game."); }
+    finally { setUploadLoading(false); }
   }
 
   async function ensureUniqueGameSlug(slug: string) {
@@ -723,6 +760,12 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
               {notice ? (
                 <div className="border-b border-uniblex-border bg-white/[.03] p-4 text-sm text-uniblex-blue">
                   <span>{notice}</span>
+                  {mvpReady && previewGameUrl ? (
+                    <span className="ml-3 inline-flex gap-2">
+                      <button className="font-bold text-white underline" onClick={() => window.open(previewGameUrl, "_blank", "noopener,noreferrer")}>Preview Upload</button>
+                      <button className="font-bold text-white underline" disabled={uploadLoading} onClick={() => void publishPreparedMvp()}>{uploadLoading ? "Publishing..." : "Publish Verified Build"}</button>
+                    </span>
+                  ) : null}
                   {successGameSlug ? (
                     <a className="ml-3 font-bold text-white underline decoration-uniblex-blue underline-offset-4" href={`/games/${successGameSlug}`} target="_blank" rel="noreferrer">
                       View Game
@@ -745,8 +788,10 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
                         coverImageFile={coverImageFile}
                         coverUrl={String(formValues.cover_url ?? "")}
                         uploadProgress={uploadProgress}
+                        uploadDetail={uploadDetail}
                         setGameZipFile={setGameZipFile}
                         setCoverImageFile={setCoverImageFile}
+                        onCancel={() => uploadAbortRef.current?.abort()}
                       />
                     ) : null}
                     {activeConfig.fields.map((field) => {
@@ -1264,16 +1309,20 @@ function GameUploadFields({
   coverImageFile,
   coverUrl,
   uploadProgress,
+  uploadDetail,
   setGameZipFile,
-  setCoverImageFile
+  setCoverImageFile,
+  onCancel
 }: {
   r2GameUploadsEnabled: boolean;
   gameZipFile: File | null;
   coverImageFile: File | null;
   coverUrl: string;
   uploadProgress: number;
+  uploadDetail: WebglUploadProgress | null;
   setGameZipFile: (file: File | null) => void;
   setCoverImageFile: (file: File | null) => void;
+  onCancel: () => void;
 }) {
   const [coverPreview, setCoverPreview] = useState("");
 
@@ -1308,7 +1357,7 @@ function GameUploadFields({
             onChange={(event) => setGameZipFile(event.target.files?.[0] ?? null)}
           />
           <span className="text-xs font-normal text-uniblex-gray">
-            {gameZipFile ? gameZipFile.name : "Uploads directly to Cloudflare R2, then a Worker validates and extracts the build."}
+            {gameZipFile ? gameZipFile.name : "Validated and extracted locally, then uploaded directly with short-lived signed R2 URLs."}
           </span>
         </label>
       ) : (
@@ -1318,8 +1367,10 @@ function GameUploadFields({
       )}
       {uploadProgress > 0 ? (
         <div className="md:col-span-2 rounded-lg border border-uniblex-blue/30 bg-uniblex-blue/10 p-3">
-          <div className="mb-2 flex items-center justify-between text-xs font-bold text-uniblex-blue"><span>R2 upload and extraction</span><span>{uploadProgress}%</span></div>
+          <div className="mb-2 flex items-center justify-between text-xs font-bold text-uniblex-blue"><span>{uploadDetail?.phase || "Preparing upload"}</span><span>{uploadProgress}%</span></div>
           <div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-uniblex-blue transition-all" style={{ width: `${uploadProgress}%` }} /></div>
+          {uploadDetail ? <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-uniblex-gray"><span>{uploadDetail.completedFiles} / {uploadDetail.totalFiles || "?"} files</span><span>{formatUploadMb(uploadDetail.completedBytes)} / {uploadDetail.totalBytes ? formatUploadMb(uploadDetail.totalBytes) : "?"} MB</span>{uploadDetail.currentFile ? <span className="max-w-full truncate">{uploadDetail.currentFile}</span> : null}</div> : null}
+          {uploadProgress < 100 ? <button type="button" className="mt-3 text-xs font-bold text-red-200 underline" onClick={onCancel}>Cancel upload</button> : null}
         </div>
       ) : null}
       <label className="grid gap-2 text-sm font-bold">
@@ -1346,6 +1397,11 @@ function GameUploadFields({
     </div>
   );
 }
+
+function parseDelimitedValues(value: string | boolean | undefined) { return String(value ?? "").split(",").map((item) => item.trim()).filter(Boolean); }
+function parseJsonArray(value: string | boolean | undefined) { const text=String(value ?? "").trim(); if(!text)return []; try { const parsed=JSON.parse(text); return Array.isArray(parsed)?parsed:[]; } catch { throw new Error("Control instructions must be a valid JSON array."); } }
+function cloudinaryThumbnailUrl(coverUrl: string) { return coverUrl.includes("/upload/") ? coverUrl.replace("/upload/","/upload/c_fill,w_640,h_360,f_auto,q_auto/") : coverUrl; }
+function formatUploadMb(bytes: number) { return (bytes/(1024*1024)).toFixed(1); }
 
 function GameIframeField({
   field,
