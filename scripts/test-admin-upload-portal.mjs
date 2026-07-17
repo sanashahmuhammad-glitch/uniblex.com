@@ -50,6 +50,25 @@ test("verification result gates publish", () => equal(wizard.includes("canPublis
 test("quarantine state disables production upload controls", () => equal(wizard.includes("Production uploads are quarantined"), true));
 test("mobile portal uses an accessible drawer", () => equal(sidebar.includes("Open admin navigation") && sidebar.includes("lg:hidden"), true));
 test("feature flag remains exact-value fail closed", () => equal(flag.includes('process.env.R2_GAME_UPLOADS_ENABLED === "true"'), true));
+test("invalid Continue focuses the rendered error summary", () => {
+  equal(wizard.includes("const errorSummaryRef = useRef<HTMLDivElement | null>(null)"), true);
+  equal(/useEffect\(\(\) => \{\s*if \(errors\.length\) errorSummaryRef\.current\?\.focus\(\);\s*\}, \[errors\]\);/.test(wizard), true);
+  equal(wizard.includes("ref={errorSummaryRef}"), true);
+});
+test("validation summary is announced and accessibly labelled", () => {
+  equal(wizard.includes('role="alert"'), true);
+  equal(wizard.includes('aria-live="assertive"'), true);
+  equal(wizard.includes('aria-labelledby="wizard-errors-title"'), true);
+  equal(wizard.includes('id="wizard-errors-title"'), true);
+});
+test("valid Continue still advances normally", () => {
+  equal(wizard.includes("setStep((current) => Math.min(4, current + 1))"), true);
+  equal(portal.validateSubmissionStep(0, valid, false, false, false).length, 0);
+});
+test("error summary remains programmatically focusable without entering the tab order", () => {
+  equal(wizard.includes('id="wizard-errors" tabIndex={-1}'), true);
+  equal(wizard.includes('onKeyDown='), false);
+});
 
 for (const item of tests) { await item.run(); passed += 1; console.log(`ok ${passed} - ${item.name}`); }
 console.log(`\n${passed} admin upload portal tests passed.`);

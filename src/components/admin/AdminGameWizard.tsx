@@ -55,6 +55,7 @@ export function AdminGameWizard({ categories, editingGame, r2GameUploadsEnabled,
   const [saving, setSaving] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadResultState | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const coverPreview = useObjectUrl(coverFile, form.coverUrl);
   const thumbnailPreview = useObjectUrl(thumbnailFile, form.thumbnailUrl || form.coverUrl);
   const slugPreview = useMemo(() => getSlugPreview(form.title, form.slug), [form.slug, form.title]);
@@ -69,6 +70,10 @@ export function AdminGameWizard({ categories, editingGame, r2GameUploadsEnabled,
   }, [uploading]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  useEffect(() => {
+    if (errors.length) errorSummaryRef.current?.focus();
+  }, [errors]);
 
   function update<K extends keyof GameFormState>(key: K, value: GameFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -211,7 +216,7 @@ export function AdminGameWizard({ categories, editingGame, r2GameUploadsEnabled,
         {SUBMISSION_STEPS.map((label, index) => <li key={label} className="min-w-0"><button type="button" onClick={() => index < step && setStep(index)} disabled={index > step || uploading} className={`flex min-h-14 w-full items-center justify-center gap-2 rounded-xl px-2 text-xs font-bold transition sm:justify-start sm:px-3 ${index === step ? "bg-gradient-to-r from-uniblex-blue/20 to-uniblex-purple/15 text-white ring-1 ring-uniblex-blue/30" : index < step ? "text-emerald-200 hover:bg-white/5" : "text-uniblex-gray/60"}`}><span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border ${index < step ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10"}`}>{index < step ? <Check size={14} /> : index + 1}</span><span className="hidden truncate sm:block">{label}</span></button></li>)}
       </ol>
 
-      {errors.length ? <div id="wizard-errors" tabIndex={-1} role="alert" className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4 outline-none focus:ring-2 focus:ring-red-400"><div className="flex gap-2 font-bold text-red-100"><AlertCircle size={19} /> Please fix the following</div><ul className="mt-2 list-disc space-y-1 pl-6 text-sm text-red-200">{errors.map((error) => <li key={error}>{error}</li>)}</ul></div> : null}
+      {errors.length ? <div ref={errorSummaryRef} id="wizard-errors" tabIndex={-1} role="alert" aria-live="assertive" aria-labelledby="wizard-errors-title" className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4 outline-none focus:ring-2 focus:ring-red-400"><div id="wizard-errors-title" className="flex gap-2 font-bold text-red-100"><AlertCircle size={19} /> Please fix the following</div><ul className="mt-2 list-disc space-y-1 pl-6 text-sm text-red-200">{errors.map((error) => <li key={error}>{error}</li>)}</ul></div> : null}
       {requestError ? <div role="alert" className="mt-5 flex flex-col gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between"><span>{requestError}</span>{step === 3 && zipFile && !uploading ? <button type="button" onClick={() => void startSecureUpload()} className="font-bold text-white underline">Retry safely</button> : null}</div> : null}
 
       <div className="mt-5 rounded-2xl border border-white/10 bg-[#111822]/80 p-4 sm:p-6">
