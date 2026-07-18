@@ -84,6 +84,10 @@ export async function headMvpObject(config: R2MvpConfig, key: string) {
   return parseMvpHeadResponse(response);
 }
 
+export function headR2ObjectResponse(config: R2MvpConfig, key: string) {
+  return signedRequest(config, "HEAD", key, {});
+}
+
 export function parseMvpHeadResponse(response: Pick<Response, "ok" | "status" | "headers">): MvpHeadObject {
   if (!response.ok) {
     return { exists: false, status: response.status, size: null, sha256: "", checksumSha256: "" };
