@@ -256,10 +256,10 @@ export function AdminGameWizard({ adminId, categories, editingGame, initialDraft
       setRequestError(sanitizeAdminError(error));
     } finally {
       setSaving(false);
-    }
-  }
       abortRef.current = null;
       setUploading(false);
+    }
+  }
 
   async function previewVerified() {
     if (!uploadResult) return;

@@ -118,6 +118,21 @@ test("restore is skipped once and subsequent autosave uses a stable ref", () => 
   equal(hookSource.includes("window.setTimeout(() => void persistRef.current(), 500)"), true);
   equal(hookSource.includes("options.buildResult, persist]"), false);
 });
+test("identical draft content has one stable revision despite timestamp changes", () => {
+  const restored = draftModule.sanitizeAdminSubmissionDraft(baseDraft, ownerId);
+  const later = { ...restored, updatedAt: new Date(Date.now() + 30_000).toISOString() };
+  equal(draftModule.getAdminDraftRevision(restored), draftModule.getAdminDraftRevision(later));
+});
+test("meaningful draft changes produce a new revision", () => {
+  const restored = draftModule.sanitizeAdminSubmissionDraft(baseDraft, ownerId);
+  const changed = { ...restored, form: { ...restored.form, title: "A different title" } };
+  equal(draftModule.getAdminDraftRevision(restored) === draftModule.getAdminDraftRevision(changed), false);
+});
+test("autosave and BroadcastChannel ignore identical and self-originated revisions", () => {
+  equal(hookSource.includes("if (revision === savedRevisionRef.current) return"), true);
+  equal(hookSource.includes("message.instanceId === instanceId.current"), true);
+  equal(hookSource.includes("message.revision || \"\") === savedRevisionRef.current"), true);
+});
 test("draft persistence uses IndexedDB with version, expiry, owner, and stable draft id", () => equal(hookSource.includes("saveAdminSubmissionDraft") && fs.readFileSync(path.join(root, "src/lib/adminSubmissionDraft.ts"), "utf8").includes("ADMIN_DRAFT_EXPIRY_MS"), true));
 test("draft lifecycle covers debounce, hidden tabs, unload warning, discard, and multi-tab conflicts", () => equal(hookSource.includes("500") && hookSource.includes("visibilitychange") && hookSource.includes("beforeunload") && hookSource.includes("BroadcastChannel") && hookSource.includes("deleteAdminSubmissionDraft"), true));
 

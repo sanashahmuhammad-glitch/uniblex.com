@@ -99,6 +99,16 @@ export function initializeAdminSubmissionDraft(
   return current ?? restored ?? createDraft(ownerId);
 }
 
+export function getAdminDraftRevision(draft: AdminSubmissionDraft) {
+  return JSON.stringify({
+    currentStep: draft.currentStep,
+    form: draft.form,
+    media: draft.media,
+    zip: draft.zip,
+    buildResult: draft.buildResult
+  });
+}
+
 export function sanitizeAdminSubmissionDraft(value: unknown, expectedOwnerId?: string, now = Date.now()): AdminSubmissionDraft | null {
   if (!value || typeof value !== "object") return null;
   const input = value as Record<string, unknown>;

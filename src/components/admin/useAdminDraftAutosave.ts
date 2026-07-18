@@ -6,6 +6,7 @@ import {
   createAdminSubmissionDraft,
   deleteAdminSubmissionDraft,
   initializeAdminSubmissionDraft,
+  getAdminDraftRevision,
   isMeaningfulAdminDraft,
   saveAdminSubmissionDraft,
   type AdminSubmissionDraft,
@@ -45,6 +46,7 @@ export function useAdminDraftAutosave(options: {
   const persistRef = useRef<() => Promise<void>>(async () => undefined);
   const clearedRef = useRef(false);
   const autosaveReadyRef = useRef(false);
+  const savedRevisionRef = useRef(getAdminDraftRevision(baseRef.current));
 
   const snapshot = useCallback(() => {
     const now = new Date().toISOString();
@@ -82,17 +84,20 @@ export function useAdminDraftAutosave(options: {
     const next = snapshot();
     latestRef.current = next;
     if (!isMeaningfulAdminDraft(next)) return;
+    const revision = getAdminDraftRevision(next);
+    if (revision === savedRevisionRef.current) return;
     setSaveState("saving");
     try {
       const saved = await saveAdminSubmissionDraft(next);
       baseRef.current = saved;
       latestRef.current = saved;
+      savedRevisionRef.current = revision;
       setDirty(false);
       setSaveState("saved");
       options.onSaved(saved);
       if ("BroadcastChannel" in window) {
         const channel = new BroadcastChannel(`uniblex-admin-draft:${options.ownerId}`);
-        channel.postMessage({ instanceId: instanceId.current, draftId: saved.draftId, updatedAt: saved.updatedAt });
+        channel.postMessage({ instanceId: instanceId.current, draftId: saved.draftId, updatedAt: saved.updatedAt, revision });
         channel.close();
       }
     } catch {
@@ -129,7 +134,10 @@ export function useAdminDraftAutosave(options: {
     channel.onmessage = (event) => {
       const message = event.data as Record<string, unknown>;
       if (message.instanceId === instanceId.current || message.draftId !== baseRef.current.draftId) return;
-      if (Date.parse(String(message.updatedAt || "")) > Date.parse(baseRef.current.updatedAt)) setConflict(true);
+      if (String(message.revision || "") === savedRevisionRef.current) return;
+      if (Date.parse(String(message.updatedAt || "")) > Date.parse(baseRef.current.updatedAt)) {
+        setConflict((current) => current || true);
+      }
     };
     return () => channel.close();
   }, [options.enabled, options.ownerId]);
