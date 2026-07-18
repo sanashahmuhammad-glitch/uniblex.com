@@ -7,6 +7,7 @@ export const ADMIN_DRAFT_VERSION = 1;
 export const ADMIN_DRAFT_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000;
 const databaseName = "uniblex-admin-upload-drafts";
 const storeName = "drafts";
+let fallbackIdCounter = 0;
 
 export type PersistedMediaSelection = {
   role: GameMediaRole;
@@ -53,8 +54,26 @@ export type AdminSubmissionDraft = {
   buildResult: PersistedBuildResult | null;
 };
 
+export function createAdminRuntimeId() {
+  const cryptoApi = typeof globalThis === "object" ? globalThis.crypto : undefined;
+  if (typeof cryptoApi?.randomUUID === "function") return cryptoApi.randomUUID();
+
+  const bytes = new Uint8Array(16);
+  if (typeof cryptoApi?.getRandomValues === "function") cryptoApi.getRandomValues(bytes);
+  else {
+    let seed = Date.now() + Math.floor(Math.random() * 0x100000000) + fallbackIdCounter++;
+    for (let index = 0; index < bytes.length; index += 1) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      bytes[index] = seed & 0xff;
+    }
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  return formatBytesAsUuid(bytes);
+}
+
 export function createAdminSubmissionDraft(ownerId: string, now = new Date()): AdminSubmissionDraft {
-  const draftId = crypto.randomUUID();
+  const draftId = createAdminRuntimeId();
   return {
     version: ADMIN_DRAFT_VERSION,
     storageKey: storageKey(ownerId, draftId),
@@ -69,6 +88,15 @@ export function createAdminSubmissionDraft(ownerId: string, now = new Date()): A
     zip: null,
     buildResult: null
   };
+}
+
+export function initializeAdminSubmissionDraft(
+  current: AdminSubmissionDraft | null,
+  restored: AdminSubmissionDraft | null,
+  ownerId: string,
+  createDraft: (ownerId: string) => AdminSubmissionDraft = createAdminSubmissionDraft
+) {
+  return current ?? restored ?? createDraft(ownerId);
 }
 
 export function sanitizeAdminSubmissionDraft(value: unknown, expectedOwnerId?: string, now = Date.now()): AdminSubmissionDraft | null {
@@ -222,6 +250,10 @@ function sanitizeBuildResult(value: unknown): PersistedBuildResult | null {
 }
 
 function storageKey(ownerId: string, draftId: string) { return `${ownerId}:${draftId}`; }
+function formatBytesAsUuid(bytes: Uint8Array) {
+  const value = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
+}
 function uuid(value: string) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value); }
 function text(value: unknown, length: number) { return typeof value === "string" ? value.trim().slice(0, length) : ""; }
 function iso(value: unknown) { const date = new Date(String(value || "")); return Number.isFinite(date.getTime()) ? date.toISOString() : ""; }

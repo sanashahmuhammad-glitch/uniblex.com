@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  createAdminRuntimeId,
   createAdminSubmissionDraft,
   deleteAdminSubmissionDraft,
+  initializeAdminSubmissionDraft,
   isMeaningfulAdminDraft,
   saveAdminSubmissionDraft,
   type AdminSubmissionDraft,
@@ -30,14 +32,19 @@ export function useAdminDraftAutosave(options: {
   uploading: boolean;
   onSaved: (draft: AdminSubmissionDraft) => void;
 }) {
-  const baseRef = useRef<AdminSubmissionDraft>(options.initialDraft || createAdminSubmissionDraft(options.ownerId));
+  const initialBaseRef = useRef<AdminSubmissionDraft | null>(null);
+  initialBaseRef.current = initializeAdminSubmissionDraft(initialBaseRef.current, options.initialDraft, options.ownerId, createAdminSubmissionDraft);
+  const baseRef = initialBaseRef as { current: AdminSubmissionDraft };
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">(options.initialDraft ? "saved" : "idle");
   const [conflict, setConflict] = useState(false);
   const [dirty, setDirty] = useState(false);
   const latestRef = useRef<AdminSubmissionDraft>(baseRef.current);
-  const instanceId = useRef(crypto.randomUUID());
+  const instanceIdRef = useRef("");
+  if (!instanceIdRef.current) instanceIdRef.current = createAdminRuntimeId();
+  const instanceId = instanceIdRef as { current: string };
   const persistRef = useRef<() => Promise<void>>(async () => undefined);
   const clearedRef = useRef(false);
+  const autosaveReadyRef = useRef(false);
 
   const snapshot = useCallback(() => {
     const now = new Date().toISOString();
@@ -95,6 +102,7 @@ export function useAdminDraftAutosave(options: {
   persistRef.current = persist;
 
   useEffect(() => {
+    if (typeof document === "undefined") return;
     const saveWhenHidden = () => { if (document.visibilityState === "hidden") void persistRef.current(); };
     document.addEventListener("visibilitychange", saveWhenHidden);
     return () => { document.removeEventListener("visibilitychange", saveWhenHidden); void persistRef.current(); };
@@ -103,12 +111,16 @@ export function useAdminDraftAutosave(options: {
 
 
   useEffect(() => {
-    if (!options.enabled) return;
+    if (!options.enabled || typeof window === "undefined") return;
+    if (!autosaveReadyRef.current) {
+      autosaveReadyRef.current = true;
+      return;
+    }
     setDirty(true);
     setSaveState((current) => current === "error" ? current : "idle");
-    const timer = window.setTimeout(() => void persist(), 500);
+    const timer = window.setTimeout(() => void persistRef.current(), 500);
     return () => window.clearTimeout(timer);
-  }, [options.enabled, options.step, options.form, options.selections, options.verifiedMedia, options.zipFile, options.buildResult, persist]);
+  }, [options.enabled, options.step, options.form, options.selections, options.verifiedMedia, options.zipFile, options.buildResult]);
 
   useEffect(() => {
     if (!options.enabled) return;

@@ -75,6 +75,49 @@ test("draft restore preserves verified media metadata and honest ZIP reselection
 test("draft sanitizer rejects another owner and expired records", () => { equal(draftModule.sanitizeAdminSubmissionDraft(baseDraft, "44444444-4444-4444-8444-444444444444"), null); equal(draftModule.sanitizeAdminSubmissionDraft({ ...baseDraft, expiresAt: new Date(Date.now() - 1).toISOString() }, ownerId), null); });
 test("draft sanitizer drops unknown secret-shaped fields", () => equal("accessToken" in draftModule.sanitizeAdminSubmissionDraft(baseDraft, ownerId).form, false));
 test("draft sanitizer never persists presigned URLs", () => { const draft = draftModule.sanitizeAdminSubmissionDraft({ ...baseDraft, media: [{ ...baseDraft.media[0], publicUrl: "https://r2.example/file?X-Amz-Signature=secret" }] }, ownerId); equal(draft.media.length, 0); });
+test("first Submit Game mount creates exactly one stable draft id", () => {
+  let creations = 0;
+  const create = (nextOwnerId) => { creations += 1; return { ...draftModule.createAdminSubmissionDraft(nextOwnerId), draftId: `00000000-0000-4000-8000-${String(creations).padStart(12, "0")}` }; };
+  const first = draftModule.initializeAdminSubmissionDraft(null, null, ownerId, create);
+  const rerender = draftModule.initializeAdminSubmissionDraft(first, null, ownerId, create);
+  equal(creations, 1);
+  equal(rerender.draftId, first.draftId);
+});
+test("valid restored drafts remain stable across rerenders", () => {
+  let creations = 0;
+  const restored = draftModule.sanitizeAdminSubmissionDraft(baseDraft, ownerId);
+  const first = draftModule.initializeAdminSubmissionDraft(null, restored, ownerId, () => { creations += 1; return draftModule.createAdminSubmissionDraft(ownerId); });
+  const rerender = draftModule.initializeAdminSubmissionDraft(first, restored, ownerId, () => { creations += 1; return draftModule.createAdminSubmissionDraft(ownerId); });
+  equal(creations, 0);
+  equal(rerender, first);
+});
+test("corrupt and version-mismatched drafts create once and do not loop", () => {
+  for (const stored of ["{not-json", { ...baseDraft, version: 999 }]) {
+    let creations = 0;
+    const restored = typeof stored === "string" ? null : draftModule.sanitizeAdminSubmissionDraft(stored, ownerId);
+    const create = () => { creations += 1; return draftModule.createAdminSubmissionDraft(ownerId); };
+    const first = draftModule.initializeAdminSubmissionDraft(null, restored, ownerId, create);
+    const rerender = draftModule.initializeAdminSubmissionDraft(first, restored, ownerId, create);
+    equal(creations, 1);
+    equal(rerender, first);
+  }
+});
+test("draft id generation survives an unavailable randomUUID implementation", () => {
+  const originalCrypto = globalThis.crypto;
+  Object.defineProperty(globalThis, "crypto", { value: {}, configurable: true });
+  try { equal(/^[0-9a-f-]{36}$/.test(draftModule.createAdminSubmissionDraft(ownerId).draftId), true); }
+  finally { Object.defineProperty(globalThis, "crypto", { value: originalCrypto, configurable: true }); }
+});
+test("Submit Game initialization has no eager ref initializer or render-time state setter", () => {
+  equal(hookSource.includes("useRef<AdminSubmissionDraft>(options.initialDraft || createAdminSubmissionDraft"), false);
+  equal(hookSource.includes("useRef(crypto.randomUUID())"), false);
+  equal(hookSource.includes("initialBaseRef.current = initializeAdminSubmissionDraft"), true);
+});
+test("restore is skipped once and subsequent autosave uses a stable ref", () => {
+  equal(hookSource.includes("if (!autosaveReadyRef.current)"), true);
+  equal(hookSource.includes("window.setTimeout(() => void persistRef.current(), 500)"), true);
+  equal(hookSource.includes("options.buildResult, persist]"), false);
+});
 test("draft persistence uses IndexedDB with version, expiry, owner, and stable draft id", () => equal(hookSource.includes("saveAdminSubmissionDraft") && fs.readFileSync(path.join(root, "src/lib/adminSubmissionDraft.ts"), "utf8").includes("ADMIN_DRAFT_EXPIRY_MS"), true));
 test("draft lifecycle covers debounce, hidden tabs, unload warning, discard, and multi-tab conflicts", () => equal(hookSource.includes("500") && hookSource.includes("visibilitychange") && hookSource.includes("beforeunload") && hookSource.includes("BroadcastChannel") && hookSource.includes("deleteAdminSubmissionDraft"), true));
 
