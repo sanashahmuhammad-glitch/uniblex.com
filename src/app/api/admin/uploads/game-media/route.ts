@@ -1,94 +1,79 @@
-import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { verifyAdminRequest } from "@/lib/serverAdminAuth";
-import { slugify } from "@/lib/slug";
+import { areR2GameUploadsEnabled } from "@/lib/r2GameUploads";
+import { deleteMvpObject, getR2MvpConfig, headR2ObjectResponse, presignMvpPut } from "@/lib/r2Mvp";
+import {
+  assertGameMediaKey,
+  createGameMediaKey,
+  GAME_MEDIA_SIGNING_SECONDS,
+  gameMediaHeaders,
+  gameMediaPublicUrl,
+  validateGameMediaDescriptor,
+  verifyGameMediaHead
+} from "@/lib/r2GameMedia";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxImageBytes = 15 * 1024 * 1024;
-
 export async function POST(request: Request) {
   const auth = await verifyAdminRequest(request);
   if (!auth.authorized) return NextResponse.json({ error: auth.error }, { status: 401 });
+  if (!areR2GameUploadsEnabled()) return NextResponse.json({ error: "Game uploads are currently quarantined." }, { status: 503 });
+  const ownerId = auth.user?.id;
+  if (!ownerId) return NextResponse.json({ error: "Admin identity is unavailable." }, { status: 401 });
 
   try {
-    const formData = await request.formData();
-    const slug = slugify(String(formData.get("slug") || formData.get("title") || ""));
-    if (!slug) return NextResponse.json({ error: "A valid game slug is required for media uploads." }, { status: 400 });
+    const body = await request.json() as Record<string, unknown>;
+    const action = String(body.action || "");
+    const config = getR2MvpConfig();
 
-    const cover = optionalImage(formData.get("coverImage"), "Cover image");
-    const thumbnail = optionalImage(formData.get("thumbnailImage"), "Card thumbnail");
-    const screenshots = formData.getAll("screenshots").map((value, index) => requiredImage(value, `Screenshot ${index + 1}`));
-    if (screenshots.length > 6) return NextResponse.json({ error: "A maximum of 6 screenshots is allowed." }, { status: 400 });
+    if (action === "sign") {
+      const descriptor = validateGameMediaDescriptor(body.file);
+      const objectKey = createGameMediaKey(ownerId, descriptor);
+      const headers = {
+        ...gameMediaHeaders(ownerId, descriptor),
+        "cache-control": "public, max-age=31536000, immutable"
+      };
+      return NextResponse.json({
+        objectKey,
+        uploadUrl: presignMvpPut(config, objectKey, headers, GAME_MEDIA_SIGNING_SECONDS),
+        publicUrl: gameMediaPublicUrl(config, objectKey),
+        requiredHeaders: headers,
+        expiresAt: new Date(Date.now() + GAME_MEDIA_SIGNING_SECONDS * 1000).toISOString()
+      });
+    }
 
-    const [coverUrl, thumbnailUrl, screenshotUrls] = await Promise.all([
-      cover ? uploadToCloudinary(cover, `${slug}-cover`, "uniblex/game-covers") : Promise.resolve(""),
-      thumbnail ? uploadToCloudinary(thumbnail, `${slug}-thumbnail`, "uniblex/game-thumbnails") : Promise.resolve(""),
-      Promise.all(screenshots.map((file, index) => uploadToCloudinary(file, `${slug}-screenshot-${index + 1}`, "uniblex/game-screenshots")))
-    ]);
+    if (action === "verify") {
+      const descriptor = validateGameMediaDescriptor(body.file);
+      const objectKey = assertGameMediaKey(String(body.objectKey || ""), ownerId, descriptor.draftId, descriptor.role);
+      const response = await headR2ObjectResponse(config, objectKey);
+      if (!response.ok) return NextResponse.json({ error: "Uploaded media object was not found." }, { status: 409 });
+      verifyGameMediaHead(descriptor, ownerId, response.headers);
+      return NextResponse.json({
+        verified: true,
+        objectKey,
+        publicUrl: gameMediaPublicUrl(config, objectKey),
+        metadata: { role: descriptor.role, name: descriptor.name, contentType: descriptor.contentType, size: descriptor.size, sha256: descriptor.sha256 }
+      });
+    }
 
-    return NextResponse.json({ coverUrl, thumbnailUrl, screenshotUrls });
+    if (action === "cleanup") {
+      const draftId = String(body.draftId || "");
+      const keys = Array.isArray(body.objectKeys) ? [...new Set(body.objectKeys.map(String))] : [];
+      if (keys.length > 8) throw new Error("Too many media objects were requested for cleanup.");
+      const validated = keys.map((key) => assertGameMediaKey(key, ownerId, draftId));
+      await Promise.all(validated.map((key) => deleteMvpObject(config, key)));
+      return NextResponse.json({ cleaned: validated.length });
+    }
+
+    return NextResponse.json({ error: "Media upload action is invalid." }, { status: 400 });
   } catch (error) {
     return NextResponse.json({ error: safeMediaError(error) }, { status: 400 });
   }
 }
 
-function optionalImage(value: FormDataEntryValue | null, label: string) {
-  if (!(value instanceof File) || value.size === 0) return null;
-  return validateImage(value, label);
-}
-
-function requiredImage(value: FormDataEntryValue, label: string) {
-  if (!(value instanceof File) || value.size === 0) throw new Error(`${label} is missing.`);
-  return validateImage(value, label);
-}
-
-function validateImage(file: File, label: string) {
-  if (!allowedImageTypes.has(file.type)) throw new Error(`${label} must be a JPG, PNG, or WebP file.`);
-  if (file.size > maxImageBytes) throw new Error(`${label} must be 15 MB or smaller.`);
-  return file;
-}
-
-async function uploadToCloudinary(file: File, publicId: string, folder: string) {
-  const cloudName = env("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME", "CLOUDINARY_CLOUD_NAME") || "dktp3tqgl";
-  const uploadPreset = env("NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET", "CLOUDINARY_UPLOAD_PRESET") || "uniblex_uploads";
-  const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
-  const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
-  if (!cloudName || (!uploadPreset && (!apiKey || !apiSecret))) throw new Error("Media storage is not configured.");
-
-  const body = new FormData();
-  body.set("file", file);
-  body.set("folder", folder);
-  body.set("public_id", publicId);
-  if (uploadPreset) {
-    body.set("upload_preset", uploadPreset);
-  } else if (apiKey && apiSecret) {
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    body.set("api_key", apiKey);
-    body.set("timestamp", timestamp);
-    body.set("signature", sign({ folder, public_id: publicId, timestamp }, apiSecret));
-  }
-
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body });
-  const payload = await response.json().catch(() => ({})) as { secure_url?: string; error?: { message?: string } };
-  if (!response.ok || !payload.secure_url) throw new Error(payload.error?.message || "Media upload failed.");
-  return payload.secure_url;
-}
-
-function env(...keys: string[]) {
-  for (const key of keys) { const value = process.env[key]?.trim(); if (value) return value; }
-  return "";
-}
-
-function sign(params: Record<string, string>, secret: string) {
-  const values = Object.entries(params).sort(([left], [right]) => left.localeCompare(right)).map(([key, value]) => `${key}=${value}`).join("&");
-  return createHash("sha1").update(`${values}${secret}`).digest("hex");
-}
-
 function safeMediaError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Media upload failed.";
-  if (/cloudinary|api[_ -]?key|secret|signature|preset/i.test(message)) return "Media upload could not be completed.";
+  const message = error instanceof Error ? error.message : "Media upload could not be completed.";
+  if (/access.?key|secret|signature|credential|x-amz-/i.test(message)) return "Media upload could not be completed.";
   return message.slice(0, 240);
 }

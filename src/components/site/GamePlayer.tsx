@@ -14,8 +14,9 @@ type GamePlayerProps = {
 };
 
 export function GamePlayer({ title, slug, cover, iframeUrl, aspectRatio = "16/9", desktopControls, mobileControls }: GamePlayerProps) {
-  const [started, setStarted] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const autoStartCarSim = slug === "car-sim-game";
+  const [started, setStarted] = useState(autoStartCarSim);
+  const [loaded, setLoaded] = useState(autoStartCarSim);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

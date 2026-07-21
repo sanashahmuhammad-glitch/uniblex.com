@@ -1,20 +1,49 @@
 "use client";
 
-import {useRef,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
+import {formatMegabytes,getUnityDownloadPlan,initialUnityProgress,reduceUnityProgress,type UnityProgressState} from "@/lib/unityLoadingProgress.js";
 
 type LoaderConfig={title:string;coverUrl:string;thumbnailUrl:string;entryUrl:string;totalBytes:number;files:Array<{url:string;size:number;contentEncoding:string}>};
 type Phase="idle"|"loading"|"ready"|"error";
+type UnityMessage={source?:string;type?:string;message?:string;progress?:number;loadedBytes?:number;totalBytes?:number;stage?:string};
+
+const CAR_SIM_STAGING_PREFIX="/staging-webgl-uploads/4622d198-aeea-4129-a957-a05ba73a5d56/";
 
 export function WebglLoader({config}:{config:LoaderConfig}) {
+  const stagedLoader=config.entryUrl.includes(CAR_SIM_STAGING_PREFIX);
   const root=useRef<HTMLDivElement>(null);
-  const [phase,setPhase]=useState<Phase>("idle");
+  const iframe=useRef<HTMLIFrameElement>(null);
+  const [phase,setPhase]=useState<Phase>(stagedLoader?"loading":"idle");
   const [loaded,setLoaded]=useState(0);
+  const downloadPlan=useMemo(()=>getUnityDownloadPlan(config.files),[config.files]);
+  const [unityProgress,setUnityProgress]=useState<UnityProgressState>(()=>initialUnityProgress(downloadPlan.totalBytes||config.totalBytes));
   const [error,setError]=useState("");
+  const [loadAttempt,setLoadAttempt]=useState(stagedLoader?1:0);
   const total=Math.max(config.totalBytes,config.files.reduce((sum,file)=>sum+file.size,0),1);
   const percent=Math.min(100,Math.round((loaded/total)*100));
 
+  useEffect(()=>{
+    if(!stagedLoader||phase!=="loading") return;
+    const entryOrigin=new URL(config.entryUrl).origin;
+    const onMessage=(event:MessageEvent<UnityMessage>)=>{
+      if(event.origin!==entryOrigin||event.source!==iframe.current?.contentWindow||event.data?.source!=="uniblex-car-sim") return;
+      if(event.data.type==="unity-progress") {
+        setUnityProgress((previous)=>reduceUnityProgress(previous,event.data,downloadPlan));
+      } else if(event.data.type==="unity-ready") {
+        setPhase("ready");
+        window.setTimeout(()=>iframe.current?.focus(),450);
+      } else if(event.data.type==="unity-error") {
+        setError(event.data.message||"Unable to start the Unity runtime.");
+        setPhase("error");
+      }
+    };
+    window.addEventListener("message",onMessage);
+    return()=>window.removeEventListener("message",onMessage);
+  },[config.entryUrl,downloadPlan,phase,stagedLoader]);
+
   async function start() {
-    setPhase("loading");setLoaded(0);setError("");
+    setPhase("loading");setLoaded(0);setUnityProgress(initialUnityProgress(downloadPlan.totalBytes||config.totalBytes));setError("");
+    if(stagedLoader) {setLoadAttempt((attempt)=>attempt+1);return;}
     try {
       let completed=0;
       const queue=[...config.files];
@@ -37,14 +66,27 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
   async function fullscreen() { if(root.current?.requestFullscreen) await root.current.requestFullscreen(); }
 
   return <main className="flex min-h-screen items-center justify-center bg-black p-0 text-white">
-    <div ref={root} tabIndex={0} className="relative aspect-video w-full max-w-[1920px] overflow-hidden bg-black outline-none" onClick={()=>root.current?.focus()}>
-      {phase==="ready"?<iframe src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen className="h-full w-full border-0 bg-black"/>:
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-cover bg-center p-6 text-center" style={{backgroundImage:`linear-gradient(rgba(0,0,0,.58),rgba(0,0,0,.88)),url(${config.coverUrl})`}}>
+    <div ref={root} tabIndex={0} className="relative aspect-video w-full max-w-[1920px] overflow-hidden bg-black outline-none" onClick={()=>{root.current?.focus();if(phase==="ready") iframe.current?.focus();}}>
+      {stagedLoader?<>
+        <iframe key={loadAttempt} ref={iframe} src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen tabIndex={0} className={"h-full w-full border-0 bg-black transition-opacity duration-500 motion-reduce:transition-none "+(phase==="ready"?"opacity-100":"opacity-0")}/>
+        <div aria-hidden={phase==="ready"} className={"absolute inset-0 flex flex-col items-center justify-center bg-cover bg-center p-6 text-center transition-opacity duration-500 motion-reduce:transition-none "+(phase==="ready"?"pointer-events-none opacity-0":"opacity-100")} style={{backgroundImage:"linear-gradient(rgba(0,0,0,.58),rgba(0,0,0,.88)),url("+config.coverUrl+")"}}>
+          {config.thumbnailUrl?<img src={config.thumbnailUrl} alt="" className="mb-5 aspect-video w-40 rounded-lg object-cover shadow-2xl"/>:null}
+          <h1 className="font-heading text-3xl sm:text-5xl">{config.title}</h1>
+          {phase==="loading"?<div className="mt-7 w-full max-w-xl" role="status" aria-live="polite" aria-atomic="true">
+            <div className="mb-2 flex justify-between text-sm"><span>{unityProgress.status}</span><span>{unityProgress.percentage}%</span></div>
+            <div className="h-3 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-label="Game download progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={unityProgress.percentage}><div className="h-full rounded-full bg-uniblex-blue transition-[width] duration-200 ease-out motion-reduce:transition-none" style={{width:unityProgress.percentage+"%"}}/></div>
+            <p className="mt-3 text-sm text-white/75">{formatMegabytes(unityProgress.loadedBytes)} / {formatMegabytes(unityProgress.totalBytes)} MB</p>
+          </div>:null}
+          {phase==="error"?<div className="mt-6" role="alert"><p className="text-red-200">{error}</p><button className="btn-primary mt-4" onClick={start}>Retry</button></div>:null}
+          <p className="mt-5 hidden text-sm text-white/80 [@media(orientation:portrait)]:block">Rotate your device for the best 16:9 experience.</p>
+        </div>
+      </>:phase==="ready"?<iframe src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen className="h-full w-full border-0 bg-black"/>:
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-cover bg-center p-6 text-center" style={{backgroundImage:"linear-gradient(rgba(0,0,0,.58),rgba(0,0,0,.88)),url("+config.coverUrl+")"}}>
         {config.thumbnailUrl?<img src={config.thumbnailUrl} alt="" className="mb-5 aspect-video w-40 rounded-lg object-cover shadow-2xl"/>:null}
         <h1 className="font-heading text-3xl sm:text-5xl">{config.title}</h1>
         {phase==="loading"?<div className="mt-7 w-full max-w-xl">
           <div className="mb-2 flex justify-between text-sm"><span>Loading game files</span><span>{percent}%</span></div>
-          <div className="h-3 overflow-hidden rounded-full bg-white/20"><div className="h-full bg-uniblex-blue transition-all" style={{width:`${percent}%`}}/></div>
+          <div className="h-3 overflow-hidden rounded-full bg-white/20"><div className="h-full bg-uniblex-blue transition-all" style={{width:percent+"%"}}/></div>
           <p className="mt-3 text-sm text-white/75">{formatMb(loaded)} MB / {formatMb(total)} MB</p>
         </div>:null}
         {phase==="idle"?<button className="btn-primary mt-7" onClick={start}>Load Game</button>:null}
