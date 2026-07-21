@@ -1,10 +1,11 @@
 "use client";
 
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
+import {formatMegabytes,getUnityDownloadPlan,initialUnityProgress,reduceUnityProgress,type UnityProgressState} from "@/lib/unityLoadingProgress.js";
 
 type LoaderConfig={title:string;coverUrl:string;thumbnailUrl:string;entryUrl:string;totalBytes:number;files:Array<{url:string;size:number;contentEncoding:string}>};
 type Phase="idle"|"loading"|"ready"|"error";
-type UnityMessage={source?:string;type?:string;message?:string};
+type UnityMessage={source?:string;type?:string;message?:string;progress?:number;loadedBytes?:number;totalBytes?:number;stage?:string};
 
 const CAR_SIM_STAGING_PREFIX="/staging-webgl-uploads/4622d198-aeea-4129-a957-a05ba73a5d56/";
 
@@ -14,6 +15,8 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
   const iframe=useRef<HTMLIFrameElement>(null);
   const [phase,setPhase]=useState<Phase>(stagedLoader?"loading":"idle");
   const [loaded,setLoaded]=useState(0);
+  const downloadPlan=useMemo(()=>getUnityDownloadPlan(config.files),[config.files]);
+  const [unityProgress,setUnityProgress]=useState<UnityProgressState>(()=>initialUnityProgress(downloadPlan.totalBytes||config.totalBytes));
   const [error,setError]=useState("");
   const [loadAttempt,setLoadAttempt]=useState(stagedLoader?1:0);
   const total=Math.max(config.totalBytes,config.files.reduce((sum,file)=>sum+file.size,0),1);
@@ -24,7 +27,9 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
     const entryOrigin=new URL(config.entryUrl).origin;
     const onMessage=(event:MessageEvent<UnityMessage>)=>{
       if(event.origin!==entryOrigin||event.source!==iframe.current?.contentWindow||event.data?.source!=="uniblex-car-sim") return;
-      if(event.data.type==="unity-ready") {
+      if(event.data.type==="unity-progress") {
+        setUnityProgress((previous)=>reduceUnityProgress(previous,event.data,downloadPlan));
+      } else if(event.data.type==="unity-ready") {
         setPhase("ready");
         window.setTimeout(()=>iframe.current?.focus(),450);
       } else if(event.data.type==="unity-error") {
@@ -34,10 +39,10 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
     };
     window.addEventListener("message",onMessage);
     return()=>window.removeEventListener("message",onMessage);
-  },[config.entryUrl,phase,stagedLoader]);
+  },[config.entryUrl,downloadPlan,phase,stagedLoader]);
 
   async function start() {
-    setPhase("loading");setLoaded(0);setError("");
+    setPhase("loading");setLoaded(0);setUnityProgress(initialUnityProgress(downloadPlan.totalBytes||config.totalBytes));setError("");
     if(stagedLoader) {setLoadAttempt((attempt)=>attempt+1);return;}
     try {
       let completed=0;
@@ -68,8 +73,9 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
           {config.thumbnailUrl?<img src={config.thumbnailUrl} alt="" className="mb-5 aspect-video w-40 rounded-lg object-cover shadow-2xl"/>:null}
           <h1 className="font-heading text-3xl sm:text-5xl">{config.title}</h1>
           {phase==="loading"?<div className="mt-7 w-full max-w-xl" role="status" aria-live="polite" aria-atomic="true">
-            <div className="mb-2 text-sm"><span>Loading game files{"\u2026"}</span></div>
-            <div className="h-3 overflow-hidden rounded-full bg-white/20" aria-hidden="true"><div className="h-full w-2/3 animate-pulse rounded-full bg-uniblex-blue motion-reduce:animate-none"/></div>
+            <div className="mb-2 flex justify-between text-sm"><span>{unityProgress.status}</span><span>{unityProgress.percentage}%</span></div>
+            <div className="h-3 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-label="Game download progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={unityProgress.percentage}><div className="h-full rounded-full bg-uniblex-blue transition-[width] duration-200 ease-out motion-reduce:transition-none" style={{width:unityProgress.percentage+"%"}}/></div>
+            <p className="mt-3 text-sm text-white/75">{formatMegabytes(unityProgress.loadedBytes)} / {formatMegabytes(unityProgress.totalBytes)} MB</p>
           </div>:null}
           {phase==="error"?<div className="mt-6" role="alert"><p className="text-red-200">{error}</p><button className="btn-primary mt-4" onClick={start}>Retry</button></div>:null}
           <p className="mt-5 hidden text-sm text-white/80 [@media(orientation:portrait)]:block">Rotate your device for the best 16:9 experience.</p>
