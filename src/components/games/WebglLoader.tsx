@@ -7,23 +7,21 @@ type LoaderConfig={title:string;coverUrl:string;thumbnailUrl:string;entryUrl:str
 type Phase="idle"|"loading"|"ready"|"error";
 type UnityMessage={source?:string;type?:string;message?:string;progress?:number;loadedBytes?:number;totalBytes?:number;stage?:string};
 
-const CAR_SIM_STAGING_PREFIX="/staging-webgl-uploads/4622d198-aeea-4129-a957-a05ba73a5d56/";
-
 export function WebglLoader({config}:{config:LoaderConfig}) {
-  const stagedLoader=config.entryUrl.includes(CAR_SIM_STAGING_PREFIX);
+  const downloadPlan=useMemo(()=>getUnityDownloadPlan(config.files),[config.files]);
+  const runtimeLoader=downloadPlan.totalBytes>0;
   const root=useRef<HTMLDivElement>(null);
   const iframe=useRef<HTMLIFrameElement>(null);
-  const [phase,setPhase]=useState<Phase>(stagedLoader?"loading":"idle");
+  const [phase,setPhase]=useState<Phase>(runtimeLoader?"loading":"idle");
   const [loaded,setLoaded]=useState(0);
-  const downloadPlan=useMemo(()=>getUnityDownloadPlan(config.files),[config.files]);
   const [unityProgress,setUnityProgress]=useState<UnityProgressState>(()=>initialUnityProgress(downloadPlan.totalBytes||config.totalBytes));
   const [error,setError]=useState("");
-  const [loadAttempt,setLoadAttempt]=useState(stagedLoader?1:0);
+  const [loadAttempt,setLoadAttempt]=useState(runtimeLoader?1:0);
   const total=Math.max(config.totalBytes,config.files.reduce((sum,file)=>sum+file.size,0),1);
   const percent=Math.min(100,Math.round((loaded/total)*100));
 
   useEffect(()=>{
-    if(!stagedLoader||phase!=="loading") return;
+    if(!runtimeLoader||phase!=="loading") return;
     const entryOrigin=new URL(config.entryUrl).origin;
     const onMessage=(event:MessageEvent<UnityMessage>)=>{
       if(event.origin!==entryOrigin||event.source!==iframe.current?.contentWindow||event.data?.source!=="uniblex-car-sim") return;
@@ -39,11 +37,11 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
     };
     window.addEventListener("message",onMessage);
     return()=>window.removeEventListener("message",onMessage);
-  },[config.entryUrl,downloadPlan,phase,stagedLoader]);
+  },[config.entryUrl,downloadPlan,phase,runtimeLoader]);
 
   async function start() {
     setPhase("loading");setLoaded(0);setUnityProgress(initialUnityProgress(downloadPlan.totalBytes||config.totalBytes));setError("");
-    if(stagedLoader) {setLoadAttempt((attempt)=>attempt+1);return;}
+    if(runtimeLoader) {setLoadAttempt((attempt)=>attempt+1);return;}
     try {
       let completed=0;
       const queue=[...config.files];
@@ -67,7 +65,7 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
 
   return <main className="flex min-h-screen items-center justify-center bg-black p-0 text-white">
     <div ref={root} tabIndex={0} className="relative aspect-video w-full max-w-[1920px] overflow-hidden bg-black outline-none" onClick={()=>{root.current?.focus();if(phase==="ready") iframe.current?.focus();}}>
-      {stagedLoader?<>
+      {runtimeLoader?<>
         <iframe key={loadAttempt} ref={iframe} src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen tabIndex={0} className={"h-full w-full border-0 bg-black transition-opacity duration-500 motion-reduce:transition-none "+(phase==="ready"?"opacity-100":"opacity-0")}/>
         <div aria-hidden={phase==="ready"} className={"absolute inset-0 flex flex-col items-center justify-center bg-cover bg-center p-6 text-center transition-opacity duration-500 motion-reduce:transition-none "+(phase==="ready"?"pointer-events-none opacity-0":"opacity-100")} style={{backgroundImage:"linear-gradient(rgba(0,0,0,.58),rgba(0,0,0,.88)),url("+config.coverUrl+")"}}>
           {config.thumbnailUrl?<img src={config.thumbnailUrl} alt="" className="mb-5 aspect-video w-40 rounded-lg object-cover shadow-2xl"/>:null}
