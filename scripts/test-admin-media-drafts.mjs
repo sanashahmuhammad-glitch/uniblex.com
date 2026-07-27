@@ -39,10 +39,12 @@ test("signed headers bind type, owner, draft, role, size, and checksum", () => {
   equal(headers["x-amz-meta-draft-id"], draftId);
   equal(headers["x-amz-meta-media-role"], "cover");
   equal(headers["x-amz-meta-size-bytes"], String(descriptor.size));
+  equal(headers["x-amz-meta-sha256"], sha256);
+  equal("x-amz-checksum-sha256" in headers, false);
   equal(headers["if-none-match"], "*");
 });
 test("HEAD verification accepts matching authoritative metadata", () => {
-  const headers = new Headers({ "content-length": String(descriptor.size), "content-type": descriptor.contentType, "x-amz-meta-owner-id": ownerId, "x-amz-meta-draft-id": draftId, "x-amz-meta-media-role": descriptor.role, "x-amz-meta-sha256": sha256, "x-amz-checksum-sha256": Buffer.from(sha256, "hex").toString("base64") });
+  const headers = new Headers({ "content-length": String(descriptor.size), "content-type": descriptor.contentType, "x-amz-meta-owner-id": ownerId, "x-amz-meta-draft-id": draftId, "x-amz-meta-media-role": descriptor.role, "x-amz-meta-sha256": sha256 });
   mediaPolicy.verifyGameMediaHead(descriptor, ownerId, headers);
 });
 test("HEAD verification rejects mismatched size", () => throws(() => mediaPolicy.verifyGameMediaHead(descriptor, ownerId, new Headers({ "content-length": "1" })), "size"));

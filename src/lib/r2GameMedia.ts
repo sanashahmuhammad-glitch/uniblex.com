@@ -71,7 +71,6 @@ export function gameMediaHeaders(ownerId: string, descriptor: GameMediaDescripto
     "x-amz-meta-media-role": descriptor.role,
     "x-amz-meta-size-bytes": String(descriptor.size),
     "x-amz-meta-sha256": descriptor.sha256,
-    "x-amz-checksum-sha256": Buffer.from(descriptor.sha256, "hex").toString("base64"),
     "if-none-match": "*"
   };
 }
@@ -86,23 +85,12 @@ export function verifyGameMediaHead(
   headers: Headers
 ) {
   const contentLength = Number(headers.get("content-length") ?? headers.get("x-amz-meta-size-bytes"));
-  const checksum = decodeChecksum(headers.get("x-amz-checksum-sha256"));
   if (contentLength !== descriptor.size) throw new Error("Uploaded media size verification failed.");
   if ((headers.get("content-type") || "").split(";")[0].trim().toLowerCase() !== descriptor.contentType) throw new Error("Uploaded media type verification failed.");
   if (headers.get("x-amz-meta-owner-id") !== ownerId || headers.get("x-amz-meta-draft-id") !== descriptor.draftId || headers.get("x-amz-meta-media-role") !== descriptor.role) {
     throw new Error("Uploaded media ownership verification failed.");
   }
-  if (headers.get("x-amz-meta-sha256")?.toLowerCase() !== descriptor.sha256 || checksum !== descriptor.sha256) {
+  if (headers.get("x-amz-meta-sha256")?.toLowerCase() !== descriptor.sha256) {
     throw new Error("Uploaded media checksum verification failed.");
-  }
-}
-
-function decodeChecksum(value: string | null) {
-  if (!value) return "";
-  try {
-    const decoded = Buffer.from(value.trim(), "base64");
-    return decoded.length === 32 ? decoded.toString("hex") : "";
-  } catch {
-    return "";
   }
 }
