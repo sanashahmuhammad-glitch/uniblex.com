@@ -1,0 +1,27 @@
+import fs from "node:fs";
+import path from "node:path";
+import assert from "node:assert/strict";
+const root=process.cwd();let count=0;
+const source=file=>fs.readFileSync(path.join(root,file),"utf8");
+function test(name,run){run();count++;console.log(`ok ${count} - ${name}`);}
+const route=source("src/app/developers/[[...slug]]/page.tsx");
+const portal=source("src/lib/developerPortal.ts");
+const migration=source("supabase/migrations/20260726235634_developer_portal.sql");
+const mediaClient=source("src/lib/gameMediaUploadClient.ts");
+const buildClient=source("src/lib/developerBuildUploadClient.ts");
+const mediaApi=source("src/app/api/developer/uploads/media/route.ts");
+const buildApi=source("src/app/api/developer/uploads/build/route.ts");
+const auth=source("src/lib/serverDeveloperAuth.ts");
+test("all required public portal routes are dispatched",()=>{for(const page of ["docs","sdk","requirements","guidelines","unity","html5","builds","media","publishing","monetization","faq","support","login","register","recover"])assert.ok(route.includes(`"${page}"`),page);});
+test("private workspace routes are noindex",()=>{assert.ok(route.includes("robots: isPrivate"));for(const page of ["dashboard","games","drafts","submissions","uploads","published","notifications","profile","team","billing"])assert.ok(route.includes(`"${page}"`),page);});
+test("submission state machine contains every controlled status",()=>{for(const status of ["draft","uploading","upload_failed","verification_pending","verification_failed","ready_for_review","submitted","under_review","changes_requested","approved","rejected","published","unpublished","archived"])assert.ok(portal.includes(`"${status}"`),status);});
+test("database migration is additive and enables RLS",()=>{for(const table of ["developer_profiles","game_submissions","game_media","game_builds","submission_reviews","notifications","support_tickets","audit_events"]){assert.ok(migration.includes(`create table if not exists public.${table}`),table);assert.ok(migration.includes(`alter table public.${table} enable row level security`),table);}assert.doesNotMatch(migration,/drop table|truncate/i);});
+test("developer identity is verified server-side",()=>{assert.ok(auth.includes("auth.getUser()"));assert.ok(auth.includes('from("admins")'));assert.ok(auth.includes('from("developer_profiles")'));assert.doesNotMatch(auth,/user_metadata.*role/);});
+test("media bytes bypass application functions",()=>{assert.ok(mediaClient.includes('xhr.open("PUT", uploadUrl)'));assert.ok(mediaClient.includes("/api/developer/uploads/media"));assert.doesNotMatch(mediaApi,/formData|arrayBuffer\(/i);});
+test("media failures report accurate phases",()=>{for(const message of ["Upload connection failed","R2 rejected the uploaded file","Upload URL expired","File already exists"])assert.ok(mediaClient.includes(message),message);assert.ok(mediaApi.includes("Checksum did not match"));});
+test("verified media is bound to its developer submission",()=>{assert.ok(mediaApi.includes('from("game_submissions")'));assert.ok(mediaApi.includes('.eq("owner_id",ownerId)'));assert.match(mediaApi,/from\("game_media"\)\.upsert/);});
+test("WebGL files upload directly with conditional signed writes",()=>{assert.ok(buildClient.includes("XMLHttpRequest"));assert.ok(buildClient.includes("readExtractedWebglFile"));assert.ok(buildApi.includes('"if-none-match":"*"'));assert.ok(buildApi.includes("headMvpObject"));});
+test("production and preview storage prefixes are isolated",()=>{assert.ok(buildApi.includes('env==="production"'));assert.ok(buildApi.includes('"developer-webgl-uploads"'));assert.ok(buildApi.includes('"staging-developer-webgl-uploads"'));assert.match(source("src/lib/r2GameMedia.ts"),/environment === "production".*"game-media"/s);});
+test("review decisions are server-authorized and private notes stay private",()=>{const review=source("src/app/api/admin/developer-submissions/route.ts");assert.ok(review.includes("verifyReviewerRequest"));assert.ok(review.includes("internal_notes"));assert.ok(!source("src/app/api/developer/submissions/route.ts").includes("internal_notes"));assert.ok(review.includes("Owner or admin authority is required to publish"));});
+test("support tickets enforce ownership and RLS",()=>{const support=source("src/app/api/developer/support/route.ts");assert.ok(support.includes('.eq("owner_id",auth.user.id)'));assert.ok(migration.includes("Developer creates tickets"));assert.ok(migration.includes("Reviewer updates tickets"));});
+console.log(`\n${count} Developer Portal tests passed.`);

@@ -268,4 +268,4 @@ function uuid(value: string) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}
 function text(value: unknown, length: number) { return typeof value === "string" ? value.trim().slice(0, length) : ""; }
 function iso(value: unknown) { const date = new Date(String(value || "")); return Number.isFinite(date.getTime()) ? date.toISOString() : ""; }
 function safePublicUrl(value: unknown) { try { const url = new URL(String(value || "")); if (url.protocol !== "https:" || url.username || url.password || /(?:x-amz-|token|signature|credential)/i.test(url.search)) return ""; url.hash = ""; return url.toString(); } catch { return ""; } }
-function safeObjectKey(value: unknown) { const key = text(value, 420); return /^staging-game-media\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/(cover|thumbnail|screenshot-[1-6])\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(key) ? key : ""; }
+function safeObjectKey(value: unknown) { const key = text(value, 420); return /^(?:staging-)?game-media\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/(cover|thumbnail|screenshot-[1-6])\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(key) ? key : ""; }

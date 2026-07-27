@@ -30,6 +30,17 @@ test("media policy rejects unsupported MIME", () => throws(() => mediaPolicy.val
 test("media policy rejects files over 15 MB", () => throws(() => mediaPolicy.validateGameMediaDescriptor({ ...descriptor, size: 15 * 1024 * 1024 + 1 }), "15 MB"));
 test("media policy rejects screenshot roles outside one through six", () => throws(() => mediaPolicy.validateGameMediaDescriptor({ ...descriptor, role: "screenshot-7" }), "role"));
 test("generated keys bind owner, draft, role, and random object id", () => equal(mediaPolicy.createGameMediaKey(ownerId, descriptor, objectId), `staging-game-media/${ownerId}/${draftId}/cover/${objectId}.png`));
+test("production keys use the production-only media prefix", () => {
+  const previous = process.env.VERCEL_ENV;
+  try {
+    process.env.VERCEL_ENV = "production";
+    equal(mediaPolicy.createGameMediaKey(ownerId, descriptor, objectId), `game-media/${ownerId}/${draftId}/cover/${objectId}.png`);
+    throws(() => mediaPolicy.assertGameMediaKey(`staging-game-media/${ownerId}/${draftId}/cover/${objectId}.png`, ownerId, draftId), "outside");
+  } finally {
+    if (previous === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = previous;
+  }
+});
 test("key authorization rejects another draft", () => throws(() => mediaPolicy.assertGameMediaKey(`staging-game-media/${ownerId}/${draftId}/cover/${objectId}.png`, ownerId, "44444444-4444-4444-8444-444444444444"), "outside"));
 test("key authorization rejects role mismatch", () => throws(() => mediaPolicy.assertGameMediaKey(`staging-game-media/${ownerId}/${draftId}/cover/${objectId}.png`, ownerId, draftId, "thumbnail"), "role"));
 test("signed headers bind type, owner, draft, role, size, and checksum", () => {

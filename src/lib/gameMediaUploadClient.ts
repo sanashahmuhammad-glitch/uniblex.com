@@ -38,12 +38,12 @@ export async function uploadGameMediaFile(
   const sha256 = await hashFile(file, signal);
   report(onProgress, role, "signing", 0, file.size);
   const descriptor = { draftId, role, name: file.name, contentType: file.type, size: file.size, sha256 };
-  const signed = await mediaApi({ action: "sign", file: descriptor }, signal);
+  const signed = await mediaApi({ action: "sign", file: descriptor }, signal, "signing");
   const objectKey = requireText(signed.objectKey, "Media signing response is incomplete.");
   try {
     await putFile(requireText(signed.uploadUrl, "Media signing response is incomplete."), file, asHeaders(signed.requiredHeaders), role, onProgress, signal);
     report(onProgress, role, "verifying", file.size, file.size);
-    const verified = await mediaApi({ action: "verify", file: descriptor, objectKey }, signal);
+    const verified = await mediaApi({ action: "verify", file: descriptor, objectKey }, signal, "verifying");
     report(onProgress, role, "verified", file.size, file.size);
     return {
       role,
@@ -73,12 +73,12 @@ export function mediaRoleLabel(role: GameMediaRole) {
   return `Screenshot ${Number(role.split("-")[1])}`;
 }
 
-async function mediaApi(body: Record<string, unknown>, signal?: AbortSignal) {
+async function mediaApi(body: Record<string, unknown>, signal?: AbortSignal, phase: GameMediaUploadPhase = "signing") {
   if (!supabase) throw new Error("Supabase is not configured.");
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  if (!token) throw new Error("Admin session expired. Sign in again.");
-  const response = await fetch("/api/admin/uploads/game-media", {
+  if (!token) throw new Error("Authentication expired. Sign in again.");
+  const response = await fetch("/api/developer/uploads/media", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
@@ -103,8 +103,13 @@ function putFile(
     xhr.open("PUT", uploadUrl);
     for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
     xhr.upload.onprogress = (event) => report(onProgress, role, "uploading", event.loaded, event.lengthComputable ? event.total : file.size);
-    xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Direct media upload failed with HTTP ${xhr.status}.`));
-    xhr.onerror = () => reject(new Error("Direct media upload failed because of a network or R2 CORS error."));
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) return resolve();
+      if (xhr.status === 412) return reject(new Error("File already exists. Request a fresh upload authorization."));
+      if (xhr.status === 401 || xhr.status === 403) return reject(new Error("Upload URL expired or R2 rejected the signed request."));
+      reject(new Error(`R2 rejected the uploaded file (HTTP ${xhr.status}).`));
+    };
+    xhr.onerror = () => reject(new Error("Upload connection failed. Check the network and retry this file."));
     xhr.onabort = () => reject(new DOMException("Media upload cancelled.", "AbortError"));
     signal.addEventListener("abort", abort, { once: true });
     const finish = () => signal.removeEventListener("abort", abort);
