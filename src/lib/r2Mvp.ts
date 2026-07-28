@@ -29,14 +29,14 @@ const region = "auto";
 const service = "s3";
 const unsignedPayload = "UNSIGNED-PAYLOAD";
 
-export function getR2MvpConfig(): R2MvpConfig {
-  const preview = process.env.VERCEL_ENV === "preview";
+export function getR2MvpConfig(environment: NodeJS.ProcessEnv = process.env): R2MvpConfig {
+
   const config = {
-    accountId: readEnv("R2_ACCOUNT_ID", "CLOUDFLARE_R2_ACCOUNT_ID"),
-    bucket: preview ? "uniblex-games-preview" : readEnv("R2_BUCKET", "CLOUDFLARE_R2_BUCKET"),
-    accessKeyId: readEnv("R2_ACCESS_KEY_ID", "CLOUDFLARE_R2_ACCESS_KEY_ID"),
-    secretAccessKey: readEnv("R2_SECRET_ACCESS_KEY", "CLOUDFLARE_R2_SECRET_ACCESS_KEY"),
-    publicBaseUrl: (preview ? "https://pub-88826996dd154c8886ae581e9ea4bb64.r2.dev" : readEnv("R2_PUBLIC_BASE_URL", "NEXT_PUBLIC_R2_PUBLIC_BASE_URL")).replace(/\/+$/, "")
+    accountId: readEnv(environment, "R2_ACCOUNT_ID", "CLOUDFLARE_R2_ACCOUNT_ID"),
+    bucket: readEnv(environment, "R2_BUCKET", "CLOUDFLARE_R2_BUCKET"),
+    accessKeyId: readEnv(environment, "R2_ACCESS_KEY_ID", "CLOUDFLARE_R2_ACCESS_KEY_ID"),
+    secretAccessKey: readEnv(environment, "R2_SECRET_ACCESS_KEY", "CLOUDFLARE_R2_SECRET_ACCESS_KEY"),
+    publicBaseUrl: readEnv(environment, "R2_PUBLIC_BASE_URL", "NEXT_PUBLIC_R2_PUBLIC_BASE_URL").replace(/\/+$/, "")
   };
   if (Object.values(config).some((value) => !value)) throw new Error("R2 upload storage is not configured.");
   return config;
@@ -162,9 +162,9 @@ async function signedRequest(config: R2MvpConfig, method: string, key: string, q
   });
 }
 
-function readEnv(...names: string[]) {
+function readEnv(environment: NodeJS.ProcessEnv, ...names: string[]) {
   for (const name of names) {
-    const value = process.env[name]?.trim();
+    const value = environment[name]?.trim();
     if (value) return value;
   }
   return "";

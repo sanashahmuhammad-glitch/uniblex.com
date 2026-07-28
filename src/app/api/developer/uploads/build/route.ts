@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { verifyDeveloperRequest } from "@/lib/serverDeveloperAuth";
 import { createUserSupabaseClient } from "@/lib/serverSupabase";
-import { areR2GameUploadsEnabled } from "@/lib/r2GameUploads";
+import { getR2GameUploadAvailability } from "@/lib/r2GameUploads";
 import { deleteMvpObject, getMvpHeadMismatch, getR2MvpConfig, headMvpObject, listMvpPrefix, presignMvpPut, sha256HexToBase64 } from "@/lib/r2Mvp";
 import { publicObjectUrl, validateWebglManifest, WEBGL_MVP_LIMITS } from "@/lib/webglMvpManifest";
 
@@ -11,9 +11,9 @@ type StoredFile={path:string;size:number;sha256:string;contentType:string;conten
 
 export async function POST(request:Request){
   const auth=await verifyDeveloperRequest(request);if(!auth.authorized)return NextResponse.json({error:auth.error},{status:401});
-  if(!areR2GameUploadsEnabled())return NextResponse.json({error:"Game uploads are currently unavailable."},{status:503});
+  const availability=getR2GameUploadAvailability(process.env);if(!availability.available)return NextResponse.json({error:availability.error,code:availability.code},{status:503});
   try{
-    const body=await request.json() as Record<string,unknown>;const action=String(body.action||"");const db=createUserSupabaseClient(request.headers.get("authorization") || "");const config=getR2MvpConfig();
+    const body=await request.json() as Record<string,unknown>;const action=String(body.action||"");const db=createUserSupabaseClient(request.headers.get("authorization") || "");const config=getR2MvpConfig(process.env);
     if(action==="initiate"){
       const submissionId=uuid(body.submissionId);const {data:submission}=await db.from("game_submissions").select("id").eq("id",submissionId).eq("owner_id",auth.user.id).maybeSingle();if(!submission)return NextResponse.json({error:"Submission was not found."},{status:404});
       const idempotencyKey=String(body.idempotencyKey||"");if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/.test(idempotencyKey))throw new Error("A valid build upload request identity is required.");const manifest=validateWebglManifest(body.manifest);

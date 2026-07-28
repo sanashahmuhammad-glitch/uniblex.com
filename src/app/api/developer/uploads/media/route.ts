@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { verifyDeveloperRequest } from "@/lib/serverDeveloperAuth";
 import { createUserSupabaseClient } from "@/lib/serverSupabase";
-import { areR2GameUploadsEnabled } from "@/lib/r2GameUploads";
+import { getR2GameUploadAvailability } from "@/lib/r2GameUploads";
 import { deleteMvpObject, getR2MvpConfig, headR2ObjectResponse, presignMvpPut } from "@/lib/r2Mvp";
 import { assertGameMediaKey, createGameMediaKey, GAME_MEDIA_SIGNING_SECONDS, gameMediaHeaders, gameMediaPublicUrl, validateGameMediaDescriptor, verifyGameMediaHead } from "@/lib/r2GameMedia";
 
 export const runtime="nodejs";export const dynamic="force-dynamic";
 export async function POST(request:Request){
   const auth=await verifyDeveloperRequest(request);if(!auth.authorized)return NextResponse.json({error:auth.error},{status:401});
-  if(!areR2GameUploadsEnabled())return NextResponse.json({error:"Game uploads are currently unavailable."},{status:503});
+  const availability=getR2GameUploadAvailability(process.env);if(!availability.available)return NextResponse.json({error:availability.error,code:availability.code},{status:503});
   try{
-    const body=await request.json() as Record<string,unknown>;const action=String(body.action||"");const config=getR2MvpConfig();const ownerId=auth.user.id;
+    const body=await request.json() as Record<string,unknown>;const action=String(body.action||"");const config=getR2MvpConfig(process.env);const ownerId=auth.user.id;
     if(action==="sign"){
       const descriptor=validateGameMediaDescriptor(body.file);const objectKey=createGameMediaKey(ownerId,descriptor);const headers={...gameMediaHeaders(ownerId,descriptor),"cache-control":"public, max-age=31536000, immutable"};
       return NextResponse.json({objectKey,uploadUrl:presignMvpPut(config,objectKey,headers,GAME_MEDIA_SIGNING_SECONDS),publicUrl:gameMediaPublicUrl(config,objectKey),requiredHeaders:headers,expiresAt:new Date(Date.now()+GAME_MEDIA_SIGNING_SECONDS*1000).toISOString()});
