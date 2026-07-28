@@ -30,12 +30,13 @@ const service = "s3";
 const unsignedPayload = "UNSIGNED-PAYLOAD";
 
 export function getR2MvpConfig(): R2MvpConfig {
+  const preview = process.env.VERCEL_ENV === "preview";
   const config = {
     accountId: readEnv("R2_ACCOUNT_ID", "CLOUDFLARE_R2_ACCOUNT_ID"),
-    bucket: readEnv("R2_BUCKET", "CLOUDFLARE_R2_BUCKET"),
+    bucket: preview ? "uniblex-games-preview" : readEnv("R2_BUCKET", "CLOUDFLARE_R2_BUCKET"),
     accessKeyId: readEnv("R2_ACCESS_KEY_ID", "CLOUDFLARE_R2_ACCESS_KEY_ID"),
     secretAccessKey: readEnv("R2_SECRET_ACCESS_KEY", "CLOUDFLARE_R2_SECRET_ACCESS_KEY"),
-    publicBaseUrl: readEnv("R2_PUBLIC_BASE_URL", "NEXT_PUBLIC_R2_PUBLIC_BASE_URL").replace(/\/+$/, "")
+    publicBaseUrl: (preview ? "https://pub-88826996dd154c8886ae581e9ea4bb64.r2.dev" : readEnv("R2_PUBLIC_BASE_URL", "NEXT_PUBLIC_R2_PUBLIC_BASE_URL")).replace(/\/+$/, "")
   };
   if (Object.values(config).some((value) => !value)) throw new Error("R2 upload storage is not configured.");
   return config;

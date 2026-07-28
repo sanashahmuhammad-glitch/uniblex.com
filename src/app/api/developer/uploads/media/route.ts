@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyDeveloperRequest } from "@/lib/serverDeveloperAuth";
-import { createServiceSupabaseClient } from "@/lib/serverServiceSupabase";
+import { createUserSupabaseClient } from "@/lib/serverSupabase";
 import { areR2GameUploadsEnabled } from "@/lib/r2GameUploads";
 import { deleteMvpObject, getR2MvpConfig, headR2ObjectResponse, presignMvpPut } from "@/lib/r2Mvp";
 import { assertGameMediaKey, createGameMediaKey, GAME_MEDIA_SIGNING_SECONDS, gameMediaHeaders, gameMediaPublicUrl, validateGameMediaDescriptor, verifyGameMediaHead } from "@/lib/r2GameMedia";
@@ -19,7 +19,7 @@ export async function POST(request:Request){
       const descriptor=validateGameMediaDescriptor(body.file);const objectKey=assertGameMediaKey(String(body.objectKey||""),ownerId,descriptor.draftId,descriptor.role);const response=await headR2ObjectResponse(config,objectKey);
       if(!response.ok)return NextResponse.json({error:response.status===404?"Upload completed but the object was not found.":"Upload completed but verification could not read the object."},{status:409});
       verifyGameMediaHead(descriptor,ownerId,response.headers);
-      const db=createServiceSupabaseClient();
+      const db=createUserSupabaseClient(request.headers.get("authorization") || "");
       const {data:submission}=await db.from("game_submissions").select("id").eq("id",descriptor.draftId).eq("owner_id",ownerId).maybeSingle();
       if(!submission)return NextResponse.json({error:"The media draft is not owned by this developer."},{status:403});
       const publicUrl=gameMediaPublicUrl(config,objectKey);

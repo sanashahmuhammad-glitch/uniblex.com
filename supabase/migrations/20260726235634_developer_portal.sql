@@ -4,9 +4,9 @@ alter table public.admins add constraint admins_role_check check (role in ('owne
 
 create or replace function public.is_portal_reviewer()
 returns boolean language sql stable security definer set search_path=public as $$
-  select exists(select 1 from public.admins where id=auth.uid() and is_active and role in ('owner','admin','reviewer'));
+  select exists(select 1 from public.admins where id=(select auth.uid()) and is_active and role in ('owner','admin','reviewer'));
 $$;
-revoke all on function public.is_portal_reviewer() from public;
+revoke all on function public.is_portal_reviewer() from public, anon;
 grant execute on function public.is_portal_reviewer() to authenticated;
 
 create table if not exists public.developer_profiles (
@@ -46,7 +46,7 @@ create table if not exists public.game_media (
   unique(submission_id,role)
 );
 
-create table if not exists public.game_builds (
+create table if not exists public.developer_game_builds (
   id uuid primary key default gen_random_uuid(),
   submission_id uuid not null references public.game_submissions(id) on delete cascade,
   owner_id uuid not null references public.developer_profiles(id) on delete cascade,
@@ -92,7 +92,7 @@ create table if not exists public.audit_events (
 create index if not exists game_submissions_owner_status_idx on public.game_submissions(owner_id,status,updated_at desc);
 create index if not exists game_submissions_review_queue_idx on public.game_submissions(status,submitted_at);
 create index if not exists game_media_submission_idx on public.game_media(submission_id);
-create index if not exists game_builds_submission_idx on public.game_builds(submission_id,created_at desc);
+create index if not exists developer_game_builds_submission_idx on public.developer_game_builds(submission_id,created_at desc);
 create index if not exists support_tickets_owner_idx on public.support_tickets(owner_id,created_at desc);
 create index if not exists notifications_user_idx on public.notifications(user_id,created_at desc);
 
@@ -106,23 +106,29 @@ create trigger set_support_tickets_updated_at before update on public.support_ti
 alter table public.developer_profiles enable row level security;
 alter table public.game_submissions enable row level security;
 alter table public.game_media enable row level security;
-alter table public.game_builds enable row level security;
+alter table public.developer_game_builds enable row level security;
 alter table public.submission_reviews enable row level security;
 alter table public.notifications enable row level security;
 alter table public.support_tickets enable row level security;
 alter table public.audit_events enable row level security;
 
-create policy "Developer owns profile" on public.developer_profiles for all to authenticated using(id=auth.uid() or public.is_portal_reviewer()) with check(id=auth.uid() or public.is_portal_reviewer());
-create policy "Developer owns submissions" on public.game_submissions for all to authenticated using(owner_id=auth.uid() or public.is_portal_reviewer()) with check(owner_id=auth.uid() or public.is_portal_reviewer());
-create policy "Developer reads media" on public.game_media for select to authenticated using(owner_id=auth.uid() or public.is_portal_reviewer());
-create policy "Developer reads builds" on public.game_builds for select to authenticated using(owner_id=auth.uid() or public.is_portal_reviewer());
-create policy "Submission review visibility" on public.submission_reviews for select to authenticated using(public.is_portal_reviewer() or exists(select 1 from public.game_submissions s where s.id=submission_id and s.owner_id=auth.uid()));
+create policy "Developer owns profile" on public.developer_profiles for all to authenticated using(id=(select auth.uid()) or public.is_portal_reviewer()) with check(id=(select auth.uid()) or public.is_portal_reviewer());
+create policy "Developer owns submissions" on public.game_submissions for all to authenticated using(owner_id=(select auth.uid()) or public.is_portal_reviewer()) with check(owner_id=(select auth.uid()) or public.is_portal_reviewer());
+create policy "Developer manages media" on public.game_media for all to authenticated using(owner_id=(select auth.uid()) or public.is_portal_reviewer()) with check(owner_id=(select auth.uid()) or public.is_portal_reviewer());
+create policy "Developer manages builds" on public.developer_game_builds for all to authenticated using(owner_id=(select auth.uid()) or public.is_portal_reviewer()) with check(owner_id=(select auth.uid()) or public.is_portal_reviewer());
+create policy "Submission review visibility" on public.submission_reviews for select to authenticated using(public.is_portal_reviewer() or exists(select 1 from public.game_submissions s where s.id=submission_id and s.owner_id=(select auth.uid())));
 create policy "Reviewer writes reviews" on public.submission_reviews for all to authenticated using(public.is_portal_reviewer()) with check(public.is_portal_reviewer());
-create policy "User reads notifications" on public.notifications for select to authenticated using(user_id=auth.uid() or public.is_portal_reviewer());
-create policy "Developer reads tickets" on public.support_tickets for select to authenticated using(owner_id=auth.uid() or public.is_portal_reviewer());
-create policy "Developer creates tickets" on public.support_tickets for insert to authenticated with check(owner_id=auth.uid());
+create policy "User reads notifications" on public.notifications for select to authenticated using(user_id=(select auth.uid()) or public.is_portal_reviewer());
+create policy "Developer reads tickets" on public.support_tickets for select to authenticated using(owner_id=(select auth.uid()) or public.is_portal_reviewer());
+create policy "Developer creates tickets" on public.support_tickets for insert to authenticated with check(owner_id=(select auth.uid()));
 create policy "Reviewer updates tickets" on public.support_tickets for update to authenticated using(public.is_portal_reviewer()) with check(public.is_portal_reviewer());
 create policy "Reviewer reads audit" on public.audit_events for select to authenticated using(public.is_portal_reviewer());
+create policy "Reviewer creates notifications" on public.notifications for insert to authenticated with check(public.is_portal_reviewer());
+create policy "Reviewer creates audit" on public.audit_events for insert to authenticated with check(public.is_portal_reviewer());
 
-grant select,insert,update on public.developer_profiles,public.game_submissions,public.support_tickets to authenticated;
-grant select on public.game_media,public.game_builds,public.submission_reviews,public.notifications to authenticated;
+grant select,insert,update on public.developer_profiles,public.game_submissions,public.support_tickets,public.game_media,public.developer_game_builds to authenticated;
+grant delete on public.game_media to authenticated;
+revoke select on public.submission_reviews from authenticated;
+grant select (id,submission_id,reviewer_id,decision,developer_feedback,checklist,created_at) on public.submission_reviews to authenticated;
+grant insert on public.submission_reviews,public.notifications,public.audit_events to authenticated;
+grant select on public.notifications to authenticated;

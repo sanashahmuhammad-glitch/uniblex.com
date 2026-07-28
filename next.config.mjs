@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || "";
+const isPreview = process.env.VERCEL_ENV === "preview";
+const supabaseUrl = isPreview ? "https://ddhbmaofuwegdresevur.supabase.co" : process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "";
+const supabaseAnonKey = isPreview ? "sb_publishable_uoqUpQ3OdKtnI6-gKbUmkw_HKifUwYl" : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || "";
 
 if (process.env.VERCEL_ENV === "production" && (!supabaseUrl || !supabaseAnonKey)) {
   throw new Error(

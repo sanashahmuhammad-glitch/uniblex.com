@@ -1,5 +1,5 @@
 import { createClient, type User } from "@supabase/supabase-js";
-import { createServiceSupabaseClient } from "@/lib/serverServiceSupabase";
+import { createUserSupabaseClient } from "@/lib/serverSupabase";
 
 type PortalRole = "owner" | "admin" | "reviewer" | "developer";
 
@@ -10,7 +10,7 @@ export type PortalAuthResult =
 export async function verifyDeveloperRequest(request: Request): Promise<PortalAuthResult> {
   const identity = await verifyBearerUser(request);
   if (!identity) return { authorized: false, error: "A valid developer session is required." };
-  const service = createServiceSupabaseClient();
+  const service = createUserSupabaseClient(request.headers.get("authorization") || "");
   const [{ data: admin }, { data: developer }] = await Promise.all([
     service.from("admins").select("role,is_active").eq("id", identity.id).eq("is_active", true).maybeSingle(),
     service.from("developer_profiles").select("account_status").eq("id", identity.id).maybeSingle()
@@ -27,7 +27,7 @@ export async function verifyDeveloperRequest(request: Request): Promise<PortalAu
 export async function verifyReviewerRequest(request: Request): Promise<PortalAuthResult> {
   const identity = await verifyBearerUser(request);
   if (!identity) return { authorized: false, error: "A valid reviewer session is required." };
-  const service = createServiceSupabaseClient();
+  const service = createUserSupabaseClient(request.headers.get("authorization") || "");
   const { data } = await service.from("admins").select("role,is_active").eq("id", identity.id).eq("is_active", true).maybeSingle();
   if (data && ["owner", "admin", "reviewer"].includes(data.role)) {
     return { authorized: true, user: identity, role: data.role as PortalRole };
