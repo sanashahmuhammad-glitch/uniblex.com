@@ -6,12 +6,14 @@ import { usePathname } from "next/navigation";
 import { Gamepad2, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { AuthorizedAdminLink } from "@/components/admin/AuthorizedAdminLink";
+import { AuthAwareDeveloperLink } from "@/components/developers/AuthAwareDeveloperLink";
 
 const links = [
   { href: "/", label: "Home" },
   { href: "/games", label: "Games" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
+  { href: "/developers", label: "Developers", authAware: true },
   { href: "/contact", label: "Contact" }
 ];
 
@@ -38,19 +40,29 @@ export function Header() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/[.05] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] md:flex">
+        <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/[.05] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] lg:flex">
           {links.map((link) => {
             const active = isActive(link.href);
-            return (
+            const className = `rounded-full px-4 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uniblex-blue ${
+              active
+                ? "bg-gradient-to-r from-uniblex-blue to-uniblex-purple text-white shadow-[0_10px_28px_rgba(0,178,255,.2)]"
+                : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"
+            }`;
+            return link.authAware ? (
+              <AuthAwareDeveloperLink
+                key={link.href}
+                guestHref="/developers"
+                authenticatedHref="/developers/dashboard"
+                className={className}
+              >
+                {link.label}
+              </AuthAwareDeveloperLink>
+            ) : (
               <Link
                 key={link.href}
                 href={link.href}
                 aria-current={active ? "page" : undefined}
-                className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                  active
-                    ? "bg-gradient-to-r from-uniblex-blue to-uniblex-purple text-white shadow-[0_10px_28px_rgba(0,178,255,.2)]"
-                    : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"
-                }`}
+                className={className}
               >
                 {link.label}
               </Link>
@@ -65,7 +77,7 @@ export function Header() {
           </Link>
           <button
             onClick={() => setOpen((value) => !value)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[.055] text-white shadow-[0_10px_24px_rgba(0,0,0,.2)] transition hover:border-uniblex-blue md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[.055] text-white shadow-[0_10px_24px_rgba(0,0,0,.2)] transition hover:border-uniblex-blue lg:hidden"
             aria-label="Toggle navigation menu"
           >
             {open ? <X size={22} /> : <Menu size={22} />}
@@ -73,19 +85,32 @@ export function Header() {
         </div>
       </div>
 
-      <div className={`overflow-hidden border-t border-uniblex-blue/20 bg-[#060a12]/98 backdrop-blur-xl transition-all duration-300 md:hidden ${open ? "max-h-[460px] opacity-100" : "max-h-0 opacity-0"}`}>
+      <div className={`overflow-hidden border-t border-uniblex-blue/20 bg-[#060a12]/98 backdrop-blur-xl transition-all duration-300 lg:hidden ${open ? "max-h-[460px] opacity-100" : "max-h-0 opacity-0"}`}>
         <nav className="container-pad grid gap-2 py-3">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              aria-current={isActive(link.href) ? "page" : undefined}
-              onClick={() => setOpen(false)}
-              className={`rounded-lg px-4 py-3 text-sm font-bold transition ${isActive(link.href) ? "bg-gradient-to-r from-uniblex-blue to-uniblex-purple text-white" : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"}`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {links.map((link) => {
+            const className = `rounded-lg px-4 py-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uniblex-blue ${isActive(link.href) ? "bg-gradient-to-r from-uniblex-blue to-uniblex-purple text-white" : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"}`;
+            return link.authAware ? (
+              <AuthAwareDeveloperLink
+                key={link.href}
+                guestHref="/developers"
+                authenticatedHref="/developers/dashboard"
+                onClick={() => setOpen(false)}
+                className={className}
+              >
+                {link.label}
+              </AuthAwareDeveloperLink>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={isActive(link.href) ? "page" : undefined}
+                onClick={() => setOpen(false)}
+                className={className}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
           <Link href="/games" onClick={() => setOpen(false)} className="mt-1 inline-flex items-center justify-center gap-2 rounded-lg bg-uniblex-blue px-4 py-3 text-sm font-black text-white">
             <Gamepad2 size={17} /> Play Now
           </Link>

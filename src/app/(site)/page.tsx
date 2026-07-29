@@ -8,6 +8,7 @@ import { GameThumbnail } from "@/components/site/VisualThumb";
 import { games } from "@/data/games";
 import { posts } from "@/data/posts";
 import { AuthorizedAdminLink } from "@/components/admin/AuthorizedAdminLink";
+import { AuthAwareDeveloperLink } from "@/components/developers/AuthAwareDeveloperLink";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { canonicalUrl, defaultAuthors, defaultRobots, homePageJsonLd, pageKeywords, siteConfig } from "@/lib/seo";
 
@@ -72,6 +73,9 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
               <Link href="/games" className="btn-primary"><Play size={19} /> Play Games</Link>
+              <AuthAwareDeveloperLink guestHref="/developers/register" authenticatedHref="/developers/games/new" className="btn-secondary">
+                <Gamepad2 size={19} /> Publish Your Game
+              </AuthAwareDeveloperLink>
               <Link href="/blog" className="btn-secondary"><BookOpenText size={19} /> Read Articles</Link>
             </div>
 

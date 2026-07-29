@@ -22,7 +22,7 @@ export function DeveloperHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0D1118]/90 backdrop-blur-xl">
       <div className="mx-auto flex h-18 max-w-[1440px] items-center justify-between gap-6 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/developers" className="flex items-center gap-3" aria-label="Uniblex Developers home">
+        <Link href="/" className="flex items-center gap-3" aria-label="Uniblex home">
           <Image src="/brand/horizontal-lockup.png" alt="Uniblex" width={156} height={40} className="h-9 w-auto object-contain" priority />
           <span className="hidden border-l border-white/15 pl-3 text-xs font-bold uppercase tracking-[.2em] text-uniblex-gray sm:block">Developers</span>
         </Link>
