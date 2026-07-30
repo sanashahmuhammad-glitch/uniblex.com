@@ -42,15 +42,24 @@ export function isGameMediaRole(role: string): role is GameMediaRole {
   return Boolean(match);
 }
 
+export function gameMediaPrefix() {
+  const environment = process.env.VERCEL_ENV;
+  if (environment === "production") return "game-media";
+  if (environment === "preview" || environment === "development" || process.env.NODE_ENV !== "production") {
+    return "staging-game-media";
+  }
+  throw new Error("Media storage environment is not configured.");
+}
+
 export function createGameMediaKey(ownerId: string, descriptor: GameMediaDescriptor, id = randomUUID()) {
   if (!uuidPattern.test(ownerId) || !uuidPattern.test(id)) throw new Error("Media storage identity is invalid.");
   const extension = descriptor.contentType === "image/jpeg" ? "jpg" : descriptor.contentType === "image/png" ? "png" : "webp";
-  return `staging-game-media/${ownerId}/${descriptor.draftId}/${descriptor.role}/${id}.${extension}`;
+  return `${gameMediaPrefix()}/${ownerId}/${descriptor.draftId}/${descriptor.role}/${id}.${extension}`;
 }
 
 export function assertGameMediaKey(key: string, ownerId: string, draftId: string, role?: GameMediaRole) {
   if (!uuidPattern.test(ownerId) || !uuidPattern.test(draftId)) throw new Error("Media storage identity is invalid.");
-  const expected = `staging-game-media/${ownerId}/${draftId}/`;
+  const expected = `${gameMediaPrefix()}/${ownerId}/${draftId}/`;
   if (!key.startsWith(expected) || key.length > 420 || key.includes("..") || /[\u0000-\u001f\u007f]/.test(key)) {
     throw new Error("Media object is outside this draft.");
   }

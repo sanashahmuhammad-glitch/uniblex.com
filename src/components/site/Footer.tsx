@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
+import { AuthAwareDeveloperLink } from "@/components/developers/AuthAwareDeveloperLink";
 
 const quickLinks = [
   ["Home", "/"],
@@ -45,6 +46,11 @@ export function Footer() {
             <Link href="/blog" className="transition hover:text-uniblex-blue">Articles</Link>
             <Link href="/blog/practical-pipeline-for-webgl-build-uploads" className="transition hover:text-uniblex-blue">Tutorials</Link>
             <Link href="/games" className="transition hover:text-uniblex-blue">Game Library</Link>
+            <Link href="/developers" className="transition hover:text-uniblex-blue">Developer Portal</Link>
+            <Link href="/developers/login" className="transition hover:text-uniblex-blue">Developer Login</Link>
+            <AuthAwareDeveloperLink guestHref="/developers/register" authenticatedHref="/developers/games/new" className="transition hover:text-uniblex-blue">
+              Submit a Game
+            </AuthAwareDeveloperLink>
             <Link href="/privacy-policy" className="transition hover:text-uniblex-blue">Privacy Policy</Link>
             <Link href="/terms-of-service" className="transition hover:text-uniblex-blue">Terms</Link>
           </div>

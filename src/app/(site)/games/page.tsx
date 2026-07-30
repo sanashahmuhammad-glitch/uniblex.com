@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { ArrowRight } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
+import { AuthAwareDeveloperLink } from "@/components/developers/AuthAwareDeveloperLink";
 import { GamesExplorer } from "@/components/site/GamesExplorer";
 import { getPublishedGames } from "@/lib/publicGames";
 import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
@@ -49,6 +51,13 @@ export default async function GamesPage() {
             <span className="rounded-full border border-white/10 bg-white/[.035] px-3 py-1">{games.length} live game{games.length === 1 ? "" : "s"}</span>
             <span className="rounded-full border border-white/10 bg-white/[.035] px-3 py-1">WebGL ready</span>
           </div>
+          <AuthAwareDeveloperLink
+            guestHref="/developers/register"
+            authenticatedHref="/developers/games/new"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg text-sm font-bold text-uniblex-blue transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uniblex-blue"
+          >
+            Developers: Submit your game <ArrowRight size={16} />
+          </AuthAwareDeveloperLink>
         </div>
       </div>
 

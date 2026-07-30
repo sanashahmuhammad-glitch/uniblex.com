@@ -1,0 +1,23 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import ts from "typescript";
+const root = path.resolve(import.meta.dirname, "..");
+const source = fs.readFileSync(path.join(root, "src/lib/r2GameUploads.ts"), "utf8");
+const output = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText;
+const availability = await import(`data:text/javascript;base64,${Buffer.from(output).toString("base64")}`);
+const r2Source = fs.readFileSync(path.join(root, "src/lib/r2Mvp.ts"), "utf8");
+const r2Output = ts.transpileModule(r2Source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText;
+const r2 = await import(`data:text/javascript;base64,${Buffer.from(r2Output).toString("base64")}`);
+const validPreviewEnvironment = { NODE_ENV: "production", VERCEL_ENV: "preview", R2_GAME_UPLOADS_ENABLED: "true", R2_ACCOUNT_ID: "preview-account", R2_BUCKET: "preview-bucket", R2_ACCESS_KEY_ID: "preview-access-key", R2_SECRET_ACCESS_KEY: "preview-secret-key", R2_PUBLIC_BASE_URL: "https://preview-r2.example" };
+assert.deepEqual(availability.getR2GameUploadAvailability(validPreviewEnvironment), { available: true }, "branch-scoped Preview R2 variables must enable uploads at request time");
+assert.equal(r2.getR2MvpConfig(validPreviewEnvironment).bucket, "preview-bucket", "Preview bucket must come from the runtime binding");
+assert.equal(r2.getR2MvpConfig(validPreviewEnvironment).publicBaseUrl, "https://preview-r2.example", "Preview public URL must come from the runtime binding");
+assert.doesNotMatch(source, /process\.env\.R2_/, "the availability helper must not use build-time statically analyzable R2 accesses");
+assert.equal(availability.getR2GameUploadAvailability({ ...validPreviewEnvironment, R2_GAME_UPLOADS_ENABLED: " true " }).code, "feature_flag_disabled", "the feature flag must accept only exact true");
+for (const name of ["R2_ACCOUNT_ID", "R2_BUCKET", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_PUBLIC_BASE_URL"]) { const environment = { ...validPreviewEnvironment }; delete environment[name]; const result = availability.getR2GameUploadAvailability(environment); assert.equal(result.code, "missing_r2_configuration", `${name} must be checked individually`); assert.deepEqual(result.missing, [name]); }
+assert.equal(availability.getR2GameUploadAvailability({ ...validPreviewEnvironment, VERCEL_ENV: "unknown" }).code, "invalid_environment_binding", "unknown production runtime environments must remain disabled");
+const mediaRoute = fs.readFileSync(path.join(root, "src/app/api/developer/uploads/media/route.ts"), "utf8");
+assert.match(mediaRoute, /getR2GameUploadAvailability\(process\.env\)/);
+assert.match(mediaRoute, /getR2MvpConfig\(process\.env\)/);
+console.log("ok - developer Preview upload availability regression");

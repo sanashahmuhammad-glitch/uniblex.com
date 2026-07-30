@@ -29,13 +29,14 @@ const region = "auto";
 const service = "s3";
 const unsignedPayload = "UNSIGNED-PAYLOAD";
 
-export function getR2MvpConfig(): R2MvpConfig {
+export function getR2MvpConfig(environment: NodeJS.ProcessEnv = process.env): R2MvpConfig {
+
   const config = {
-    accountId: readEnv("R2_ACCOUNT_ID", "CLOUDFLARE_R2_ACCOUNT_ID"),
-    bucket: readEnv("R2_BUCKET", "CLOUDFLARE_R2_BUCKET"),
-    accessKeyId: readEnv("R2_ACCESS_KEY_ID", "CLOUDFLARE_R2_ACCESS_KEY_ID"),
-    secretAccessKey: readEnv("R2_SECRET_ACCESS_KEY", "CLOUDFLARE_R2_SECRET_ACCESS_KEY"),
-    publicBaseUrl: readEnv("R2_PUBLIC_BASE_URL", "NEXT_PUBLIC_R2_PUBLIC_BASE_URL").replace(/\/+$/, "")
+    accountId: readEnv(environment, "R2_ACCOUNT_ID", "CLOUDFLARE_R2_ACCOUNT_ID"),
+    bucket: readEnv(environment, "R2_BUCKET", "CLOUDFLARE_R2_BUCKET"),
+    accessKeyId: readEnv(environment, "R2_ACCESS_KEY_ID", "CLOUDFLARE_R2_ACCESS_KEY_ID"),
+    secretAccessKey: readEnv(environment, "R2_SECRET_ACCESS_KEY", "CLOUDFLARE_R2_SECRET_ACCESS_KEY"),
+    publicBaseUrl: readEnv(environment, "R2_PUBLIC_BASE_URL", "NEXT_PUBLIC_R2_PUBLIC_BASE_URL").replace(/\/+$/, "")
   };
   if (Object.values(config).some((value) => !value)) throw new Error("R2 upload storage is not configured.");
   return config;
@@ -85,7 +86,7 @@ export async function headMvpObject(config: R2MvpConfig, key: string) {
 }
 
 export function headR2ObjectResponse(config: R2MvpConfig, key: string) {
-  return signedRequest(config, "HEAD", key, {});
+  return signedRequest(config, "HEAD", key, {}, { "x-amz-checksum-mode": "ENABLED" });
 }
 
 export function parseMvpHeadResponse(response: Pick<Response, "ok" | "status" | "headers">): MvpHeadObject {
@@ -138,13 +139,13 @@ export async function deleteMvpObject(config: R2MvpConfig, key: string) {
   if (!response.ok && response.status !== 404) throw new Error("Unable to remove an incomplete upload object.");
 }
 
-async function signedRequest(config: R2MvpConfig, method: string, key: string, query: Record<string, string>) {
+async function signedRequest(config: R2MvpConfig, method: string, key: string, query: Record<string, string>, extraHeaders: Record<string, string> = {}) {
   const now = new Date();
   const amzDate = toAmzDate(now);
   const dateStamp = amzDate.slice(0, 8);
   const host = `${config.accountId}.r2.cloudflarestorage.com`;
   const payloadHash = sha256("");
-  const headers = normalizeHeaders({ host, "x-amz-content-sha256": payloadHash, "x-amz-date": amzDate });
+  const headers = normalizeHeaders({ host, "x-amz-content-sha256": payloadHash, "x-amz-date": amzDate, ...extraHeaders });
   const signedHeaders = Object.keys(headers).sort().join(";");
   const scope = `${dateStamp}/${region}/${service}/aws4_request`;
   const request = [method, canonicalUri(config.bucket, key), canonicalQuery(query), canonicalHeaders(headers), signedHeaders, payloadHash].join("\n");
@@ -154,15 +155,16 @@ async function signedRequest(config: R2MvpConfig, method: string, key: string, q
     headers: {
       "X-Amz-Content-Sha256": payloadHash,
       "X-Amz-Date": amzDate,
+      ...extraHeaders,
       Authorization: `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
     },
     cache: "no-store"
   });
 }
 
-function readEnv(...names: string[]) {
+function readEnv(environment: NodeJS.ProcessEnv, ...names: string[]) {
   for (const name of names) {
-    const value = process.env[name]?.trim();
+    const value = environment[name]?.trim();
     if (value) return value;
   }
   return "";
