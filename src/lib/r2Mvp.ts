@@ -65,7 +65,10 @@ export function presignMvpPut(
   const dateStamp = amzDate.slice(0, 8);
   const host = `${config.accountId}.r2.cloudflarestorage.com`;
   const normalizedHeaders = normalizeHeaders({ host, ...headers });
-  const signedHeaders = Object.keys(normalizedHeaders).sort().join(";");
+  const canonicalSignedHeaders = Object.fromEntries(
+    Object.entries(normalizedHeaders).filter(([name]) => name !== "content-type")
+  );
+  const signedHeaders = Object.keys(canonicalSignedHeaders).sort().join(";");
   const scope = `${dateStamp}/${region}/${service}/aws4_request`;
   const query: Record<string, string> = {
     "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
@@ -74,7 +77,7 @@ export function presignMvpPut(
     "X-Amz-Expires": String(expiresSeconds),
     "X-Amz-SignedHeaders": signedHeaders
   };
-  const request = ["PUT", canonicalUri(config.bucket, key), canonicalQuery(query), canonicalHeaders(normalizedHeaders), signedHeaders, unsignedPayload].join("\n");
+  const request = ["PUT", canonicalUri(config.bucket, key), canonicalQuery(query), canonicalHeaders(canonicalSignedHeaders), signedHeaders, unsignedPayload].join("\n");
   const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256(request)].join("\n");
   query["X-Amz-Signature"] = hmacHex(signingKey(config.secretAccessKey, dateStamp), stringToSign);
   return `https://${host}${canonicalUri(config.bucket, key)}?${canonicalQuery(query)}`;

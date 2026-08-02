@@ -9,6 +9,7 @@ const compile = (relative) => ts.transpileModule(fs.readFileSync(path.join(root,
 const slugUrl = dataUrl(compile("src/lib/slug.ts"));
 const logicUrl = dataUrl(compile("src/components/admin/adminUploadLogic.ts").replace('from "@/lib/slug"', `from "${slugUrl}"`));
 const mediaPolicy = await import(dataUrl(compile("src/lib/r2GameMedia.ts")));
+const r2Signer = await import(dataUrl(compile("src/lib/r2Mvp.ts")));
 const draftModule = await import(dataUrl(compile("src/lib/adminSubmissionDraft.ts").replace('from "@/components/admin/adminUploadLogic"', `from "${logicUrl}"`)));
 
 let passed = 0;
@@ -53,6 +54,17 @@ test("signed headers bind type, owner, draft, role, size, and checksum", () => {
   equal(headers["x-amz-meta-sha256"], sha256);
   equal("x-amz-checksum-sha256" in headers, false);
   equal(headers["if-none-match"], "*");
+});
+test("browser-safe signature leaves Content-Type unsigned while binding upload metadata", () => {
+  const headers = { ...mediaPolicy.gameMediaHeaders(ownerId, descriptor), "cache-control": "public, max-age=31536000, immutable" };
+  const url = r2Signer.presignMvpPut({ accountId: "account", bucket: "bucket", accessKeyId: "access", secretAccessKey: "secret", publicBaseUrl: "https://games.example" }, `game-media/${ownerId}/${draftId}/cover/${objectId}.png`, headers, 60);
+  const signed = new URL(url).searchParams.get("X-Amz-SignedHeaders") || "";
+  equal(signed.includes("content-type"), false);
+  equal(signed.includes("x-amz-meta-owner-id"), true);
+  equal(signed.includes("x-amz-meta-draft-id"), true);
+  equal(signed.includes("x-amz-meta-media-role"), true);
+  equal(signed.includes("x-amz-meta-sha256"), true);
+  equal(signed.includes("if-none-match"), true);
 });
 test("HEAD verification accepts matching authoritative metadata", () => {
   const headers = new Headers({ "content-length": String(descriptor.size), "content-type": descriptor.contentType, "x-amz-meta-owner-id": ownerId, "x-amz-meta-draft-id": draftId, "x-amz-meta-media-role": descriptor.role, "x-amz-meta-sha256": sha256 });
