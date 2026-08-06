@@ -149,24 +149,18 @@ export async function deleteMvpObject(config: R2MvpConfig, key: string) {
 }
 
 async function signedRequest(config: R2MvpConfig, method: string, key: string, query: Record<string, string>, extraHeaders: Record<string, string> = {}) {
-  const now = new Date();
-  const amzDate = toAmzDate(now);
-  const dateStamp = amzDate.slice(0, 8);
+  const { AwsClient } = await import("aws4fetch");
   const host = `${config.accountId}.r2.cloudflarestorage.com`;
-  const payloadHash = sha256("");
-  const headers = normalizeHeaders({ host, "x-amz-content-sha256": payloadHash, "x-amz-date": amzDate, ...extraHeaders });
-  const signedHeaders = Object.keys(headers).sort().join(";");
-  const scope = `${dateStamp}/${region}/${service}/aws4_request`;
-  const request = [method, canonicalUri(config.bucket, key), canonicalQuery(query), canonicalHeaders(headers), signedHeaders, payloadHash].join("\n");
-  const signature = hmacHex(signingKey(config.secretAccessKey, dateStamp), ["AWS4-HMAC-SHA256", amzDate, scope, sha256(request)].join("\n"));
-  return fetch(`https://${host}${canonicalUri(config.bucket, key)}?${canonicalQuery(query)}`, {
+  const client = new AwsClient({
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+    service,
+    region,
+    retries: 0
+  });
+  return client.fetch(`https://${host}${canonicalUri(config.bucket, key)}?${canonicalQuery(query)}`, {
     method,
-    headers: {
-      "X-Amz-Content-Sha256": payloadHash,
-      "X-Amz-Date": amzDate,
-      ...extraHeaders,
-      Authorization: `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
-    },
+    headers: extraHeaders,
     cache: "no-store"
   });
 }
