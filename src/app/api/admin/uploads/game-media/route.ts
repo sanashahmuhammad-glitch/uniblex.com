@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       };
       return NextResponse.json({
         objectKey,
-        uploadUrl: await presignMvpPut(config, objectKey, {}, GAME_MEDIA_SIGNING_SECONDS),
+        uploadUrl: await presignMvpPut(config, objectKey, headers, GAME_MEDIA_SIGNING_SECONDS),
         publicUrl: gameMediaPublicUrl(config, objectKey),
         requiredHeaders: headers,
         expiresAt: new Date(Date.now() + GAME_MEDIA_SIGNING_SECONDS * 1000).toISOString()

@@ -56,16 +56,16 @@ test("signed headers bind type, owner, draft, role, size, and checksum", () => {
   equal("x-amz-checksum-sha256" in headers, false);
   equal(headers["if-none-match"], "*");
 });
-test("browser-safe media signature binds only the immutable R2 host", async () => {
+test("browser-safe signature leaves Content-Type unsigned while binding upload metadata", async () => {
   const headers = { ...mediaPolicy.gameMediaHeaders(ownerId, descriptor), "cache-control": "public, max-age=31536000, immutable" };
-  const url = await r2Signer.presignMvpPut({ accountId: "account", bucket: "bucket", accessKeyId: "access", secretAccessKey: "secret", publicBaseUrl: "https://games.example" }, `game-media/${ownerId}/${draftId}/cover/${objectId}.png`, {}, 60);
+  const url = await r2Signer.presignMvpPut({ accountId: "account", bucket: "bucket", accessKeyId: "access", secretAccessKey: "secret", publicBaseUrl: "https://games.example" }, `game-media/${ownerId}/${draftId}/cover/${objectId}.png`, headers, 60);
   const signed = new URL(url).searchParams.get("X-Amz-SignedHeaders") || "";
-  equal(signed, "host");
-  equal(headers["x-amz-meta-owner-id"], ownerId);
-  equal(headers["x-amz-meta-draft-id"], draftId);
-  equal(headers["x-amz-meta-media-role"], "cover");
-  equal(headers["x-amz-meta-sha256"], sha256);
-  equal(headers["if-none-match"], "*");
+  equal(signed.includes("content-type"), false);
+  equal(signed.includes("x-amz-meta-owner-id"), true);
+  equal(signed.includes("x-amz-meta-draft-id"), true);
+  equal(signed.includes("x-amz-meta-media-role"), true);
+  equal(signed.includes("x-amz-meta-sha256"), true);
+  equal(signed.includes("if-none-match"), true);
 });
 test("HEAD verification accepts matching authoritative metadata", () => {
   const headers = new Headers({ "content-length": String(descriptor.size), "content-type": descriptor.contentType, "x-amz-meta-owner-id": ownerId, "x-amz-meta-draft-id": draftId, "x-amz-meta-media-role": descriptor.role, "x-amz-meta-sha256": sha256 });
