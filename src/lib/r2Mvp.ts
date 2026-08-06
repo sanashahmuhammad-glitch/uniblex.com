@@ -139,7 +139,13 @@ export async function listMvpPrefix(config: R2MvpConfig, prefix: string, maxKeys
 
 export async function deleteMvpObject(config: R2MvpConfig, key: string) {
   const response = await signedRequest(config, "DELETE", key, {});
-  if (!response.ok && response.status !== 404) throw new Error("Unable to remove an incomplete upload object.");
+  if (!response.ok && response.status !== 404) {
+    console.error("R2 object cleanup failed.", {
+      status: response.status,
+      code: await readR2ErrorCode(response)
+    });
+    throw new Error("Unable to remove an incomplete upload object.");
+  }
 }
 
 async function signedRequest(config: R2MvpConfig, method: string, key: string, query: Record<string, string>, extraHeaders: Record<string, string> = {}) {
@@ -213,4 +219,13 @@ function signingKey(secret: string, stamp: string) {
 }
 function decodeXml(value: string) {
   return value.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+}
+
+async function readR2ErrorCode(response: Response) {
+  try {
+    const xml = await response.text();
+    return decodeXml(xml.match(/<Code>([^<]+)<\/Code>/)?.[1] || "UnknownR2Error").slice(0, 80);
+  } catch {
+    return "UnreadableR2Error";
+  }
 }
