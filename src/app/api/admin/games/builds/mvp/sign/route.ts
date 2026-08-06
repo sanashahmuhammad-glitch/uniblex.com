@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       p_operation_id: operationId,p_owner_id: auth.user.id,p_expires_at: signingLeaseExpiresAt
     });
     if (leaseError) return NextResponse.json({ error: "Upload operation is no longer accepting files." }, { status: 409 });
-    const signed = requested.map((requestFile: { path: string; size: number; sha256: string }) => {
+    const signed = await Promise.all(requested.map(async (requestFile: { path: string; size: number; sha256: string }) => {
       const file = stored.find((candidate) => candidate.path === requestFile.path);
       if (!file || Number(file.size_bytes) !== requestFile.size || file.sha256 !== requestFile.sha256 || file.object_key !== `${prefix}${requestFile.path}`) {
         throw new Error("Signing batch does not match the authoritative manifest.");
@@ -69,8 +69,8 @@ export async function POST(request: Request) {
         "if-none-match": "*"
       };
       if (file.content_encoding) headers["content-encoding"] = file.content_encoding;
-      return { path: file.path, url: presignMvpPut(config,file.object_key,headers,expiresInSeconds), headers };
-    });
+      return { path: file.path, url: await presignMvpPut(config,file.object_key,headers,expiresInSeconds), headers };
+    }));
     return NextResponse.json({ operationId, expiresInSeconds, files: signed });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to sign upload files." }, { status: 400 });

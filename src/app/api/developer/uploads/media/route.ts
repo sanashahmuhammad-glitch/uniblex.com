@@ -13,7 +13,7 @@ export async function POST(request:Request){
     const body=await request.json() as Record<string,unknown>;const action=String(body.action||"");const config=getR2MvpConfig(process.env);const ownerId=auth.user.id;
     if(action==="sign"){
       const descriptor=validateGameMediaDescriptor(body.file);const objectKey=createGameMediaKey(ownerId,descriptor);const headers={...gameMediaHeaders(ownerId,descriptor),"cache-control":"public, max-age=31536000, immutable"};
-      return NextResponse.json({objectKey,uploadUrl:presignMvpPut(config,objectKey,headers,GAME_MEDIA_SIGNING_SECONDS),publicUrl:gameMediaPublicUrl(config,objectKey),requiredHeaders:headers,expiresAt:new Date(Date.now()+GAME_MEDIA_SIGNING_SECONDS*1000).toISOString()});
+      return NextResponse.json({objectKey,uploadUrl:await presignMvpPut(config,objectKey,headers,GAME_MEDIA_SIGNING_SECONDS),publicUrl:gameMediaPublicUrl(config,objectKey),requiredHeaders:headers,expiresAt:new Date(Date.now()+GAME_MEDIA_SIGNING_SECONDS*1000).toISOString()});
     }
     if(action==="verify"){
       const descriptor=validateGameMediaDescriptor(body.file);const objectKey=assertGameMediaKey(String(body.objectKey||""),ownerId,descriptor.draftId,descriptor.role);const response=await headR2ObjectResponse(config,objectKey);

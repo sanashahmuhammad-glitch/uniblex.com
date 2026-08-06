@@ -6,10 +6,11 @@ const root = path.resolve(import.meta.dirname, "..");
 const compilerOptions = { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 };
 const dataUrl = (source) => `data:text/javascript;base64,${Buffer.from(source).toString("base64")}`;
 const compile = (relative) => ts.transpileModule(fs.readFileSync(path.join(root, relative), "utf8"), { compilerOptions }).outputText;
+const aws4fetchUrl = new URL("../node_modules/aws4fetch/dist/aws4fetch.esm.js", import.meta.url).href;
 const slugUrl = dataUrl(compile("src/lib/slug.ts"));
 const logicUrl = dataUrl(compile("src/components/admin/adminUploadLogic.ts").replace('from "@/lib/slug"', `from "${slugUrl}"`));
 const mediaPolicy = await import(dataUrl(compile("src/lib/r2GameMedia.ts")));
-const r2Signer = await import(dataUrl(compile("src/lib/r2Mvp.ts")));
+const r2Signer = await import(dataUrl(compile("src/lib/r2Mvp.ts").replace('import("aws4fetch")', `import("${aws4fetchUrl}")`)));
 const draftModule = await import(dataUrl(compile("src/lib/adminSubmissionDraft.ts").replace('from "@/components/admin/adminUploadLogic"', `from "${logicUrl}"`)));
 
 let passed = 0;
@@ -55,9 +56,9 @@ test("signed headers bind type, owner, draft, role, size, and checksum", () => {
   equal("x-amz-checksum-sha256" in headers, false);
   equal(headers["if-none-match"], "*");
 });
-test("browser-safe signature leaves Content-Type unsigned while binding upload metadata", () => {
+test("browser-safe signature leaves Content-Type unsigned while binding upload metadata", async () => {
   const headers = { ...mediaPolicy.gameMediaHeaders(ownerId, descriptor), "cache-control": "public, max-age=31536000, immutable" };
-  const url = r2Signer.presignMvpPut({ accountId: "account", bucket: "bucket", accessKeyId: "access", secretAccessKey: "secret", publicBaseUrl: "https://games.example" }, `game-media/${ownerId}/${draftId}/cover/${objectId}.png`, headers, 60);
+  const url = await r2Signer.presignMvpPut({ accountId: "account", bucket: "bucket", accessKeyId: "access", secretAccessKey: "secret", publicBaseUrl: "https://games.example" }, `game-media/${ownerId}/${draftId}/cover/${objectId}.png`, headers, 60);
   const signed = new URL(url).searchParams.get("X-Amz-SignedHeaders") || "";
   equal(signed.includes("content-type"), false);
   equal(signed.includes("x-amz-meta-owner-id"), true);

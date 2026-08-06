@@ -3,11 +3,13 @@ import path from "node:path";
 import ts from "typescript";
 
 const root=path.resolve(import.meta.dirname,"..");
+const aws4fetchUrl=new URL("../node_modules/aws4fetch/dist/aws4fetch.esm.js",import.meta.url).href;
 const cache=new Map();
 async function load(relative) {
   if(cache.has(relative))return cache.get(relative);
   let source=fs.readFileSync(path.join(root,relative),"utf8");
   let output=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
+  output=output.replace('import("aws4fetch")',`import("${aws4fetchUrl}")`);
   for(const [specifier,target] of [["@/lib/webglMvpManifest","src/lib/webglMvpManifest.ts"]]) {
     if(output.includes(`from \"${specifier}\"`)) {
       const dependency=await moduleUrl(target);
@@ -78,9 +80,9 @@ test("incremental SHA-256 known vector",()=>{
   equal(hash.digestHex(),"d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592");
 });
 test("R2 checksum uses base64 authoritative digest",()=>equal(r2.sha256HexToBase64("00".repeat(32)),"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="));
-test("R2 signed PUT binds checksum and create-only condition",()=>{
+test("R2 signed PUT binds checksum and create-only condition",async()=>{
   const checksum=r2.sha256HexToBase64("ab".repeat(32));
-  const url=r2.presignMvpPut({accountId:"account",bucket:"bucket",accessKeyId:"access",secretAccessKey:"secret",publicBaseUrl:"https://games.example"},"staging-webgl-uploads/11111111-1111-4111-8111-111111111111/file(1).js",{"x-amz-checksum-sha256":checksum,"x-amz-meta-size-bytes":"68","if-none-match":"*"},60);
+  const url=await r2.presignMvpPut({accountId:"account",bucket:"bucket",accessKeyId:"access",secretAccessKey:"secret",publicBaseUrl:"https://games.example"},"staging-webgl-uploads/11111111-1111-4111-8111-111111111111/file(1).js",{"x-amz-checksum-sha256":checksum,"x-amz-meta-size-bytes":"68","if-none-match":"*"},60);
   const parsed=new URL(url);
   const signed=parsed.searchParams.get("X-Amz-SignedHeaders")||"";
   equal(signed.includes("x-amz-checksum-sha256"),true);

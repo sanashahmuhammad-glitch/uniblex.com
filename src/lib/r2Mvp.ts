@@ -1,5 +1,3 @@
-import { createHash, createHmac } from "crypto";
-
 export type R2MvpConfig = {
   accountId: string;
   bucket: string;
@@ -27,7 +25,6 @@ export type MvpHeadMismatch =
 
 const region = "auto";
 const service = "s3";
-const unsignedPayload = "UNSIGNED-PAYLOAD";
 
 export function getR2MvpConfig(environment: NodeJS.ProcessEnv = process.env): R2MvpConfig {
 
@@ -53,34 +50,26 @@ export function sha256HexToBase64(value: string) {
   return Buffer.from(value, "hex").toString("base64");
 }
 
-export function presignMvpPut(
+export async function presignMvpPut(
   config: R2MvpConfig,
   key: string,
   headers: Record<string, string>,
   expiresSeconds = 600
 ) {
   if (expiresSeconds < 60 || expiresSeconds > 900) throw new Error("Signed upload expiry is invalid.");
-  const now = new Date();
-  const amzDate = toAmzDate(now);
-  const dateStamp = amzDate.slice(0, 8);
+  const { AwsClient } = await import("aws4fetch");
   const host = `${config.accountId}.r2.cloudflarestorage.com`;
-  const normalizedHeaders = normalizeHeaders({ host, ...headers });
-  const canonicalSignedHeaders = Object.fromEntries(
-    Object.entries(normalizedHeaders).filter(([name]) => name !== "content-type")
-  );
-  const signedHeaders = Object.keys(canonicalSignedHeaders).sort().join(";");
-  const scope = `${dateStamp}/${region}/${service}/aws4_request`;
-  const query: Record<string, string> = {
-    "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
-    "X-Amz-Credential": `${config.accessKeyId}/${scope}`,
-    "X-Amz-Date": amzDate,
-    "X-Amz-Expires": String(expiresSeconds),
-    "X-Amz-SignedHeaders": signedHeaders
-  };
-  const request = ["PUT", canonicalUri(config.bucket, key), canonicalQuery(query), canonicalHeaders(canonicalSignedHeaders), signedHeaders, unsignedPayload].join("\n");
-  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256(request)].join("\n");
-  query["X-Amz-Signature"] = hmacHex(signingKey(config.secretAccessKey, dateStamp), stringToSign);
-  return `https://${host}${canonicalUri(config.bucket, key)}?${canonicalQuery(query)}`;
+  const url = new URL(`https://${host}${canonicalUri(config.bucket, key)}`);
+  url.searchParams.set("X-Amz-Expires", String(expiresSeconds));
+  const client = new AwsClient({
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+    service,
+    region,
+    retries: 0
+  });
+  const signed = await client.sign(url, { method: "PUT", headers, aws: { signQuery: true } });
+  return signed.url;
 }
 
 export async function headMvpObject(config: R2MvpConfig, key: string) {
@@ -188,12 +177,6 @@ function decodeSha256Base64(value: string | null) {
   }
 }
 
-function normalizeHeaders(headers: Record<string, string>) {
-  return Object.fromEntries(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value.trim()]));
-}
-function canonicalHeaders(headers: Record<string, string>) {
-  return Object.entries(headers).sort(([a], [b]) => a.localeCompare(b)).map(([name, value]) => `${name}:${value}\n`).join("");
-}
 function canonicalUri(bucket: string, key: string) {
   const path = [bucket, ...key.split("/").filter(Boolean)].map(awsEncode).join("/");
   return `/${path}${key.endsWith("/") ? "/" : ""}`;
@@ -203,13 +186,6 @@ function canonicalQuery(query: Record<string, string>) {
 }
 function awsEncode(value: string) {
   return encodeURIComponent(value).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
-}
-function toAmzDate(date: Date) { return date.toISOString().replace(/[:-]|\.\d{3}/g, ""); }
-function sha256(value: string) { return createHash("sha256").update(value).digest("hex"); }
-function hmac(key: Buffer | string, value: string) { return createHmac("sha256", key).update(value).digest(); }
-function hmacHex(key: Buffer, value: string) { return createHmac("sha256", key).update(value).digest("hex"); }
-function signingKey(secret: string, stamp: string) {
-  return hmac(hmac(hmac(hmac(`AWS4${secret}`, stamp), region), service), "aws4_request");
 }
 function decodeXml(value: string) {
   return value.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
