@@ -14,6 +14,7 @@ const authForm = source("src/components/developers/DeveloperAuthForm.tsx");
 const reviewer = source("src/components/admin/DeveloperReviewPortal.tsx");
 const zipWorker = source("src/workers/webglZip.worker.ts");
 const r2Mvp = source("src/lib/r2Mvp.ts");
+const publicGames = source("src/lib/publicGames.ts");
 let passed = 0;
 
 function test(name, callback) {
@@ -80,6 +81,11 @@ test("precompressed WebGL assets prohibit CDN recompression", () => {
   assert.ok(reviewRoute.includes("getMvpHeadMismatch"));
   assert.ok(r2Mvp.includes('"x-amz-metadata-directive": "MERGE"'));
   assert.ok(r2Mvp.includes('"content-encoding": metadata.contentEncoding'));
+});
+
+test("public game listings bypass stale framework data cache", () => {
+  assert.ok(publicGames.includes('cache: "no-store"'));
+  assert.match(publicGames, /publicDataSupabase[\s\S]*?\.eq\("status", "published"\)/);
 });
 
 console.log(`\n${passed} Developer Portal completion regression tests passed.`);

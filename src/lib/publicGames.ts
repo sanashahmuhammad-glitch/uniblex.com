@@ -1,6 +1,6 @@
-﻿import { supabase } from "@/lib/supabase";
 import { games as fallbackGames, type Game } from "@/data/games";
 import { MOTO_RIDER_IFRAME_URL, MOTO_RIDER_SLUG, MOTO_RIDER_THUMBNAIL_URL } from "@/lib/gameIframeUrls";
+import { createClient } from "@supabase/supabase-js";
 
 type GameRow = {
   id?: string;
@@ -25,11 +25,21 @@ type GameRow = {
 
 const accents = ["#00B2FF", "#7A3CFF", "#FF4DDB", "#26E6D0"];
 const fallbackPublishedGames = fallbackGames.filter((game) => game.status === "Published");
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || "";
+const publicDataSupabase = supabaseUrl.startsWith("https://") && supabaseAnonKey.length > 20
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        fetch: (input, init) => fetch(input, { ...init, cache: "no-store" })
+      },
+      auth: { persistSession: false }
+    })
+  : null;
 
 export async function getPublishedGames() {
-  if (!supabase) return fallbackPublishedGames;
+  if (!publicDataSupabase) return fallbackPublishedGames;
 
-  const { data, error } = await supabase
+  const { data, error } = await publicDataSupabase
     .from("games")
     .select("title,slug,genre,status,description,cover_url,iframe_url,thumbnail_url,screenshot_urls,desktop_controls,mobile_controls,aspect_ratio,tags,sort_order,published_at")
     .eq("status", "published")
@@ -43,9 +53,9 @@ export async function getPublishedGames() {
 }
 
 export async function getPublishedGame(slug: string) {
-  if (!supabase) return fallbackPublishedGames.find((game) => game.slug === slug);
+  if (!publicDataSupabase) return fallbackPublishedGames.find((game) => game.slug === slug);
 
-  const { data, error } = await supabase
+  const { data, error } = await publicDataSupabase
     .from("games")
     .select("title,slug,genre,status,description,cover_url,iframe_url,thumbnail_url,screenshot_urls,desktop_controls,mobile_controls,aspect_ratio,tags,sort_order,published_at")
     .eq("status", "published")
@@ -91,9 +101,9 @@ function mapGameRow(row: GameRow): Game {
 }
 
 async function withOptionalCounters(games: Game[]) {
-  if (!supabase || !games.length) return games;
+  if (!publicDataSupabase || !games.length) return games;
 
-  const { data, error } = await supabase
+  const { data, error } = await publicDataSupabase
     .from("games")
     .select("slug,view_count,play_count")
     .in("slug", games.map((game) => game.slug));
@@ -114,9 +124,9 @@ async function withOptionalCounters(games: Game[]) {
 }
 
 async function withOptionalCounter(game: Game) {
-  if (!supabase) return game;
+  if (!publicDataSupabase) return game;
 
-  const { data, error } = await supabase
+  const { data, error } = await publicDataSupabase
     .from("games")
     .select("view_count,play_count")
     .eq("slug", game.slug)
