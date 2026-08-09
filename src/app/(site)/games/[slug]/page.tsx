@@ -126,7 +126,7 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         {isMotoRider && game.iframeUrl ? (
           <MotoRiderPlayer title={game.title} slug={game.slug} iframeUrl={game.iframeUrl} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
         ) : (
-          <GamePlayer title={game.title} slug={game.slug} cover={game.cover} iframeUrl={game.iframeUrl} aspectRatio={game.aspectRatio} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
+          <GamePlayer title={game.title} slug={game.slug} cover={game.cover} thumbnail={game.thumbnailUrl} iframeUrl={game.iframeUrl} aspectRatio={game.aspectRatio} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
         )}
         <aside className="grid gap-4 xl:sticky xl:top-32 xl:self-start">
           {isMotoRider ? <div className="hidden xl:block"><AdZone label="Advertisement" size="rectangle" /></div> : null}

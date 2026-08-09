@@ -1,22 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Expand, Minimize2, Play, RotateCcw, RotateCw, Smartphone } from "lucide-react";
+import Image from "next/image";
+import { Expand, Maximize2, Minimize2, Play, RotateCw, Smartphone } from "lucide-react";
 
 type GamePlayerProps = {
   title: string;
   slug: string;
   cover: string;
+  thumbnail?: string;
   iframeUrl?: string;
   aspectRatio?: string;
   desktopControls?: string[];
   mobileControls?: string[];
 };
 
-export function GamePlayer({ title, slug, cover, iframeUrl, aspectRatio = "16/9", desktopControls, mobileControls }: GamePlayerProps) {
-  const autoStartCarSim = slug === "car-sim-game";
-  const [started, setStarted] = useState(autoStartCarSim);
-  const [loaded, setLoaded] = useState(autoStartCarSim);
+export function GamePlayer({ title, slug, cover, thumbnail, iframeUrl, aspectRatio = "16/9", desktopControls, mobileControls }: GamePlayerProps) {
+  const [started, setStarted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,7 +77,6 @@ export function GamePlayer({ title, slug, cover, iframeUrl, aspectRatio = "16/9"
 
   function startGame() {
     setStarted(true);
-    setLoaded(false);
     rememberRecentGame(slug);
     void incrementCounter(slug, "play");
   }
@@ -103,36 +102,9 @@ export function GamePlayer({ title, slug, cover, iframeUrl, aspectRatio = "16/9"
           </div>
           <div className={isFullscreen ? "relative h-screen w-screen overflow-hidden bg-black" : `relative ${aspectClass} w-full overflow-hidden bg-black`}>
             {!started ? (
-              <div className="absolute inset-0 grid place-items-center overflow-hidden">
-                <div className="absolute inset-0 scale-105 bg-cover bg-center blur-[1px]" style={{ backgroundImage: `url('${cover}')` }} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/68 to-black/25" />
-                <div className="relative z-10 max-w-2xl p-5 text-center">
-                  <p className="mb-2 text-xs font-black uppercase tracking-[.24em] text-uniblex-blue sm:text-sm">Ready To Play</p>
-                  <h2 className="font-heading text-3xl leading-tight md:text-5xl">{title}</h2>
-                  <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-uniblex-gray md:text-base">
-                    Click play to load the WebGL build inside the Uniblex game frame.
-                  </p>
-                  <button className="btn-primary mx-auto mt-5 text-base sm:mt-7 sm:text-lg" onClick={startGame} type="button">
-                    <Play size={22} fill="currentColor" /> Play Now
-                  </button>
-                </div>
-              </div>
+              <GamePoster title={title} cover={cover} thumbnail={thumbnail || cover} portrait={isPortrait} onPlay={startGame} onFullscreen={() => { startGame(); void toggleFullscreen(); }} />
             ) : (
               <>
-                {!loaded ? (
-                  <div className="absolute inset-0 z-20 grid place-items-center bg-[#05070b]/95 p-5 text-center">
-                    <div className="w-full max-w-sm">
-                      <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full border border-uniblex-blue/40 bg-uniblex-blue/10">
-                        <RotateCcw className="animate-spin text-uniblex-blue" size={25} />
-                      </div>
-                      <h3 className="font-heading text-2xl sm:text-3xl">Loading Game...</h3>
-                      <p className="mt-2 text-sm text-uniblex-gray">Preparing the WebGL canvas.</p>
-                      <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
-                        <div className="h-full w-2/3 animate-pulse rounded-full bg-gradient-to-r from-uniblex-blue to-uniblex-purple" />
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
                 {isPortrait ? (
                   <div className="pointer-events-none absolute inset-x-3 top-3 z-30 flex items-center justify-center gap-2 rounded-md border border-uniblex-blue/30 bg-black/80 px-3 py-2 text-center text-xs font-bold text-white backdrop-blur md:hidden">
                     <RotateCw size={15} className="text-uniblex-blue" /> Rotate for best play
@@ -150,7 +122,6 @@ export function GamePlayer({ title, slug, cover, iframeUrl, aspectRatio = "16/9"
                   onClick={focusIframe}
                   onPointerDown={focusIframe}
                   onLoad={() => {
-                    setLoaded(true);
                     window.setTimeout(focusIframe, 100);
                   }}
                 />
@@ -177,6 +148,29 @@ export function GamePlayer({ title, slug, cover, iframeUrl, aspectRatio = "16/9"
         ))}
       </div>
     </section>
+  );
+}
+
+function GamePoster({ title, cover, thumbnail, portrait, onPlay, onFullscreen }: { title: string; cover: string; thumbnail: string; portrait: boolean; onPlay: () => void; onFullscreen: () => void }) {
+  return (
+    <div className="absolute inset-0 grid place-items-center overflow-hidden">
+      <div className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-md" style={{ backgroundImage: `url('${cover}')` }} />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(0,178,255,.2),transparent_38%),linear-gradient(to_top,rgba(3,5,12,.98),rgba(5,8,18,.56))]" />
+      <div className="relative z-10 flex max-w-xl flex-col items-center px-5 text-center">
+        <div className="relative">
+          <div className="absolute -inset-3 rounded-3xl bg-gradient-to-r from-uniblex-blue/45 to-uniblex-purple/45 blur-xl" />
+          <Image src={thumbnail} alt={`${title} thumbnail`} width={352} height={198} unoptimized className="relative aspect-video w-36 rounded-2xl border border-white/20 object-cover shadow-2xl sm:w-44" />
+        </div>
+        {portrait ? <RotateCw className="mt-4 text-uniblex-blue" size={28} /> : null}
+        <p className="mt-4 text-xs font-black uppercase tracking-[.24em] text-cyan-300">{portrait ? "Rotate to landscape" : "Uniblex WebGL"}</p>
+        <h2 className="mt-2 font-heading text-2xl leading-tight sm:text-4xl">{title}</h2>
+        <p className="mt-2 max-w-md text-xs leading-5 text-uniblex-gray sm:text-sm">{portrait ? "For the best controls and a full 16:9 view, rotate your phone before starting." : "Ready when you are. The game downloads only after you press play."}</p>
+        <div className="mt-4 flex flex-wrap justify-center gap-2 sm:mt-6">
+          <button type="button" onClick={onPlay} className="btn-primary min-h-0 px-5 py-3 text-sm sm:text-base"><Play size={19} fill="currentColor" /> Play Game</button>
+          <button type="button" onClick={onFullscreen} className="btn-secondary min-h-0 px-4 py-3 text-sm" aria-label="Enter Fullscreen" title="Enter Fullscreen"><Maximize2 size={18} /> Enter Fullscreen</button>
+        </div>
+      </div>
+    </div>
   );
 }
 

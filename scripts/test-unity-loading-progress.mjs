@@ -40,6 +40,28 @@ assert.match(componentSource,/key=\{loadAttempt\}/,"a retry replaces the failed 
 assert.match(componentSource,/setLoadAttempt\(\(attempt\)=>attempt\+1\)/,"one retry creates one new load attempt");
 assert.doesNotMatch(componentSource,/createObjectURL|revokeObjectURL/,"the single-download architecture creates no temporary object URLs to leak");
 assert.match(componentSource,/event\.data\.type==="unity-ready"[\s\S]*setPhase\("ready"\)/,"the loader is hidden only after the Unity runtime-ready handshake");
+assert.match(componentSource,/event\.data\?\.source!=="uniblex-webgl"/,"the parent accepts progress only from the generic verified WebGL bridge");
 assert.match(componentSource,/role="progressbar"[\s\S]*aria-valuenow=\{unityProgress\.percentage\}/,"the exact visible progress is exposed accessibly");
+
+const workerSource=readFileSync(new URL("../workers/uniblex-webgl-assets.mjs",import.meta.url),"utf8");
+assert.match(workerSource,/source:\"uniblex-webgl\"/,"the R2 HTML bridge emits the generic verified WebGL source marker");
+assert.match(workerSource,/html\.uniblex-embedded #unity-canvas\{[^}]*width:100%!important;[^}]*height:100%!important/,"uploaded Unity canvases fill the branded 16:9 frame");
+assert.match(workerSource,/MutationObserver\(report\)/,"the bridge reports actual Unity progress changes instead of a synthetic timer");
+
+const publicPlayerSource=readFileSync(new URL("../src/components/site/GamePlayer.tsx",import.meta.url),"utf8");
+assert.doesNotMatch(publicPlayerSource,/autoStartCarSim/,"developer-published games never bypass the Play Game launcher");
+assert.match(publicPlayerSource,/thumbnail=\{thumbnail \|\| cover\}/,"the launcher uses the submitted card thumbnail with a cover fallback");
+assert.match(publicPlayerSource,/> Play Game<\//,"the public player exposes the same explicit Play Game gate");
+
+const {default:webglAssetWorker}=await import("../workers/uniblex-webgl-assets.mjs");
+const originalHtml='<!doctype html><html><body><div id="unity-container"><canvas id="unity-canvas"></canvas><div id="unity-loading-bar"><div id="unity-progress-bar-full"></div></div><div id="unity-footer"></div></div></body></html>';
+const htmlBytes=new TextEncoder().encode(originalHtml);
+const htmlObject={size:htmlBytes.byteLength,httpEtag:'"test"',httpMetadata:{contentType:"text/html; charset=utf-8"},writeHttpMetadata(headers){headers.set("Content-Type",this.httpMetadata.contentType)},text:async()=>originalHtml,body:htmlBytes};
+const htmlResponse=await webglAssetWorker.fetch(new Request("https://assets.example/developer-webgl-uploads/user/build/index.html"),{BUCKET:{get:async()=>htmlObject,head:async()=>htmlObject}});
+const bridgedHtml=await htmlResponse.text();
+assert.equal(htmlResponse.status,200,"verified WebGL HTML remains publicly readable");
+assert.match(bridgedHtml,/data-uniblex-runtime-bridge/,"the served HTML receives one runtime bridge");
+assert.match(bridgedHtml,/source:"uniblex-webgl"/,"the runtime bridge emits the marker expected by the branded loader");
+assert.equal(Number(htmlResponse.headers.get("Content-Length")),new TextEncoder().encode(bridgedHtml).byteLength,"decorated HTML advertises its actual byte length");
 
 console.log("PASS unity loading progress: streamed increments, aggregate MB, monotonicity, cached completion, scoped retry, single instance, URL cleanup, and runtime-ready gating");

@@ -24,7 +24,7 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
     if(!runtimeLoader||phase!=="loading") return;
     const entryOrigin=new URL(config.entryUrl).origin;
     const onMessage=(event:MessageEvent<UnityMessage>)=>{
-      if(event.origin!==entryOrigin||event.source!==iframe.current?.contentWindow||event.data?.source!=="uniblex-car-sim") return;
+      if(event.origin!==entryOrigin||event.source!==iframe.current?.contentWindow||event.data?.source!=="uniblex-webgl") return;
       if(event.data.type==="unity-progress") {
         setUnityProgress((previous)=>reduceUnityProgress(previous,event.data,downloadPlan));
       } else if(event.data.type==="unity-ready") {
