@@ -79,7 +79,13 @@ export function DeveloperWorkspace({ view }: { view: "dashboard" | "games" | "su
       <button onClick={() => setMenuOpen(true)} className="fixed bottom-5 right-5 z-40 grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-uniblex-blue to-uniblex-purple text-white shadow-xl lg:hidden" aria-label="Open workspace menu"><Menu /></button>
       {menuOpen ? <button className="fixed inset-0 z-40 bg-black/70 lg:hidden" onClick={() => setMenuOpen(false)} aria-label="Close workspace menu" /> : null}
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-[285px] flex-col border-r border-white/10 bg-[#090d14] p-5 transition-transform lg:translate-x-0 ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex items-center justify-between"><Link href="/developers" className="font-heading text-lg text-white">UNIBLEX <span className="text-uniblex-blue">DEV</span></Link><button onClick={() => setMenuOpen(false)} className="p-2 lg:hidden" aria-label="Close menu"><X /></button></div>
+        <div className="flex items-center justify-between">
+          <Link href="/developers" className="group flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-uniblex-blue" aria-label="Uniblex Developer Portal home">
+            <Image src="/brand/developer-icon.png" alt="" width={512} height={512} className="h-10 w-10 shrink-0 object-contain drop-shadow-[0_0_16px_rgba(39,190,255,.22)]" priority />
+            <span className="border-l border-white/15 pl-3 text-sm font-extrabold uppercase leading-[1.05] tracking-[.08em] text-white transition group-hover:text-uniblex-blue">Developer<br />Portal</span>
+          </Link>
+          <button onClick={() => setMenuOpen(false)} className="rounded-lg p-2 text-uniblex-gray transition hover:bg-white/5 hover:text-white lg:hidden" aria-label="Close menu"><X /></button>
+        </div>
         <div className="mt-6 rounded-xl border border-white/10 bg-white/[.035] p-3"><p className="truncate text-sm font-bold text-white">{user.user_metadata?.studio_name || user.email}</p><p className="mt-1 text-xs text-uniblex-gray">Developer account</p></div>
         <nav className="mt-6 grid gap-1" aria-label="Developer workspace">
           {PRIVATE_PORTAL_NAV.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition ${pathname === item.href ? "bg-gradient-to-r from-uniblex-blue/20 to-uniblex-purple/10 text-white ring-1 ring-uniblex-blue/25" : "text-uniblex-gray hover:bg-white/5 hover:text-white"}`}>{item.label}</Link>)}

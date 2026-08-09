@@ -21,10 +21,10 @@ export function DeveloperHeader() {
   async function signOut() { await supabase?.auth.signOut(); setOpen(false); }
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0D1118]/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-18 max-w-[1440px] items-center justify-between gap-6 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3" aria-label="Uniblex home">
-          <Image src="/brand/horizontal-lockup.png" alt="Uniblex" width={156} height={40} className="h-9 w-auto object-contain" priority />
-          <span className="hidden border-l border-white/15 pl-3 text-xs font-bold uppercase tracking-[.2em] text-uniblex-gray sm:block">Developers</span>
+      <div className="mx-auto flex min-h-[76px] max-w-[1440px] items-center justify-between gap-6 px-4 py-3 sm:px-6 lg:px-8">
+        <Link href="/" className="group flex shrink-0 items-center gap-4 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-uniblex-blue" aria-label="Uniblex home">
+          <Image src="/brand/horizontal-lockup.png" alt="Uniblex" width={600} height={150} className="h-11 w-auto object-contain sm:h-12" priority />
+          <span className="hidden border-l border-white/15 py-1 pl-4 text-[11px] font-extrabold uppercase leading-[1.15] tracking-[.16em] text-white transition group-hover:text-uniblex-blue sm:block">Developer<br />Portal</span>
         </Link>
         <nav className="hidden items-center gap-5 xl:flex" aria-label="Developer resources">
           {PUBLIC_PORTAL_NAV.map((item) => <Link key={item.href} href={item.href} className="text-sm font-semibold text-uniblex-gray transition hover:text-white">{item.label}</Link>)}
