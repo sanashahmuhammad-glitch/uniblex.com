@@ -56,6 +56,9 @@ test("oversized ZIP constant is bounded",()=>equal(manifestModule.WEBGL_MVP_LIMI
 test("excessive extracted size",()=>throws(()=>manifestModule.validateWebglManifest(manifest(Array.from({length:9},(_,i)=>entry(i?`f${i}.data`:"index.html",512*1024*1024)))),"extracted-size"));
 test("excessive files",()=>throws(()=>manifestModule.validateWebglManifest(manifest(Array.from({length:5001},(_,i)=>entry(i?`f${i}.js`:"index.html")))),"file count"));
 test("missing index.html",()=>throws(()=>manifestModule.validateWebglManifest(manifest([entry("main.js")])),"index.html"));
+test("WebGL delivery uses its runtime-specific public base",()=>equal(manifestModule.webglPublicBaseUrl({R2_WEBGL_PUBLIC_BASE_URL:" https://webgl.example/ "},"https://games.example"),"https://webgl.example"));
+test("WebGL delivery falls back without changing existing media URLs",()=>equal(manifestModule.webglPublicBaseUrl({},"https://games.example/"),"https://games.example"));
+test("WebGL delivery rejects unsafe public bases",()=>throws(()=>manifestModule.webglPublicBaseUrl({R2_WEBGL_PUBLIC_BASE_URL:"http://webgl.example"},"https://games.example"),"invalid"));
 test("ambiguous index.html",()=>throws(()=>detection.selectArchiveRoot(["one/index.html","two/index.html"]),"ambiguous"));
 
 const operation={id:"11111111-1111-4111-8111-111111111111",ownerId:"admin-a",state:"uploading",stagingPrefix:"staging-webgl-uploads/11111111-1111-4111-8111-111111111111/",expiresAt:Date.now()+60000};

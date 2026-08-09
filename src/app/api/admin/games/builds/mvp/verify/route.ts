@@ -4,7 +4,7 @@ import { createUserSupabaseClient } from "@/lib/serverSupabase";
 import { createServiceSupabaseClient } from "@/lib/serverServiceSupabase";
 import { areR2GameUploadsEnabled, r2GameUploadsUnavailableMessage } from "@/lib/r2GameUploads";
 import { assertMvpOperationPrefix, getMvpHeadMismatch, getR2MvpConfig, headMvpObject, listMvpPrefix } from "@/lib/r2Mvp";
-import { publicObjectUrl, WEBGL_MVP_LIMITS } from "@/lib/webglMvpManifest";
+import { publicObjectUrl, webglPublicBaseUrl, WEBGL_MVP_LIMITS } from "@/lib/webglMvpManifest";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,7 +65,8 @@ export async function POST(request: Request) {
     if (actualKeys.length !== expectedKeys.size || actualKeys.some((key) => !expectedKeys.has(key))) {
       return NextResponse.json({ error: "Upload prefix contains missing or unexpected files." }, { status: 422 });
     }
-    const publicEntryUrl = publicObjectUrl(config.publicBaseUrl,`${prefix}${operation.entry_path}`);
+    const webglBaseUrl = webglPublicBaseUrl(process.env,config.publicBaseUrl);
+    const publicEntryUrl = publicObjectUrl(webglBaseUrl,`${prefix}${operation.entry_path}`);
     const loaderConfig = {
       schemaVersion: 1,
       entryUrl: publicEntryUrl,
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
       buildType: operation.build_type,
       compressionMode: operation.compression_mode,
       files: allFiles.map((file) => ({
-        path:file.path,url:publicObjectUrl(config.publicBaseUrl,file.object_key),size:Number(file.size_bytes),
+        path:file.path,url:publicObjectUrl(webglBaseUrl,file.object_key),size:Number(file.size_bytes),
         sha256:file.sha256,contentType:file.content_type,contentEncoding:file.content_encoding || undefined,
         cacheControl:file.cache_control
       }))

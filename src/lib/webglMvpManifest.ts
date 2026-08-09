@@ -108,3 +108,13 @@ export function stableManifestJson(manifest: WebglManifest) {
 export function publicObjectUrl(baseUrl: string, key: string) {
   return `${baseUrl.replace(/\/+$/, "")}/${key.split("/").map(encodeURIComponent).join("/")}`;
 }
+
+export function webglPublicBaseUrl(environment: NodeJS.ProcessEnv, fallbackBaseUrl: string) {
+  const configured = environment.R2_WEBGL_PUBLIC_BASE_URL?.trim();
+  const baseUrl = (configured || fallbackBaseUrl).replace(/\/+$/, "");
+  const parsed = new URL(baseUrl);
+  if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.search || parsed.hash) {
+    throw new Error("WebGL public asset URL is invalid.");
+  }
+  return baseUrl;
+}
