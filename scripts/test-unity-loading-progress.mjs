@@ -64,4 +64,7 @@ assert.match(bridgedHtml,/data-uniblex-runtime-bridge/,"the served HTML receives
 assert.match(bridgedHtml,/source:"uniblex-webgl"/,"the runtime bridge emits the marker expected by the branded loader");
 assert.equal(Number(htmlResponse.headers.get("Content-Length")),new TextEncoder().encode(bridgedHtml).byteLength,"decorated HTML advertises its actual byte length");
 
+const loaderPageSource=readFileSync(new URL("../src/app/webgl-loader/[buildId]/page.tsx",import.meta.url),"utf8");
+assert.match(loaderPageSource,/\.in\("status",\["approved","published"\]\)/,"the public loader accepts both review-approved and terminal published submissions");
+
 console.log("PASS unity loading progress: streamed increments, aggregate MB, monotonicity, cached completion, scoped retry, single instance, URL cleanup, and runtime-ready gating");

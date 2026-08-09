@@ -31,7 +31,7 @@ async function getPublishedDeveloperLoader(buildId:string) {
   if(buildError||!build||!build.preview_url||!Array.isArray(build.manifest)) return null;
 
   const {data:submission,error:submissionError}=await database.from("game_submissions")
-    .select("id,game_id,status").eq("id",build.submission_id).eq("status","approved").maybeSingle();
+    .select("id,game_id,status").eq("id",build.submission_id).in("status",["approved","published"]).maybeSingle();
   if(submissionError||!submission?.game_id) return null;
 
   const {data:game,error:gameError}=await database.from("games")
