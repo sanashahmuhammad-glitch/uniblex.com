@@ -29,7 +29,7 @@ export async function POST(request:Request){
     const files=(Array.isArray(build.manifest)?build.manifest:[]) as StoredFile[];const prefix=`${buildPrefix()}/${auth.user.id}/${operationId}/`;if(files.some(file=>!file.objectKey.startsWith(prefix)))throw new Error("Build object ownership is invalid.");
     if(action==="sign"){
       const requested=Array.isArray(body.files)?body.files as Array<Record<string,unknown>>:[];if(!requested.length||requested.length>WEBGL_MVP_LIMITS.maxSigningBatch)throw new Error(`Sign at most ${WEBGL_MVP_LIMITS.maxSigningBatch} files per batch.`);
-      const signed=requested.map(candidate=>{const file=matchStoredFile(files,candidate);const headers:Record<string,string>={"content-type":file.contentType,"cache-control":file.cacheControl,"x-amz-meta-sha256":file.sha256,"x-amz-meta-size-bytes":String(file.size),"x-amz-checksum-sha256":sha256HexToBase64(file.sha256),"if-none-match":"*"};if(file.contentEncoding)headers["content-encoding"]=file.contentEncoding;return{path:file.path,url:presignMvpPut(config,file.objectKey,headers,signingSeconds),headers};});
+      const signed=await Promise.all(requested.map(async candidate=>{const file=matchStoredFile(files,candidate);const headers:Record<string,string>={"content-type":file.contentType,"cache-control":file.cacheControl,"x-amz-meta-sha256":file.sha256,"x-amz-meta-size-bytes":String(file.size),"x-amz-checksum-sha256":sha256HexToBase64(file.sha256),"if-none-match":"*"};if(file.contentEncoding)headers["content-encoding"]=file.contentEncoding;return{path:file.path,url:await presignMvpPut(config,file.objectKey,headers,signingSeconds),headers};}));
       return NextResponse.json({operationId,files:signed,expiresInSeconds:signingSeconds});
     }
     if(action==="inspect"){

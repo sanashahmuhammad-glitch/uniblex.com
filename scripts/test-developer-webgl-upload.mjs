@@ -30,6 +30,7 @@ test("cancellation is not retried",()=>equal(policy.isDeveloperBuildRetryable(ne
 test("network failure is retried",()=>equal(policy.isDeveloperBuildRetryable(new Error("network"),false),true));
 test("signed URL lifetime is extended to fifteen minutes",()=>equal(policy.DEVELOPER_BUILD_SIGNING_SECONDS,900));
 test("each attempt signs exactly one file immediately before reading a new Blob",()=>{includes(client,'action:"sign",operationId,files:[identity(entry)]');equal(client.indexOf("const signed=await signOne")<client.indexOf("const blob=await readExtractedWebglFile"),true);});
+test("developer signing resolves every async presigned URL before JSON serialization",()=>{includes(route,"const signed=await Promise.all(requested.map(async candidate=>");includes(route,"url:await presignMvpPut(");});
 test("each successful or duplicate PUT receives authoritative HEAD verification",()=>{includes(client,"const checked=await checkOne");includes(route,'if(action==="check")');includes(route,"getMvpHeadMismatch");});
 test("replayed operation inspects and skips verified paths",()=>{includes(client,"if(initiated.replayed)");includes(client,'action:"inspect"');includes(client,"!completedPaths.has(entry.path)");});
 test("only an unverified existing failed object is cleaned up",()=>{includes(client,"if(checked?.exists)");includes(client,'action:"cleanup"');includes(route,'if(build.verification_status==="verified")');includes(route,"matchStoredFile(files,body.file");});
