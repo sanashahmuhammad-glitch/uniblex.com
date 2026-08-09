@@ -17,8 +17,13 @@ export default async function WebglLoaderPage({params}:{params:{buildId:string}}
     : await database.rpc("get_published_webgl_mvp_loader",{p_build_id:params.buildId});
   const loaderData=developerLoader||(!error&&data?.entryUrl&&Array.isArray(data.manifest)?data:null);
   if(!loaderData?.entryUrl||!Array.isArray(loaderData.manifest)) notFound();
+  const {data:publishedGame}=await database.from("games")
+    .select("title,cover_url,thumbnail_url")
+    .eq("build_id",params.buildId).eq("status","published").maybeSingle();
   return <WebglLoader config={{
-    title:String(loaderData.title||"WebGL Game"),coverUrl:String(loaderData.coverUrl||""),thumbnailUrl:String(loaderData.thumbnailUrl||""),
+    title:String(publishedGame?.title||loaderData.title||"WebGL Game"),
+    coverUrl:String(publishedGame?.cover_url||loaderData.coverUrl||""),
+    thumbnailUrl:String(publishedGame?.thumbnail_url||publishedGame?.cover_url||loaderData.thumbnailUrl||""),
     entryUrl:String(loaderData.entryUrl),totalBytes:Number(loaderData.totalBytes||0),
     files:loaderData.manifest.map((file:Record<string,unknown>)=>({url:String(file.url||""),size:Number(file.size||0),contentEncoding:String(file.contentEncoding||"")}))
   }}/>;

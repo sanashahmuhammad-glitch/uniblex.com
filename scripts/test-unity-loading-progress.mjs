@@ -77,5 +77,6 @@ assert.equal(Number(htmlResponse.headers.get("Content-Length")),new TextEncoder(
 const loaderPageSource=readFileSync(new URL("../src/app/webgl-loader/[buildId]/page.tsx",import.meta.url),"utf8");
 assert.match(loaderPageSource,/\.in\("status",\["approved","published"\]\)/,"the public loader accepts both review-approved and terminal published submissions");
 assert.ok(loaderPageSource.indexOf("getPublishedDeveloperLoader(params.buildId)")<loaderPageSource.indexOf('database.rpc("get_published_webgl_mvp_loader"'),"developer-published games use their current authoritative public artwork before the legacy MVP snapshot");
+assert.match(loaderPageSource,/\.eq\("build_id",params\.buildId\)\.eq\("status","published"\)[\s\S]*thumbnailUrl:String\(publishedGame\?\.thumbnail_url\|\|publishedGame\?\.cover_url\|\|loaderData\.thumbnailUrl/,"current published game artwork overrides any stale thumbnail stored in a legacy loader snapshot");
 
 console.log("PASS unity loading progress: streamed increments, aggregate MB, monotonicity, cached completion, scoped retry, single instance, URL cleanup, and runtime-ready gating");
