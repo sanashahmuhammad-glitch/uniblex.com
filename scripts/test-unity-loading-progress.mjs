@@ -47,6 +47,7 @@ const workerSource=readFileSync(new URL("../workers/uniblex-webgl-assets.mjs",im
 assert.match(workerSource,/source:\"uniblex-webgl\"/,"the R2 HTML bridge emits the generic verified WebGL source marker");
 assert.match(workerSource,/html\.uniblex-embedded #unity-canvas\{[^}]*width:100%!important;[^}]*height:100%!important/,"uploaded Unity canvases fill the branded 16:9 frame");
 assert.match(workerSource,/MutationObserver\(report\)/,"the bridge reports actual Unity progress changes instead of a synthetic timer");
+assert.match(workerSource,/runtimeStarted&&loading\?\.style\.display==="none"/,"embedded CSS cannot falsely mark Unity ready before its own loading state completes");
 
 const publicPlayerSource=readFileSync(new URL("../src/components/site/GamePlayer.tsx",import.meta.url),"utf8");
 assert.doesNotMatch(publicPlayerSource,/autoStartCarSim/,"developer-published games never bypass the Play Game launcher");

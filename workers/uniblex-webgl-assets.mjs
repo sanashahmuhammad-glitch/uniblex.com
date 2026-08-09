@@ -59,12 +59,14 @@ html.uniblex-embedded #unity-loading-bar,html.uniblex-embedded #unity-footer{dis
   const send=(type,detail={})=>window.parent.postMessage({source:"uniblex-webgl",type,...detail},"*");
   let lastProgress=-1;
   let readySent=false;
+  let runtimeStarted=false;
   const report=()=>{
     const bar=document.querySelector("#unity-progress-bar-full");
     const loading=document.querySelector("#unity-loading-bar");
     const progress=Math.max(0,Math.min(1,(parseFloat(bar?.style.width||"0")||0)/100));
+    if(loading?.style.display==="block"||progress>0)runtimeStarted=true;
     if(progress!==lastProgress){lastProgress=progress;send("unity-progress",{progress,stage:progress>=.9?"preparing":"downloading"});}
-    if(!readySent&&loading&&getComputedStyle(loading).display==="none"){
+    if(!readySent&&runtimeStarted&&loading?.style.display==="none"){
       readySent=true;send("unity-ready");
     }
   };
