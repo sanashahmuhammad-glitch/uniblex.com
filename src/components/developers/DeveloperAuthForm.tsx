@@ -34,7 +34,7 @@ export function DeveloperAuthForm({ mode }: { mode: "login" | "register" | "reco
       } else setMessage("Check your email to confirm the account, then log in.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setMessage(error.message); else router.replace("/developers/dashboard");
+      if (error) setMessage(error.message); else { const next = new URLSearchParams(window.location.search).get("next"); router.replace(next?.startsWith("/developers/") ? next : "/developers/dashboard"); }
     }
     setBusy(false);
   }

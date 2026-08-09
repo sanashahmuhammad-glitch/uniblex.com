@@ -6,8 +6,16 @@ export const runtime="nodejs"; export const dynamic="force-dynamic";
 
 export async function GET(request:Request){
   const auth=await verifyDeveloperRequest(request);if(!auth.authorized)return NextResponse.json({error:auth.error},{status:401});
-  const {data,error}=await createUserSupabaseClient(request.headers.get("authorization") || "").from("game_submissions").select("id,title,slug,status,engine,updated_at,build_verified,short_description,submission_reviews(decision,developer_feedback,created_at)").eq("owner_id",auth.user.id).order("updated_at",{ascending:false}).limit(200);
-  return error?NextResponse.json({error:"Submissions could not be loaded."},{status:500}):NextResponse.json({submissions:(data||[]).map(row=>({...row,cover_url:null}))});
+  const db=createUserSupabaseClient(request.headers.get("authorization") || "");const id=optionalUuid(new URL(request.url).searchParams.get("id"));
+  if(id){
+    const {data,error}=await db.from("game_submissions").select("*,game_media(id,role,object_key,public_url,file_name,content_type,size_bytes,sha256,verified_at),developer_game_builds(id,operation_id,preview_url,build_type,compression_mode,file_count,total_bytes,verification_status,verified_at),submission_reviews(decision,developer_feedback,checklist,created_at)").eq("id",id).eq("owner_id",auth.user.id).maybeSingle();
+    return error?NextResponse.json({error:"Submission could not be loaded."},{status:500}):data?NextResponse.json({submission:data}):NextResponse.json({error:"Submission was not found."},{status:404});
+  }
+  const [{data,error},{data:notifications}]=await Promise.all([
+    db.from("game_submissions").select("id,title,slug,status,engine,updated_at,build_verified,short_description,game_id,game_media(role,public_url),games(view_count,play_count,published_at),submission_reviews(decision,developer_feedback,created_at)").eq("owner_id",auth.user.id).order("updated_at",{ascending:false}).limit(200),
+    db.from("notifications").select("id,kind,title,body,read_at,created_at").eq("user_id",auth.user.id).order("created_at",{ascending:false}).limit(100)
+  ]);
+  return error?NextResponse.json({error:"Submissions could not be loaded."},{status:500}):NextResponse.json({submissions:(data||[]).map(row=>({...row,cover_url:Array.isArray(row.game_media)?row.game_media.find((media:{role:string})=>media.role==="cover")?.public_url||null:null})),notifications:notifications||[]});
 }
 export async function POST(request:Request){
   const auth=await verifyDeveloperRequest(request);if(!auth.authorized)return NextResponse.json({error:auth.error},{status:401});
@@ -16,6 +24,7 @@ export async function POST(request:Request){
     const {data:profile}=await db.from("developer_profiles").select("id").eq("id",auth.user.id).maybeSingle();if(!profile){const studio=String(auth.user.user_metadata?.studio_name||auth.user.user_metadata?.display_name||"").trim().slice(0,120);const {error:profileError}=await db.from("developer_profiles").insert({id:auth.user.id,studio_name:studio,display_name:studio,account_status:"pending"});if(profileError)return NextResponse.json({error:"Complete your developer profile before saving a submission."},{status:409});}
     if(body.action==="archive"){const id=uuid(body.id);const {data,error}=await db.from("game_submissions").update({status:"archived"}).eq("id",id).eq("owner_id",auth.user.id).in("status",["draft","rejected","changes_requested"]).select().maybeSingle();return error||!data?NextResponse.json({error:"This submission cannot be archived."},{status:409}):NextResponse.json({submission:data});}
     const input=body.submission&&typeof body.submission==="object"?body.submission as Record<string,unknown>:body;const id=optionalUuid(input.id);const status=["draft","ready_for_review","submitted"].includes(String(input.status))?String(input.status):"draft";
+    if(id){const {data:current}=await db.from("game_submissions").select("status").eq("id",id).eq("owner_id",auth.user.id).maybeSingle();if(!current)return NextResponse.json({error:"Submission was not found."},{status:404});if(!["draft","changes_requested","rejected"].includes(current.status))return NextResponse.json({error:"This reviewed submission is read-only."},{status:409});}
     const payload={owner_id:auth.user.id,title:text(input.title,160),slug:slugify(String(input.slug||input.title||"")),short_description:text(input.short_description,220),full_description:text(input.full_description,5000),category_id:optionalUuid(input.category_id),tags:array(input.tags,20),engine:text(input.engine,80)||null,primary_language:text(input.primary_language,80)||"English",age_rating:text(input.age_rating,80)||null,content_declaration:object(input.content_declaration),options:object(input.options),gameplay_video_url:httpsUrl(input.gameplay_video_url),status,submitted_at:status==="submitted"?new Date().toISOString():null};
     if(!payload.title||!payload.slug)return NextResponse.json({error:"Game title and slug are required."},{status:400});
     const query=id?db.from("game_submissions").update(payload).eq("id",id).eq("owner_id",auth.user.id):db.from("game_submissions").insert(payload);const {data,error}=await query.select().single();

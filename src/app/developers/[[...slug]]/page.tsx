@@ -4,12 +4,12 @@ import { DeveloperAuthForm } from "@/components/developers/DeveloperAuthForm";
 import { DeveloperWorkspace } from "@/components/developers/DeveloperWorkspace";
 import { DeveloperWizard } from "@/components/developers/DeveloperWizard";
 import { SupportCenter } from "@/components/developers/SupportCenter";
-import { DeveloperLanding, DocumentationContent, GuidelinesContent, SimpleResourcePage } from "@/components/developers/PublicPortalPage";
+import { DeveloperLanding, DocumentationContent, GuidelinesContent, SdkContent, SimpleResourcePage } from "@/components/developers/PublicPortalPage";
 
-const privateViews = new Set(["dashboard", "games", "drafts", "submissions", "uploads", "published", "notifications", "profile", "team", "billing"]);
+const privateViews = new Set(["dashboard", "games", "drafts", "submissions", "uploads", "published", "analytics", "notifications", "profile", "team", "billing"]);
 const titles: Record<string, string> = {
   docs: "Documentation", sdk: "SDK", requirements: "Game Requirements", guidelines: "Quality Guidelines",
-  unity: "Unity WebGL Guide", html5: "HTML5 Guide", builds: "Build & ZIP Requirements", media: "Media & Artwork Guidelines",
+  unity: "Unity WebGL Guide", html5: "HTML5 Guide", builds: "Build & ZIP Requirements", media: "Media & Artwork Guidelines", assets: "Developer Assets",
   publishing: "Publishing Process", monetization: "Monetization Overview", faq: "Frequently Asked Questions", support: "Support",
   login: "Developer Login", register: "Developer Registration", recover: "Password Recovery"
 };
@@ -33,18 +33,19 @@ export default async function DeveloperRoute({ params }: { params: Promise<{ slu
   if (key === "games/new") return <DeveloperWizard />;
   if (privateViews.has(key)) {
     const view = key === "drafts" || key === "published" ? "games" : key;
-    return <DeveloperWorkspace view={view as "dashboard" | "games" | "submissions" | "uploads" | "notifications" | "profile" | "billing"} />;
+    return <DeveloperWorkspace view={view as "dashboard" | "games" | "submissions" | "uploads" | "analytics" | "notifications" | "profile" | "team" | "billing"} />;
   }
   if (["docs", "getting-started", "unity", "html5", "builds"].includes(key)) return <DocumentationContent />;
   if (key === "requirements") return <GuidelinesContent kind="requirements" />;
   if (key === "guidelines") return <GuidelinesContent kind="quality" />;
   if (key === "media") return <GuidelinesContent kind="media" />;
-  if (key === "sdk") return <SimpleResourcePage eyebrow="Integration" title="Uniblex SDK" intro="The first SDK release is intentionally small: stable browser lifecycle signals without locking your game to a proprietary runtime." items={[
-    { title: "Ready signal", text: "Notify the host when loading is complete and the first playable frame is available. Games must still work if the optional bridge is unavailable." },
-    { title: "Pause and resume", text: "Respond to visibility changes and host pause requests by suspending gameplay and audio safely." },
-    { title: "Fullscreen", text: "Request fullscreen only from a user gesture and always provide an obvious exit path." },
-    { title: "Data boundaries", text: "Do not collect credentials or personal data. Save APIs and monetization hooks will be documented before they become available." }
+  if (key === "assets") return <SimpleResourcePage eyebrow="Creative resources" title="Developer assets" intro="Prepare accurate Uniblex-ready artwork and presentation materials without copying another portal’s branding." items={[
+    { title: "Cover template", text: "Use a clean 16:9 composition at 1920×1080 or higher. Keep the focal subject inside the center safe area and avoid tiny text." },
+    { title: "Card thumbnail", text: "Export a 4:3 image at 1200×900 or higher. It should remain readable on compact game cards and accurately represent gameplay." },
+    { title: "Screenshot set", text: "Upload up to six unedited gameplay screenshots at 1280 pixels wide or higher. Do not add ratings, platform logos, or misleading UI." },
+    { title: "Brand usage", text: "Do not place the Uniblex logo inside the game or artwork unless you have written approval. Your own studio identity remains yours." }
   ]} />;
+  if (key === "sdk") return <SdkContent />;
   if (key === "publishing") return <SimpleResourcePage eyebrow="Release workflow" title="Publishing process" intro="Every release moves through a controlled, auditable review state." items={[
     { title: "1. Draft", text: "Complete listing details, artwork, compatibility declarations, and a locally validated browser build." },
     { title: "2. Verification", text: "Files upload directly to isolated object storage and are checked against the authoritative manifest." },
