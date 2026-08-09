@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChevronRight, Clock3, FileEdit, Gamepad2, Menu, Search, SlidersHorizontal, UploadCloud, X } from "lucide-react";
+import { BarChart3, Bell, BookOpen, ChevronRight, Clock3, FileEdit, Gamepad2, LifeBuoy, Menu, Search, ShieldCheck, SlidersHorizontal, UploadCloud, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { PRIVATE_PORTAL_NAV, readableStatus, STATUS_COPY } from "@/lib/developerPortal";
@@ -18,16 +19,21 @@ export type SubmissionRow = {
   build_verified: boolean;
   cover_url: string | null;
   short_description: string | null;
+  game_id?: string | null;
+  games?: { view_count?: number | null; play_count?: number | null; published_at?: string | null } | Array<{ view_count?: number | null; play_count?: number | null; published_at?: string | null }> | null;
   submission_reviews?: Array<{ decision: string; developer_feedback: string | null; created_at: string }>;
 };
 
-export function DeveloperWorkspace({ view }: { view: "dashboard" | "games" | "submissions" | "uploads" | "notifications" | "profile" | "team" | "billing" }) {
+type NotificationRow = { id: string; kind: string; title: string; body: string; read_at: string | null; created_at: string };
+
+export function DeveloperWorkspace({ view }: { view: "dashboard" | "games" | "submissions" | "uploads" | "notifications" | "profile" | "team" | "billing" | "analytics" }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rows, setRows] = useState<SubmissionRow[]>([]);
+  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
 
@@ -41,8 +47,9 @@ export function DeveloperWorkspace({ view }: { view: "dashboard" | "games" | "su
       setUser(data.session.user);
       const response = await fetch("/api/developer/submissions", { headers: { Authorization: `Bearer ${data.session.access_token}` } });
       if (response.ok) {
-        const payload = await response.json() as { submissions?: SubmissionRow[] };
+        const payload = await response.json() as { submissions?: SubmissionRow[]; notifications?: NotificationRow[] };
         setRows(payload.submissions || []);
+        setNotifications(payload.notifications || []);
       }
       setChecking(false);
     }
@@ -63,8 +70,9 @@ export function DeveloperWorkspace({ view }: { view: "dashboard" | "games" | "su
     view === "profile" ? <ProfileForm user={user} /> :
     view === "billing" ? <Billing /> :
     view === "team" ? <Team /> :
+    view === "analytics" ? <Analytics rows={rows} /> :
     view === "uploads" ? <Uploads rows={rows} /> :
-    <Notifications rows={rows} />;
+    <Notifications notifications={notifications} />;
 
   return (
     <div className="min-h-screen bg-[#0D1118]">
@@ -76,6 +84,7 @@ export function DeveloperWorkspace({ view }: { view: "dashboard" | "games" | "su
         <nav className="mt-6 grid gap-1" aria-label="Developer workspace">
           {PRIVATE_PORTAL_NAV.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition ${pathname === item.href ? "bg-gradient-to-r from-uniblex-blue/20 to-uniblex-purple/10 text-white ring-1 ring-uniblex-blue/25" : "text-uniblex-gray hover:bg-white/5 hover:text-white"}`}>{item.label}</Link>)}
         </nav>
+        <div className="mt-6 border-t border-white/10 pt-5"><p className="px-3 text-[10px] font-bold uppercase tracking-[.2em] text-uniblex-gray">Resources</p><div className="mt-2 grid gap-1"><Link href="/developers/docs" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-uniblex-gray hover:bg-white/5 hover:text-white"><BookOpen size={15} />Documentation</Link><Link href="/developers/guidelines" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-uniblex-gray hover:bg-white/5 hover:text-white"><ShieldCheck size={15} />Quality guidelines</Link><Link href="/developers/support" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-uniblex-gray hover:bg-white/5 hover:text-white"><LifeBuoy size={15} />Support</Link></div></div>
         <div className="mt-auto pt-5"><button onClick={() => void signOut()} className="btn-secondary w-full !min-h-10 text-sm">Log out</button></div>
       </aside>
       <main className="min-h-screen p-5 sm:p-8 lg:ml-[285px] lg:p-10">{content}</main>
@@ -103,7 +112,9 @@ function GamesTable({ rows, query, setQuery, status, setStatus }: { rows: Submis
 }
 
 function SubmissionItem({ row, detailed = false }: { row: SubmissionRow; detailed?: boolean }) {
-  return <article className="flex flex-col gap-4 border-b border-white/10 p-4 last:border-0 sm:flex-row sm:items-center"><div className="grid h-16 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-uniblex-blue/25 to-uniblex-purple/25"><Gamepad2 className="text-white/70" /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-white">{row.title}</h3><span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-uniblex-gray">{readableStatus(row.status)}</span>{row.build_verified ? <span className="rounded-full bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-300">BUILD VERIFIED</span> : null}</div><p className="mt-1 truncate text-sm text-uniblex-gray">/{row.slug} · {row.engine || "Engine not set"} · Updated {new Date(row.updated_at).toLocaleDateString()}</p>{detailed && row.short_description ? <p className="mt-2 line-clamp-1 text-sm text-white/70">{row.short_description}</p> : null}{detailed && latestFeedback(row) ? <p className="mt-2 rounded-lg border border-uniblex-purple/20 bg-uniblex-purple/10 p-3 text-sm text-white"><span className="font-bold">Reviewer feedback:</span> {latestFeedback(row)}</p> : null}</div><div className="flex gap-2"><Link href={`/developers/games/new?draft=${row.id}`} className="btn-secondary !min-h-10 !px-3 text-sm">{row.status === "draft" ? <><FileEdit size={16} /> Continue draft</> : <>View submission <ChevronRight size={16} /></>}</Link></div></article>;
+  const metrics = Array.isArray(row.games) ? row.games[0] : row.games;
+  const editable = ["draft", "changes_requested", "rejected"].includes(row.status);
+  return <article className="flex flex-col gap-4 border-b border-white/10 p-4 last:border-0 sm:flex-row sm:items-center"><div className="relative grid h-16 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-uniblex-blue/25 to-uniblex-purple/25">{row.cover_url ? <Image src={row.cover_url} alt="" fill unoptimized sizes="80px" className="object-cover" /> : <Gamepad2 className="text-white/70" />}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-white">{row.title}</h3><span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-uniblex-gray">{readableStatus(row.status)}</span>{row.build_verified ? <span className="rounded-full bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-300">BUILD VERIFIED</span> : null}</div><p className="mt-1 truncate text-sm text-uniblex-gray">/{row.slug} · {row.engine || "Engine not set"} · Updated {new Date(row.updated_at).toLocaleDateString()}</p>{metrics ? <p className="mt-1 text-xs text-uniblex-gray">{Number(metrics.view_count || 0).toLocaleString()} views · {Number(metrics.play_count || 0).toLocaleString()} plays</p> : null}{detailed && row.short_description ? <p className="mt-2 line-clamp-1 text-sm text-white/70">{row.short_description}</p> : null}{detailed && latestFeedback(row) ? <p className="mt-2 rounded-lg border border-uniblex-purple/20 bg-uniblex-purple/10 p-3 text-sm text-white"><span className="font-bold">Reviewer feedback:</span> {latestFeedback(row)}</p> : null}</div><div className="flex gap-2">{row.status === "published" ? <Link href={`/games/${row.slug}`} className="btn-secondary !min-h-10 !px-3 text-sm">Open live game <ChevronRight size={16} /></Link> : <Link href={`/developers/games/new?draft=${row.id}`} className="btn-secondary !min-h-10 !px-3 text-sm">{editable ? <><FileEdit size={16} /> Continue submission</> : <>View submission <ChevronRight size={16} /></>}</Link>}</div></article>;
 }
 
 function latestFeedback(row: SubmissionRow) { return [...(row.submission_reviews || [])].sort((a, b) => b.created_at.localeCompare(a.created_at)).find((review) => review.developer_feedback)?.developer_feedback || ""; }
@@ -112,22 +123,56 @@ function Uploads({ rows }: { rows: SubmissionRow[] }) {
   return <><PageHeading eyebrow="Storage activity" title="Upload history" /><section className="card mt-8 p-6">{rows.length ? rows.map((row) => <div key={row.id} className="flex items-center gap-4 border-b border-white/10 py-4 last:border-0"><Clock3 className="text-uniblex-blue" /><div><p className="font-bold text-white">{row.title}</p><p className="text-sm text-uniblex-gray">{row.build_verified ? "Build verification complete" : "No verified build"} · {new Date(row.updated_at).toLocaleString()}</p></div></div>) : <EmptyState title="No upload operations" text="Media and build transfers will appear here with their exact phase and result." />}</section></>;
 }
 
-function Notifications({ rows }: { rows: SubmissionRow[] }) {
-  return <><PageHeading eyebrow="Activity" title="Notifications" /><section className="card mt-8 p-6">{rows.filter((row) => ["changes_requested", "approved", "rejected", "published"].includes(row.status)).length ? rows.map((row) => <div key={row.id} className="flex gap-4 border-b border-white/10 py-4"><Bell className="text-uniblex-purple" /><div><p className="font-bold text-white">{row.title}: {readableStatus(row.status)}</p><p className="mt-1 text-sm text-uniblex-gray">{latestFeedback(row) || STATUS_COPY[row.status as keyof typeof STATUS_COPY]?.detail}</p></div></div>) : <EmptyState title="You’re all caught up" text="Submission and support updates will appear here." />}</section></>;
+function Notifications({ notifications }: { notifications: NotificationRow[] }) {
+  return <><PageHeading eyebrow="Activity" title="Notifications" /><section className="card mt-8 p-6">{notifications.length ? notifications.map((item) => <article key={item.id} className="flex gap-4 border-b border-white/10 py-4 last:border-0"><Bell className={item.read_at ? "text-uniblex-gray" : "text-uniblex-purple"} /><div><p className="font-bold text-white">{item.title}</p><p className="mt-1 text-sm text-uniblex-gray">{item.body}</p><p className="mt-2 text-xs text-uniblex-gray">{new Date(item.created_at).toLocaleString()}</p></div></article>) : <EmptyState title="You’re all caught up" text="Submission and support updates will appear here." />}</section></>;
 }
 
 function ProfileForm({ user }: { user: User }) {
   const [message, setMessage] = useState("");
+  const [profile, setProfile] = useState<Record<string, string>>({ display_name: String(user.user_metadata?.display_name || "") });
+  useEffect(() => { void (async () => {
+    const session = (await supabase?.auth.getSession())?.data.session;
+    if (!session) return;
+    const response = await fetch("/api/developer/profile", { headers: { Authorization: `Bearer ${session.access_token}` } });
+    if (!response.ok) return setMessage("Profile could not be loaded.");
+    const payload = await response.json() as { profile?: Record<string, unknown> };
+    const next: Record<string, string> = {};
+    for (const [key, value] of Object.entries(payload.profile || {})) next[key] = key === "social_links" ? socialText(value) : typeof value === "string" ? value : "";
+    setProfile((current) => ({ ...current, ...next }));
+  })(); }, []);
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const { data } = await supabase!.auth.getSession();
     const body = Object.fromEntries(new FormData(event.currentTarget));
     const response = await fetch("/api/developer/profile", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token}` }, body: JSON.stringify(body) });
-    setMessage(response.ok ? "Studio profile saved." : "Profile could not be saved.");
+    const payload = await response.json().catch(() => ({})) as { profile?: Record<string, unknown>; error?: string };
+    if (response.ok && payload.profile) {
+      const next: Record<string, string> = {};
+      for (const [key, value] of Object.entries(payload.profile)) next[key] = key === "social_links" ? socialText(value) : typeof value === "string" ? value : "";
+      setProfile(next);
+    }
+    setMessage(response.ok ? "Studio profile saved." : payload.error || "Profile could not be saved.");
   }
   const fields = [["studio_name", "Studio name"], ["display_name", "Display name"], ["country", "Country"], ["website", "Website"], ["portfolio_url", "Portfolio"], ["company_info", "Company / studio information"], ["social_links", "Social links"], ["logo_url", "Profile image / logo URL"], ["support_email", "Support email"]];
-  return <><PageHeading eyebrow="Identity" title="Developer profile" /><form onSubmit={save} className="card mt-8 grid gap-5 p-6 md:grid-cols-2">{fields.map(([name, label]) => <label key={name} className="text-sm font-semibold text-white">{label}<input name={name} type={name.includes("email") ? "email" : name.includes("url") || name === "website" ? "url" : "text"} defaultValue={name === "display_name" ? String(user.user_metadata?.display_name || "") : ""} className="mt-2 min-h-12 w-full rounded-xl border border-white/10 bg-black/20 px-4 outline-none focus:border-uniblex-blue" /></label>)}<label className="text-sm font-semibold text-white md:col-span-2">Short biography<textarea name="biography" rows={4} className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 p-4 outline-none focus:border-uniblex-blue" /></label><div className="md:col-span-2"><button className="btn-primary">Save profile</button>{message ? <span className="ml-4 text-sm text-uniblex-gray">{message}</span> : null}</div></form></>;
+  return <><PageHeading eyebrow="Identity" title="Developer profile" /><form onSubmit={save} className="card mt-8 grid gap-5 p-6 md:grid-cols-2">{fields.map(([name, label]) => <label key={name} className="text-sm font-semibold text-white">{label}<input name={name} type={name.includes("email") ? "email" : name.includes("url") || name === "website" ? "url" : "text"} value={profile[name] || ""} onChange={(event) => setProfile((current) => ({ ...current, [name]: event.target.value }))} className="mt-2 min-h-12 w-full rounded-xl border border-white/10 bg-black/20 px-4 outline-none focus:border-uniblex-blue" /></label>)}<label className="text-sm font-semibold text-white md:col-span-2">Short biography<textarea name="biography" value={profile.biography || ""} onChange={(event) => setProfile((current) => ({ ...current, biography: event.target.value }))} rows={4} className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 p-4 outline-none focus:border-uniblex-blue" /></label><div className="md:col-span-2 flex flex-wrap items-center gap-4"><button className="btn-primary">Save profile</button>{message ? <span role="status" className="text-sm text-uniblex-gray">{message}</span> : null}</div></form></>;
 }
+
+function socialText(value: unknown) {
+  if (!value || typeof value !== "object") return "";
+  const record = value as { links?: unknown };
+  return Array.isArray(record.links) ? record.links.filter((item): item is string => typeof item === "string").join(", ") : "";
+}
+
+function Analytics({ rows }: { rows: SubmissionRow[] }) {
+  const published = rows.filter((row) => row.status === "published");
+  const metrics = published.map((row) => ({ row, metric: Array.isArray(row.games) ? row.games[0] : row.games }));
+  const views = metrics.reduce((total, item) => total + Number(item.metric?.view_count || 0), 0);
+  const plays = metrics.reduce((total, item) => total + Number(item.metric?.play_count || 0), 0);
+  const conversion = views ? Math.min(100, Math.round((plays / views) * 100)) : 0;
+  return <><PageHeading eyebrow="Performance" title="Game analytics" /><div className="mt-8 grid gap-4 sm:grid-cols-3"><Metric label="Total views" value={views.toLocaleString()} /><Metric label="Game starts" value={plays.toLocaleString()} /><Metric label="View-to-play" value={`${conversion}%`} /></div><section className="card mt-6 overflow-hidden"><div className="border-b border-white/10 p-5"><h2 className="font-heading text-xl text-white">Published games</h2><p className="mt-1 text-sm text-uniblex-gray">Live counters update from the public game experience.</p></div>{metrics.length ? metrics.map(({ row, metric }) => <article key={row.id} className="grid gap-3 border-b border-white/10 p-5 last:border-0 sm:grid-cols-[1fr_auto_auto] sm:items-center"><div><p className="font-bold text-white">{row.title}</p><p className="mt-1 text-xs text-uniblex-gray">Published {metric?.published_at ? new Date(metric.published_at).toLocaleDateString() : "recently"}</p></div><span className="text-sm text-uniblex-gray">{Number(metric?.view_count || 0).toLocaleString()} views</span><span className="text-sm text-uniblex-gray">{Number(metric?.play_count || 0).toLocaleString()} plays</span></article>) : <EmptyState title="No published analytics yet" text="Performance metrics appear after your first game is published." />}</section></>;
+}
+
+function Metric({ label, value }: { label: string; value: string }) { return <div className="card p-5"><BarChart3 className="text-uniblex-blue" size={20} /><p className="mt-4 text-sm text-uniblex-gray">{label}</p><p className="mt-2 font-heading text-3xl text-white">{value}</p></div>; }
 
 function Team() {
   return <><PageHeading eyebrow="Prepared for collaboration" title="Team" /><section className="card mt-8 p-6"><EmptyState title="Team invitations are coming later" text="Your studio owner record and future member roles are prepared. No invitations are sent in this release." /></section></>;
