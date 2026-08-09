@@ -12,6 +12,9 @@ export type MvpHeadObject = {
   size: number | null;
   sha256: string;
   checksumSha256: string;
+  contentType: string;
+  contentEncoding: string;
+  cacheControl: string;
 };
 
 export type MvpHeadMismatch =
@@ -83,7 +86,7 @@ export function headR2ObjectResponse(config: R2MvpConfig, key: string) {
 
 export function parseMvpHeadResponse(response: Pick<Response, "ok" | "status" | "headers">): MvpHeadObject {
   if (!response.ok) {
-    return { exists: false, status: response.status, size: null, sha256: "", checksumSha256: "" };
+    return { exists: false, status: response.status, size: null, sha256: "", checksumSha256: "", contentType: "", contentEncoding: "", cacheControl: "" };
   }
   const sizeHeader = response.headers.get("content-length") ?? response.headers.get("x-amz-meta-size-bytes");
   const parsedSize = sizeHeader === null ? null : Number(sizeHeader);
@@ -92,8 +95,35 @@ export function parseMvpHeadResponse(response: Pick<Response, "ok" | "status" | 
     status: response.status,
     size: parsedSize !== null && Number.isSafeInteger(parsedSize) && parsedSize >= 0 ? parsedSize : null,
     sha256: normalizeSha256Hex(response.headers.get("x-amz-meta-sha256")),
-    checksumSha256: decodeSha256Base64(response.headers.get("x-amz-checksum-sha256"))
+    checksumSha256: decodeSha256Base64(response.headers.get("x-amz-checksum-sha256")),
+    contentType: response.headers.get("content-type")?.trim() || "",
+    contentEncoding: response.headers.get("content-encoding")?.trim().toLowerCase() || "",
+    cacheControl: response.headers.get("cache-control")?.trim() || ""
   };
+}
+
+export async function replaceMvpObjectHostingMetadata(
+  config: R2MvpConfig,
+  key: string,
+  metadata: { contentType: string; contentEncoding: "br" | "gzip"; cacheControl: string }
+) {
+  const cacheControl = withNoTransform(metadata.cacheControl);
+  const response = await signedRequest(config, "PUT", key, {}, {
+    "x-amz-copy-source": canonicalUri(config.bucket, key),
+    "x-amz-metadata-directive": "MERGE",
+    "content-type": metadata.contentType,
+    "content-encoding": metadata.contentEncoding,
+    "cache-control": cacheControl
+  });
+  if (!response.ok) {
+    console.error("R2 hosting metadata repair failed.", { status: response.status, code: await readR2ErrorCode(response) });
+    throw new Error("Unable to repair WebGL hosting metadata.");
+  }
+  const head = await headMvpObject(config, key);
+  if (!head.exists || head.contentEncoding !== metadata.contentEncoding || !hasNoTransform(head.cacheControl)) {
+    throw new Error("WebGL hosting metadata could not be verified.");
+  }
+  return { ...head, cacheControl };
 }
 
 export function getMvpHeadMismatch(expected: { size: number; sha256: string }, actual: MvpHeadObject): MvpHeadMismatch {
@@ -160,6 +190,16 @@ function readEnv(environment: NodeJS.ProcessEnv, ...names: string[]) {
     if (value) return value;
   }
   return "";
+}
+
+export function withNoTransform(value: string) {
+  const parts = value.split(",").map((part) => part.trim()).filter(Boolean);
+  if (!parts.some((part) => part.toLowerCase() === "no-transform")) parts.push("no-transform");
+  return parts.join(", ");
+}
+
+function hasNoTransform(value: string) {
+  return value.split(",").some((part) => part.trim().toLowerCase() === "no-transform");
 }
 
 function normalizeSha256Hex(value: string | null) {

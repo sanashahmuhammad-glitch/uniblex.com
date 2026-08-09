@@ -227,7 +227,9 @@ function hostingMetadata(path: string): Pick<WebglManifestEntry, "contentType" |
   return {
     contentType,
     ...(contentEncoding ? { contentEncoding } : {}),
-    cacheControl: extension === "html" ? "no-cache, no-store, must-revalidate" : "public, max-age=31536000, immutable"
+    cacheControl: extension === "html"
+      ? "no-cache, no-store, must-revalidate"
+      : `public, max-age=31536000, immutable${contentEncoding ? ", no-transform" : ""}`
   };
 }
 

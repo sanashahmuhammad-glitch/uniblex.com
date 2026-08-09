@@ -40,8 +40,21 @@ export function DeveloperReviewPortal() {
     const session = (await supabase?.auth.getSession())?.data.session;
     if (!session) return setMessage("Sign in with an authorized reviewer account.");
     const response = await fetch("/api/admin/developer-submissions", { headers: { Authorization: `Bearer ${session.access_token}` } });
-    const payload = await response.json().catch(() => ({})) as { submissions?: Submission[]; role?: string; error?: string };
+    const payload = await response.json().catch(() => ({})) as { submissions?: Submission[]; role?: string; hostingRepairSubmissionIds?: string[]; error?: string };
     if (!response.ok) return setMessage(payload.error || "Reviewer access is required.");
+    if (payload.hostingRepairSubmissionIds?.length) {
+      setMessage("Repairing verified WebGL hosting metadata…");
+      for (const submissionId of payload.hostingRepairSubmissionIds) {
+        const repair = await fetch("/api/admin/developer-submissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ action: "repair_hosting", submissionId })
+        });
+        const repairPayload = await repair.json().catch(() => ({})) as { error?: string };
+        if (!repair.ok) return setMessage(repairPayload.error || "WebGL hosting metadata could not be repaired.");
+      }
+      return load();
+    }
     setRows(payload.submissions || []);
     setRole(payload.role || "");
     setMessage("");
@@ -55,24 +68,30 @@ export function DeveloperReviewPortal() {
   async function decide(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected || busy) return;
+    const form = event.currentTarget;
     const session = (await supabase?.auth.getSession())?.data.session;
     if (!session) return setMessage("Your reviewer session expired. Sign in again.");
-    const form = event.currentTarget;
     const body = Object.fromEntries(new FormData(form));
     setBusy(true);
-    const response = await fetch("/api/admin/developer-submissions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({
-        ...body,
-        submissionId: selected.id,
-        checklist: { load: body.load === "on", controls: body.controls === "on", responsive: body.responsive === "on", content: body.content === "on" }
-      })
-    });
-    const payload = await response.json().catch(() => ({})) as { error?: string };
-    setBusy(false);
-    setMessage(response.ok ? "Review decision recorded." : payload.error || "Decision could not be recorded.");
-    if (response.ok) { setSelected(null); await load(); }
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/developer-submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          ...body,
+          submissionId: selected.id,
+          checklist: { load: body.load === "on", controls: body.controls === "on", responsive: body.responsive === "on", content: body.content === "on" }
+        })
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      setMessage(response.ok ? "Review decision recorded." : payload.error || "Decision could not be recorded.");
+      if (response.ok) { setSelected(null); await load(); }
+    } catch {
+      setMessage("Decision request failed. Check the connection and try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -103,12 +122,12 @@ export function DeveloperReviewPortal() {
         </section>
       </div>
 
-      {selected ? <ReviewDialog submission={selected} role={role} busy={busy} onClose={() => setSelected(null)} onSubmit={decide} /> : null}
+      {selected ? <ReviewDialog submission={selected} role={role} busy={busy} message={message} onClose={() => setSelected(null)} onSubmit={decide} /> : null}
     </main>
   );
 }
 
-function ReviewDialog({ submission, role, busy, onClose, onSubmit }: { submission: Submission; role: string; busy: boolean; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
+function ReviewDialog({ submission, role, busy, message, onClose, onSubmit }: { submission: Submission; role: string; busy: boolean; message: string; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
   const cover = submission.game_media?.find((media) => media.role === "cover");
   const screenshots = submission.game_media?.filter((media) => media.role.startsWith("screenshot-")) || [];
   const build = submission.developer_game_builds?.find((item) => item.verification_status === "verified") || submission.developer_game_builds?.[0];
@@ -126,6 +145,7 @@ function ReviewDialog({ submission, role, busy, onClose, onSubmit }: { submissio
       <label className="mt-5 block text-sm font-bold">Private internal notes<textarea name="internalNotes" rows={4} className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 p-4 outline-none focus:border-uniblex-purple" /></label>
       <label className="mt-5 block text-sm font-bold">Decision<select name="decision" className="admin-select mt-2 min-h-12 w-full rounded-xl border border-white/10 bg-black/20 px-4"><option value="under_review">Start review</option><option value="changes_requested">Request changes</option><option value="approved">Approve</option><option value="rejected">Reject</option>{canPublish ? <option value="published">Publish to Uniblex Games</option> : null}{canUnpublish ? <option value="unpublished">Unpublish</option> : null}</select></label>
       {submission.status !== "approved" && ["owner", "admin"].includes(role) ? <p className="mt-3 text-xs text-uniblex-gray">Publishing becomes available after an explicit Approved decision.</p> : null}
+      {message ? <p role="status" className="mt-5 rounded-xl border border-uniblex-blue/20 bg-uniblex-blue/10 p-4 text-sm">{message}</p> : null}
       <button disabled={busy} className="btn-primary mt-6 disabled:opacity-50"><CheckCircle2 size={18} />{busy ? "Saving…" : "Confirm decision"}</button>
     </form>
   </div>;

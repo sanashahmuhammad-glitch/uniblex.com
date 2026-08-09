@@ -11,6 +11,9 @@ const submissionRoute = source("src/app/api/developer/submissions/route.ts");
 const wizard = source("src/components/developers/DeveloperWizard.tsx");
 const workspace = source("src/components/developers/DeveloperWorkspace.tsx");
 const authForm = source("src/components/developers/DeveloperAuthForm.tsx");
+const reviewer = source("src/components/admin/DeveloperReviewPortal.tsx");
+const zipWorker = source("src/workers/webglZip.worker.ts");
+const r2Mvp = source("src/lib/r2Mvp.ts");
 let passed = 0;
 
 function test(name, callback) {
@@ -62,6 +65,21 @@ test("SDK exposes a stable dependency-free lifecycle API", () => {
   assert.equal(window.UniblexSDK.version, "1.0.0");
   window.UniblexSDK.game.ready();
   assert.equal(events.filter((event) => event.type === "game:ready").length, 2);
+});
+
+test("review form survives the asynchronous session lookup and shows request errors in the dialog", () => {
+  assert.match(reviewer, /async function decide[\s\S]*?const form = event\.currentTarget;[\s\S]*?const session = \(await supabase\?\.auth\.getSession\(\)\)/);
+  assert.ok(reviewer.includes('message={message}'));
+  assert.ok(reviewer.includes("Decision request failed. Check the connection and try again."));
+});
+
+test("precompressed WebGL assets prohibit CDN recompression", () => {
+  assert.ok(zipWorker.includes('", no-transform"'));
+  assert.ok(zipWorker.includes("contentEncoding ?"));
+  assert.ok(reviewRoute.includes('body.action==="repair_hosting"'));
+  assert.ok(reviewRoute.includes("getMvpHeadMismatch"));
+  assert.ok(r2Mvp.includes('"x-amz-metadata-directive": "MERGE"'));
+  assert.ok(r2Mvp.includes('"content-encoding": metadata.contentEncoding'));
 });
 
 console.log(`\n${passed} Developer Portal completion regression tests passed.`);
