@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LayoutDashboard, LogOut, Menu, UserRound, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -9,8 +10,10 @@ import { PUBLIC_PORTAL_NAV } from "@/lib/developerPortal";
 import { supabase } from "@/lib/supabase";
 
 export function DeveloperHeader() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const hasWorkspaceSidebar = /^\/developers\/(dashboard|games|drafts|submissions|uploads|published|analytics|notifications|profile|team|billing)$/.test(pathname);
   useEffect(() => {
     let active = true;
     void supabase?.auth.getSession().then(({ data }) => { if (active) setUser(data.session?.user || null); });
@@ -21,7 +24,7 @@ export function DeveloperHeader() {
   async function signOut() { await supabase?.auth.signOut(); setOpen(false); }
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0D1118]/90 backdrop-blur-xl">
-      <div className="mx-auto flex min-h-[76px] max-w-[1440px] items-center justify-between gap-6 px-4 py-3 sm:px-6 lg:px-8">
+      <div className={`mx-auto flex min-h-[76px] max-w-[1440px] items-center justify-between gap-6 px-4 py-3 sm:px-6 lg:px-8 ${hasWorkspaceSidebar ? "lg:ml-[285px] lg:mr-0 lg:max-w-none lg:px-10" : ""}`}>
         <Link href="/" className="group flex shrink-0 items-center gap-4 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-uniblex-blue" aria-label="Uniblex home">
           <Image src="/brand/horizontal-lockup.png" alt="Uniblex" width={600} height={150} className="h-11 w-auto object-contain sm:h-12" priority />
           <span className="hidden border-l border-white/15 py-1 pl-4 text-[11px] font-extrabold uppercase leading-[1.15] tracking-[.16em] text-white transition group-hover:text-uniblex-blue sm:block">Developer<br />Portal</span>
