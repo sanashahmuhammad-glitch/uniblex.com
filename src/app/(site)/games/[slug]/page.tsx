@@ -123,11 +123,14 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
       </section>
 
       <section className="relative left-1/2 mt-5 grid w-screen max-w-[1600px] -translate-x-1/2 items-start gap-4 px-4 md:mt-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:px-8 2xl:grid-cols-[minmax(0,1fr)_300px]">
-        {isMotoRider && game.iframeUrl ? (
-          <MotoRiderPlayer title={game.title} slug={game.slug} iframeUrl={game.iframeUrl} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
-        ) : (
-          <GamePlayer title={game.title} slug={game.slug} cover={game.cover} thumbnail={game.thumbnailUrl} iframeUrl={game.iframeUrl} aspectRatio={game.aspectRatio} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
-        )}
+        <div className="grid min-w-0 gap-4">
+          {isMotoRider && game.iframeUrl ? (
+            <MotoRiderPlayer title={game.title} slug={game.slug} iframeUrl={game.iframeUrl} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
+          ) : (
+            <GamePlayer title={game.title} slug={game.slug} cover={game.cover} thumbnail={game.thumbnailUrl} iframeUrl={game.iframeUrl} aspectRatio={game.aspectRatio} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
+          )}
+          <GameEngagement game={game} games={publishedGames} />
+        </div>
         <aside className="grid gap-4 xl:sticky xl:top-32 xl:self-start">
           {isMotoRider ? <div className="hidden xl:block"><AdZone label="Advertisement" size="rectangle" /></div> : null}
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.07] via-uniblex-card/75 to-black/25 p-5 shadow-[0_22px_80px_rgba(0,0,0,.22)]">
@@ -165,8 +168,6 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
       <div className="my-6 md:my-10">
         <AdZone label={isMotoRider ? "Advertisement" : "Below Game Player"} size="game-bottom" />
       </div>
-
-      <GameEngagement game={game} games={publishedGames} />
 
       <section className="mt-10 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="card p-6 md:p-8">

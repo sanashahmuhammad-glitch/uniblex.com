@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Expand, Maximize2, Minimize2, Play, RotateCw, Smartphone } from "lucide-react";
+import {
+  AlertTriangle, Expand, Gamepad2, Heart, Maximize2, Minimize2, Play, RotateCw,
+  Share2, Smartphone, ThumbsDown, ThumbsUp, Volume2, VolumeX
+} from "lucide-react";
 
 type GamePlayerProps = {
   title: string;
@@ -19,6 +22,12 @@ export function GamePlayer({ title, slug, cover, thumbnail, iframeUrl, aspectRat
   const [started, setStarted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
+  const [favorite, setFavorite] = useStoredFlag(`uniblex_favorite_${slug}`);
+  const [liked, setLiked] = useStoredFlag(`uniblex_like_${slug}`);
+  const [disliked, setDisliked] = useStoredFlag(`uniblex_dislike_${slug}`);
+  const [muted, setMuted] = useStoredFlag(`uniblex_muted_${slug}`);
+  const [showControls, setShowControls] = useState(false);
+  const [message, setMessage] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const aspectClass = getAspectClass(aspectRatio);
   const desktopControlList = desktopControls?.length ? desktopControls : ["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"];
@@ -81,6 +90,30 @@ export function GamePlayer({ title, slug, cover, thumbnail, iframeUrl, aspectRat
     void incrementCounter(slug, "play");
   }
 
+  function react(kind: "like" | "dislike") {
+    if (kind === "like") {
+      setLiked(!liked);
+      if (!liked) setDisliked(false);
+    } else {
+      setDisliked(!disliked);
+      if (!disliked) setLiked(false);
+    }
+  }
+
+  async function share() {
+    const data = { title, text: `Play ${title} on Uniblex`, url: window.location.href };
+    if (navigator.share) await navigator.share(data).catch(() => undefined);
+    else {
+      await navigator.clipboard?.writeText(data.url).catch(() => undefined);
+      showMessage("Link copied");
+    }
+  }
+
+  function showMessage(value: string) {
+    setMessage(value);
+    window.setTimeout(() => setMessage(""), 1800);
+  }
+
   return (
     <section className="grid gap-3 md:gap-4">
       <div
@@ -131,24 +164,50 @@ export function GamePlayer({ title, slug, cover, thumbnail, iframeUrl, aspectRat
         </div>
       </div>
 
-      <div className="grid gap-3 rounded-lg border border-white/10 bg-white/[.035] p-3 text-sm text-uniblex-gray md:grid-cols-[1fr_auto] md:items-center md:p-4">
+      <div className="relative flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-gradient-to-r from-[#0b1220] via-[#101528] to-[#120d24] p-2 shadow-[0_14px_50px_rgba(0,0,0,.28)] sm:gap-2 sm:p-2.5">
+        <Action label={liked ? "Unlike" : "Like"} active={liked} onClick={() => react("like")} icon={<ThumbsUp size={17} />} />
+        <Action label={disliked ? "Remove dislike" : "Dislike"} active={disliked} onClick={() => react("dislike")} icon={<ThumbsDown size={17} />} />
+        <Action label={favorite ? "Remove favorite" : "Favorite"} active={favorite} onClick={() => setFavorite(!favorite)} icon={<Heart size={17} fill={favorite ? "currentColor" : "none"} />} />
+        <Action label="Share" onClick={() => void share()} icon={<Share2 size={17} />} />
+        <Action label="Report" href={`mailto:support@uniblex.com?subject=${encodeURIComponent(`Report: ${title}`)}`} icon={<AlertTriangle size={17} />} />
+        <span className="mx-1 hidden h-7 w-px bg-white/10 sm:block" />
+        <Action label={muted ? "Sound preference off" : "Sound preference on"} active={!muted} onClick={() => { setMuted(!muted); showMessage("Sound preference saved"); }} icon={muted ? <VolumeX size={17} /> : <Volume2 size={17} />} />
+        <Action label="Controls and help" active={showControls} onClick={() => setShowControls(!showControls)} icon={<Gamepad2 size={17} />} />
+        <Action label={isFullscreen ? "Exit fullscreen" : "Fullscreen"} onClick={() => void toggleFullscreen()} icon={isFullscreen ? <Minimize2 size={17} /> : <Expand size={17} />} />
+        {message && <span className="ml-auto px-2 text-xs font-bold text-cyan-200" role="status">{message}</span>}
+      </div>
+
+      {showControls ? <div className="grid gap-3 rounded-lg border border-uniblex-blue/20 bg-uniblex-blue/[.06] p-3 text-sm text-uniblex-gray md:grid-cols-[1fr_auto] md:items-center md:p-4">
         <p>
           Click inside the game once if keyboard controls do not respond.
         </p>
         <p className="inline-flex items-center gap-2 font-bold text-white md:hidden">
           <Smartphone size={16} className="text-uniblex-blue" /> {mobileControlList.join(" / ")}
         </p>
-      </div>
+      </div> : null}
 
-      <div className="hidden grid-cols-3 gap-3 md:grid">
+      {showControls ? <div className="hidden grid-cols-3 gap-3 md:grid">
         {desktopControlList.map((control) => (
           <div key={control} className="rounded-lg border border-uniblex-border bg-white/[.025] px-4 py-3 text-center text-sm font-bold text-uniblex-gray">
             {control}
           </div>
         ))}
-      </div>
+      </div> : null}
     </section>
   );
+}
+
+function Action({ label, icon, onClick, active = false, href }: { label: string; icon: React.ReactNode; onClick?: () => void; active?: boolean; href?: string }) {
+  const classes = `group relative inline-flex min-h-10 min-w-10 items-center justify-center gap-2 rounded-lg border px-3 text-xs font-bold transition ${active ? "border-uniblex-blue/55 bg-uniblex-blue/20 text-cyan-100" : "border-white/10 bg-white/[.045] text-uniblex-gray hover:border-uniblex-purple/55 hover:bg-uniblex-purple/15 hover:text-white"}`;
+  const content = <>{icon}<span className="hidden 2xl:inline">{label}</span><span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/95 px-2 py-1 text-[11px] text-white opacity-0 shadow-lg transition group-hover:opacity-100 group-focus-visible:opacity-100">{label}</span></>;
+  return href ? <a className={classes} href={href} aria-label={label} title={label}>{content}</a> : <button className={classes} type="button" onClick={onClick} aria-label={label} aria-pressed={active} title={label}>{content}</button>;
+}
+
+function useStoredFlag(key: string) {
+  const [value, setValue] = useState(false);
+  useEffect(() => { try { setValue(localStorage.getItem(key) === "1"); } catch {} }, [key]);
+  function update(next: boolean) { setValue(next); try { localStorage.setItem(key, next ? "1" : "0"); } catch {} }
+  return [value, update] as const;
 }
 
 function GamePoster({ title, cover, thumbnail, portrait, onPlay, onFullscreen }: { title: string; cover: string; thumbnail: string; portrait: boolean; onPlay: () => void; onFullscreen: () => void }) {

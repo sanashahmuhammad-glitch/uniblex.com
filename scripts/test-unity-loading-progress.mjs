@@ -42,6 +42,7 @@ assert.doesNotMatch(componentSource,/createObjectURL|revokeObjectURL/,"the singl
 assert.match(componentSource,/event\.data\.type==="unity-ready"[\s\S]*setPhase\("ready"\)/,"the loader is hidden only after the Unity runtime-ready handshake");
 assert.match(componentSource,/event\.data\?\.source!=="uniblex-webgl"/,"the parent accepts progress only from the generic verified WebGL bridge");
 assert.match(componentSource,/role="progressbar"[\s\S]*aria-valuenow=\{unityProgress\.percentage\}/,"the exact visible progress is exposed accessibly");
+assert.match(componentSource,/bg-\[#070b14\]\/95[\s\S]*Uniblex Game Launcher/,"the loading state keeps the verified game artwork inside a Moto Rider-style black launcher card");
 
 const workerSource=readFileSync(new URL("../workers/uniblex-webgl-assets.mjs",import.meta.url),"utf8");
 assert.match(workerSource,/source:\"uniblex-webgl\"/,"the R2 HTML bridge emits the generic verified WebGL source marker");
@@ -53,6 +54,14 @@ const publicPlayerSource=readFileSync(new URL("../src/components/site/GamePlayer
 assert.doesNotMatch(publicPlayerSource,/autoStartCarSim/,"developer-published games never bypass the Play Game launcher");
 assert.match(publicPlayerSource,/thumbnail=\{thumbnail \|\| cover\}/,"the launcher uses the submitted card thumbnail with a cover fallback");
 assert.match(publicPlayerSource,/> Play Game<\//,"the public player exposes the same explicit Play Game gate");
+assert.match(publicPlayerSource,/label=\{liked \? "Unlike" : "Like"\}[\s\S]*label=\{disliked \? "Remove dislike" : "Dislike"\}/,"developer-published games expose the same immediate Like and Dislike action bar as Moto Rider");
+assert.match(publicPlayerSource,/label="Share"[\s\S]*label="Report"[\s\S]*label=\{isFullscreen \? "Exit fullscreen" : "Fullscreen"\}/,"the complete player action bar stays directly beneath the canvas");
+
+const gamePageSource=readFileSync(new URL("../src/app/(site)/games/[slug]/page.tsx",import.meta.url),"utf8");
+const playerPosition=gamePageSource.indexOf("<GamePlayer");
+const engagementPosition=gamePageSource.indexOf("<GameEngagement");
+const bottomAdPosition=gamePageSource.indexOf('AdZone label={isMotoRider ? "Advertisement" : "Below Game Player"}');
+assert.ok(playerPosition>=0&&engagementPosition>playerPosition&&bottomAdPosition>engagementPosition,"views and share engagement render immediately after the player and before the below-game ad");
 
 const {default:webglAssetWorker}=await import("../workers/uniblex-webgl-assets.mjs");
 const originalHtml='<!doctype html><html><body><div id="unity-container"><canvas id="unity-canvas"></canvas><div id="unity-loading-bar"><div id="unity-progress-bar-full"></div></div><div id="unity-footer"></div></div></body></html>';

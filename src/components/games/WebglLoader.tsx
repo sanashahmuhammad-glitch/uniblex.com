@@ -67,16 +67,23 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
     <div ref={root} tabIndex={0} className="relative aspect-video w-full max-w-[1920px] overflow-hidden bg-black outline-none" onClick={()=>{root.current?.focus();if(phase==="ready") iframe.current?.focus();}}>
       {runtimeLoader?<>
         <iframe key={loadAttempt} ref={iframe} src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen tabIndex={0} className={"h-full w-full border-0 bg-black transition-opacity duration-500 motion-reduce:transition-none "+(phase==="ready"?"opacity-100":"opacity-0")}/>
-        <div aria-hidden={phase==="ready"} className={"absolute inset-0 flex flex-col items-center justify-center bg-cover bg-center p-6 text-center transition-opacity duration-500 motion-reduce:transition-none "+(phase==="ready"?"pointer-events-none opacity-0":"opacity-100")} style={{backgroundImage:"linear-gradient(rgba(0,0,0,.58),rgba(0,0,0,.88)),url("+config.coverUrl+")"}}>
-          {config.thumbnailUrl?<img src={config.thumbnailUrl} alt="" className="mb-5 aspect-video w-40 rounded-lg object-cover shadow-2xl"/>:null}
-          <h1 className="font-heading text-3xl sm:text-5xl">{config.title}</h1>
-          {phase==="loading"?<div className="mt-7 w-full max-w-xl" role="status" aria-live="polite" aria-atomic="true">
-            <div className="mb-2 flex justify-between text-sm"><span>{unityProgress.status}</span><span>{unityProgress.percentage}%</span></div>
-            <div className="h-3 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-label="Game download progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={unityProgress.percentage}><div className="h-full rounded-full bg-uniblex-blue transition-[width] duration-200 ease-out motion-reduce:transition-none" style={{width:unityProgress.percentage+"%"}}/></div>
-            <p className="mt-3 text-sm text-white/75">{formatMegabytes(unityProgress.loadedBytes)} / {formatMegabytes(unityProgress.totalBytes)} MB</p>
-          </div>:null}
-          {phase==="error"?<div className="mt-6" role="alert"><p className="text-red-200">{error}</p><button className="btn-primary mt-4" onClick={start}>Retry</button></div>:null}
-          <p className="mt-5 hidden text-sm text-white/80 [@media(orientation:portrait)]:block">Rotate your device for the best 16:9 experience.</p>
+        <div aria-hidden={phase==="ready"} className={"absolute inset-0 flex items-center justify-center bg-cover bg-center p-4 text-center transition-opacity duration-500 motion-reduce:transition-none sm:p-6 "+(phase==="ready"?"pointer-events-none opacity-0":"opacity-100")} style={{backgroundImage:"linear-gradient(rgba(0,0,0,.42),rgba(0,0,0,.72)),url("+config.coverUrl+")"}}>
+          <div className="flex w-full max-w-2xl flex-col items-center rounded-3xl border border-white/10 bg-[#070b14]/95 p-6 shadow-[0_28px_100px_rgba(0,0,0,.72)] backdrop-blur-md sm:p-8">
+            <p className="mb-4 text-xs font-black uppercase tracking-[.22em] text-uniblex-blue">Uniblex Game Launcher</p>
+            <div className="grid w-full items-center gap-5 sm:grid-cols-[180px_minmax(0,1fr)] sm:text-left">
+              {config.thumbnailUrl?<img src={config.thumbnailUrl} alt={`${config.title} thumbnail`} className="mx-auto aspect-video w-40 rounded-2xl border border-white/15 object-cover shadow-2xl sm:w-full"/>:null}
+              <div className="min-w-0">
+                <h1 className="font-heading text-3xl sm:text-4xl">{config.title}</h1>
+                {phase==="loading"?<div className="mt-5 w-full" role="status" aria-live="polite" aria-atomic="true">
+                  <div className="mb-2 flex justify-between gap-4 text-sm"><span>{unityProgress.status}</span><span>{unityProgress.percentage}%</span></div>
+                  <div className="h-3 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-label="Game download progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={unityProgress.percentage}><div className="h-full rounded-full bg-gradient-to-r from-uniblex-blue to-uniblex-purple transition-[width] duration-200 ease-out motion-reduce:transition-none" style={{width:unityProgress.percentage+"%"}}/></div>
+                  <p className="mt-3 text-sm text-white/70">{formatMegabytes(unityProgress.loadedBytes)} / {formatMegabytes(unityProgress.totalBytes)} MB</p>
+                </div>:null}
+                {phase==="error"?<div className="mt-6" role="alert"><p className="text-red-200">{error}</p><button className="btn-primary mt-4" onClick={start}>Retry</button></div>:null}
+              </div>
+            </div>
+            <p className="mt-5 hidden text-sm text-white/80 [@media(orientation:portrait)]:block">Rotate your device for the best 16:9 experience.</p>
+          </div>
         </div>
       </>:phase==="ready"?<iframe src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen className="h-full w-full border-0 bg-black"/>:
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-cover bg-center p-6 text-center" style={{backgroundImage:"linear-gradient(rgba(0,0,0,.58),rgba(0,0,0,.88)),url("+config.coverUrl+")"}}>
