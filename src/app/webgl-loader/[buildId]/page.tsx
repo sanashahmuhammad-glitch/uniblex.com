@@ -11,10 +11,11 @@ export default async function WebglLoaderPage({params}:{params:{buildId:string}}
   if(!/^[0-9a-f-]{36}$/i.test(params.buildId)) notFound();
   const database=createPublicServerSupabaseClient();
   if(!database) notFound();
-  const {data,error}=await database.rpc("get_published_webgl_mvp_loader",{p_build_id:params.buildId});
-  const loaderData=!error&&data?.entryUrl&&Array.isArray(data.manifest)
-    ? data
-    : await getPublishedDeveloperLoader(params.buildId);
+  const developerLoader=await getPublishedDeveloperLoader(params.buildId);
+  const {data,error}=developerLoader
+    ? {data:null,error:null}
+    : await database.rpc("get_published_webgl_mvp_loader",{p_build_id:params.buildId});
+  const loaderData=developerLoader||(!error&&data?.entryUrl&&Array.isArray(data.manifest)?data:null);
   if(!loaderData?.entryUrl||!Array.isArray(loaderData.manifest)) notFound();
   return <WebglLoader config={{
     title:String(loaderData.title||"WebGL Game"),coverUrl:String(loaderData.coverUrl||""),thumbnailUrl:String(loaderData.thumbnailUrl||""),
