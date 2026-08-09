@@ -1,6 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock3, Gamepad2, Monitor, MousePointer2, Smartphone, Trophy, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock3, Compass, Gamepad2, Monitor, MousePointer2, Smartphone, Trophy, UserRound, Users } from "lucide-react";
 import { AdZone } from "@/components/site/AdZone";
 import { GamePlayer } from "@/components/site/GamePlayer";
 import { MotoRiderPlayer } from "@/components/site/MotoRiderPlayer";
@@ -130,6 +130,14 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
             <GamePlayer title={game.title} slug={game.slug} cover={game.cover} thumbnail={game.thumbnailUrl} iframeUrl={game.iframeUrl} aspectRatio={game.aspectRatio} desktopControls={game.desktopControls} mobileControls={game.mobileControls} />
           )}
           <GameEngagement game={game} games={publishedGames} />
+          <section className="grid gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.06] via-uniblex-card/75 to-black/30 p-5 shadow-[0_18px_70px_rgba(0,0,0,.18)] sm:grid-cols-2 xl:grid-cols-3" aria-label="Game information">
+            <GameFact icon={UserRound} label="Developer" value={game.developerName || "Uniblex Creator"} />
+            <GameFact icon={Trophy} label="Rating" value={`${game.rating} / 5`} />
+            <GameFact icon={CalendarDays} label="Released" value={formatGameDate(game.publishedAt)} />
+            <GameFact icon={CalendarDays} label="Last updated" value={formatGameDate(game.updatedAt)} />
+            <GameFact icon={Gamepad2} label="Game engine" value={game.engine || "WebGL"} />
+            <GameFact icon={Compass} label="Orientation" value={titleCase(game.orientation || "landscape")} />
+          </section>
         </div>
         <aside className="grid gap-4 xl:sticky xl:top-32 xl:self-start">
           {isMotoRider ? <div className="hidden xl:block"><AdZone label="Advertisement" size="rectangle" /></div> : null}
@@ -213,6 +221,18 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
         </aside>
       </section>
 
+      {game.previewVideoUrl ? (
+        <section className="mt-10 overflow-hidden rounded-2xl border border-white/10 bg-black/35 p-5 md:p-7" aria-labelledby="gameplay-preview-heading">
+          <div className="mb-5">
+            <p className="text-xs font-black uppercase tracking-[.22em] text-uniblex-blue">See it in motion</p>
+            <h2 id="gameplay-preview-heading" className="mt-2 font-heading text-3xl">Gameplay Video</h2>
+          </div>
+          <video controls preload="metadata" poster={game.cover} className="aspect-video w-full rounded-xl bg-black object-cover" src={game.previewVideoUrl}>
+            Your browser does not support the gameplay preview video.
+          </video>
+        </section>
+      ) : null}
+
       <section className="mt-12 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.055] via-uniblex-card/60 to-black/25 p-5 shadow-[0_24px_90px_rgba(0,0,0,.2)] md:p-7">
         <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
@@ -233,6 +253,25 @@ export default async function GameDetailPage({ params }: { params: { slug: strin
       </section>
     </main>
   );
+}
+
+function GameFact({ icon: Icon, label, value }: { icon: typeof Gamepad2; label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-white/[.035] p-4">
+      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-uniblex-blue/10 text-uniblex-blue"><Icon size={18} /></span>
+      <span className="min-w-0"><span className="block text-xs text-uniblex-gray">{label}</span><span className="mt-1 block truncate text-sm font-black text-white">{value}</span></span>
+    </div>
+  );
+}
+
+function formatGameDate(value?: string) {
+  if (!value) return "Recently";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Recently" : new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(date);
+}
+
+function titleCase(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 }
 
 function getHowToPlay(genre: string) {

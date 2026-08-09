@@ -21,6 +21,10 @@ type GameRow = {
   published_at: string | null;
   view_count?: number | null;
   play_count?: number | null;
+  preview_video_url?: string | null;
+  build_metadata?: Record<string, unknown> | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
 const accents = ["#00B2FF", "#7A3CFF", "#FF4DDB", "#26E6D0"];
@@ -41,7 +45,7 @@ export async function getPublishedGames() {
 
   const { data, error } = await publicDataSupabase
     .from("games")
-    .select("title,slug,genre,status,description,cover_url,iframe_url,thumbnail_url,screenshot_urls,desktop_controls,mobile_controls,aspect_ratio,tags,sort_order,published_at")
+    .select("title,slug,genre,status,description,cover_url,iframe_url,thumbnail_url,preview_video_url,screenshot_urls,desktop_controls,mobile_controls,aspect_ratio,tags,sort_order,published_at,created_at,updated_at,build_metadata")
     .eq("status", "published")
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false });
@@ -57,7 +61,7 @@ export async function getPublishedGame(slug: string) {
 
   const { data, error } = await publicDataSupabase
     .from("games")
-    .select("title,slug,genre,status,description,cover_url,iframe_url,thumbnail_url,screenshot_urls,desktop_controls,mobile_controls,aspect_ratio,tags,sort_order,published_at")
+    .select("title,slug,genre,status,description,cover_url,iframe_url,thumbnail_url,preview_video_url,screenshot_urls,desktop_controls,mobile_controls,aspect_ratio,tags,sort_order,published_at,created_at,updated_at,build_metadata")
     .eq("status", "published")
     .eq("slug", slug)
     .maybeSingle();
@@ -71,6 +75,7 @@ function mapGameRow(row: GameRow): Game {
   const tags = row.tags?.length ? row.tags : ["WebGL"];
   const genre = row.genre || "WebGL Game";
   const isMotoRider = row.slug === MOTO_RIDER_SLUG;
+  const metadata = row.build_metadata && typeof row.build_metadata === "object" ? row.build_metadata : {};
 
   return {
     title: row.title,
@@ -81,6 +86,7 @@ function mapGameRow(row: GameRow): Game {
     cover: isMotoRider ? MOTO_RIDER_THUMBNAIL_URL : row.cover_url || "/cards/game-cover-sprite.png",
     iframeUrl: isMotoRider ? MOTO_RIDER_IFRAME_URL : row.iframe_url || undefined,
     thumbnailUrl: isMotoRider ? MOTO_RIDER_THUMBNAIL_URL : row.thumbnail_url || row.cover_url || undefined,
+    previewVideoUrl: typeof row.preview_video_url === "string" && row.preview_video_url.startsWith("https://") ? row.preview_video_url : undefined,
     screenshotUrls: row.screenshot_urls?.length ? row.screenshot_urls : [],
     aspectRatio: row.aspect_ratio || "16/9",
     desktopControls: normalizeControlList(row.desktop_controls, ["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"]),
@@ -96,7 +102,12 @@ function mapGameRow(row: GameRow): Game {
     rating: "4.7",
     accent: accents[Math.abs(hashCode(row.slug)) % accents.length],
     viewCount: typeof row.view_count === "number" ? row.view_count : null,
-    playCount: typeof row.play_count === "number" ? row.play_count : null
+    playCount: typeof row.play_count === "number" ? row.play_count : null,
+    developerName: typeof metadata.developer_name === "string" ? metadata.developer_name : "Uniblex Creator",
+    engine: typeof metadata.engine === "string" ? metadata.engine : row.genre || "WebGL",
+    orientation: typeof metadata.orientation === "string" ? metadata.orientation : "landscape",
+    publishedAt: row.published_at || undefined,
+    updatedAt: row.updated_at || row.published_at || undefined
   };
 }
 

@@ -9,6 +9,7 @@ export type Game = {
   cover: string;
   iframeUrl?: string;
   thumbnailUrl?: string;
+  previewVideoUrl?: string;
   screenshotUrls?: string[];
   aspectRatio?: string;
   desktopControls?: string[];
@@ -25,6 +26,11 @@ export type Game = {
   accent: string;
   viewCount?: number | null;
   playCount?: number | null;
+  developerName?: string;
+  engine?: string;
+  orientation?: string;
+  publishedAt?: string;
+  updatedAt?: string;
 };
 
 const cover = "/cards/game-cover-sprite.png";
