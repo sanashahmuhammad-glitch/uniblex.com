@@ -3,7 +3,7 @@ import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 import { areR2GameUploadsEnabled } from "@/lib/r2GameUploads";
 
 export const metadata: Metadata = {
-  title: "Admin | Uniblex",
+  title: "Admin",
   description: "Uniblex admin dashboard UI.",
   robots: { index: false, follow: false }
 };

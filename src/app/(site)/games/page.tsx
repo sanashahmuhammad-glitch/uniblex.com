@@ -9,7 +9,7 @@ import { canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig }
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Play Free WebGL Games Online | Uniblex",
+  title: "Play Free WebGL Games Online",
   description: "Explore free WebGL games, racing games, arcade games, and more on Uniblex.",
   keywords: pageKeywords("free WebGL games", "online racing games", "arcade browser games"),
   authors: defaultAuthors,

@@ -5,7 +5,7 @@ import { createPublicServerSupabaseClient } from "@/lib/publicServerSupabase";
 import { createServiceSupabaseClient } from "@/lib/serverServiceSupabase";
 
 export const dynamic="force-dynamic";
-export const metadata:Metadata={title:"Play WebGL Game | Uniblex",robots:{index:false,follow:false}};
+export const metadata:Metadata={title:"Play WebGL Game",robots:{index:false,follow:false}};
 
 export default async function WebglLoaderPage({params}:{params:{buildId:string}}) {
   if(!/^[0-9a-f-]{36}$/i.test(params.buildId)) notFound();

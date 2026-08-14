@@ -23,7 +23,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const game = await getPublishedGame(params.slug);
   if (!game) return {};
 
-  const title = `${game.title} - Play Free WebGL Game | Uniblex`;
+  const title = `${game.title} - Play Free WebGL Game`;
+  const socialTitle = `${title} | Uniblex`;
   const url = canonicalUrl(`/games/${game.slug}`);
 
   return {
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     robots: defaultRobots,
     alternates: { canonical: url },
     openGraph: {
-      title,
+      title: socialTitle,
       description: game.description,
       url,
       siteName: siteConfig.name,
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       card: "summary_large_image",
       site: siteConfig.twitter,
       creator: siteConfig.twitter,
-      title,
+      title: socialTitle,
       description: game.description,
       images: [game.cover]
     }
