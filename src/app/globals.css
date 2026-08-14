@@ -19,13 +19,9 @@ html {
 body {
   margin: 0;
   background:
-    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px),
-    radial-gradient(circle at 12% 8%, rgba(0, 178, 255, .24), transparent 31rem),
-    radial-gradient(circle at 86% 12%, rgba(122, 60, 255, .28), transparent 34rem),
-    radial-gradient(circle at 48% 0%, rgba(255, 46, 138, .12), transparent 28rem),
-    linear-gradient(180deg, rgba(13,17,24,.98), #070b13 44%, #05070d 100%);
-  background-size: 42px 42px, 42px 42px, auto, auto, auto, auto;
+    radial-gradient(circle at 15% 0%, rgba(0, 178, 255, .10), transparent 30rem),
+    radial-gradient(circle at 85% 0%, rgba(122, 60, 255, .12), transparent 34rem),
+    #080b12;
   color: #F2F4F8;
   font-family: var(--font-exo), sans-serif;
   overflow-x: hidden;

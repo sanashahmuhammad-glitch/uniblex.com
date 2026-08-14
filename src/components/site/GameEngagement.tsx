@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Copy, Facebook, Heart, MessageCircle, ThumbsUp, Twitter } from "lucide-react";
 import type { Game } from "@/data/games";
 
@@ -16,12 +16,10 @@ export function GameEngagement({ game, games }: GameEngagementProps) {
   const [copied, setCopied] = useState(false);
   const [recentSlugs, setRecentSlugs] = useState<string[]>([]);
 
-  const gameUrl = useMemo(() => {
-    if (typeof window === "undefined") return `https://uniblex.com/games/${game.slug}`;
-    return `${window.location.origin}/games/${game.slug}`;
-  }, [game.slug]);
+  const [gameUrl, setGameUrl] = useState(`https://uniblex.com/games/${game.slug}`);
 
   useEffect(() => {
+    setGameUrl(`${window.location.origin}/games/${game.slug}`);
     setFavorite(readList("uniblex_favorite_games").includes(game.slug));
     setLiked(readList("uniblex_liked_games").includes(game.slug));
     const recent = rememberRecentGame(game.slug);

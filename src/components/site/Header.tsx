@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gamepad2, Menu, X } from "lucide-react";
+import { Gamepad2, Menu, Search, X } from "lucide-react";
 import { useState } from "react";
 import { AuthorizedAdminLink } from "@/components/admin/AuthorizedAdminLink";
 import { AuthAwareDeveloperLink } from "@/components/developers/AuthAwareDeveloperLink";
@@ -24,11 +24,8 @@ export function Header() {
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-uniblex-blue/20 bg-[#060a12]/88 shadow-[0_14px_50px_rgba(0,0,0,.32)] backdrop-blur-xl">
-      <div className="hidden border-b border-white/10 bg-white/[.035] py-1.5 text-center text-[11px] font-black uppercase tracking-[.24em] text-uniblex-blue md:block">
-        Uniblex Arena | Free WebGL Games | Creator Articles
-      </div>
-      <div className="container-pad flex h-14 items-center justify-between gap-4 md:h-[74px]">
+    <header className="sticky top-0 z-50 border-b border-white/[.07] bg-[#080b12]/92 backdrop-blur-xl">
+      <div className="container-pad flex h-16 items-center justify-between gap-4 md:h-[72px]">
         <Link href="/" className="group flex min-w-0 items-center" aria-label="Uniblex home">
           <Image
             src="/brand/horizontal-lockup.png"
@@ -40,13 +37,13 @@ export function Header() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/[.05] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] lg:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {links.map((link) => {
             const active = isActive(link.href);
-            const className = `rounded-full px-4 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uniblex-blue ${
+            const className = `rounded-lg px-3.5 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uniblex-blue ${
               active
-                ? "bg-gradient-to-r from-uniblex-blue to-uniblex-purple text-white shadow-[0_10px_28px_rgba(0,178,255,.2)]"
-                : "text-uniblex-gray hover:bg-white/[.04] hover:text-white"
+                ? "bg-white/[.08] text-white"
+                : "text-[#929cad] hover:bg-white/[.04] hover:text-white"
             }`;
             return link.authAware ? (
               <AuthAwareDeveloperLink
@@ -72,8 +69,11 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <AuthorizedAdminLink />
-          <Link href="/games" className="hidden min-h-[42px] items-center justify-center gap-2 rounded-lg bg-uniblex-blue px-4 py-2 text-sm font-black text-white shadow-[0_14px_32px_rgba(0,178,255,.22)] transition hover:bg-uniblex-purple lg:inline-flex">
-            <Gamepad2 size={17} /> Play Now
+          <Link href="/games" className="hidden h-10 w-10 items-center justify-center rounded-lg border border-white/[.08] bg-white/[.04] text-[#aab3c2] transition hover:border-white/20 hover:text-white sm:inline-flex lg:hidden" aria-label="Search games">
+            <Search size={17} />
+          </Link>
+          <Link href="/games" className="hidden min-h-[42px] items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-black text-[#080b12] transition hover:bg-uniblex-blue lg:inline-flex">
+            <Gamepad2 size={17} /> Browse Games
           </Link>
           <button
             onClick={() => setOpen((value) => !value)}

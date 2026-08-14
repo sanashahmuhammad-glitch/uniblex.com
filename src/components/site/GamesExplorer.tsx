@@ -27,6 +27,12 @@ export function GamesExplorer({ games }: { games: Game[] }) {
 
   const genres = useMemo(() => ["All", ...Array.from(new Set(games.map((game) => game.genre))).sort()], [games]);
   const tags = useMemo(() => ["All", ...Array.from(new Set(games.flatMap((game) => game.tags))).sort()], [games]);
+
+  useEffect(() => {
+    const requestedGenre = new URLSearchParams(window.location.search).get("genre");
+    if (requestedGenre && genres.includes(requestedGenre)) setGenre(requestedGenre);
+  }, [genres]);
+
   const recentlyPlayed = recentSlugs.map((slug) => games.find((game) => game.slug === slug)).filter(Boolean).slice(0, 6) as Game[];
 
   const filteredGames = useMemo(() => {
