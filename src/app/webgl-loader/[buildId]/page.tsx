@@ -7,7 +7,8 @@ import { createServiceSupabaseClient } from "@/lib/serverServiceSupabase";
 export const dynamic="force-dynamic";
 export const metadata:Metadata={title:"Play WebGL Game",robots:{index:false,follow:false}};
 
-export default async function WebglLoaderPage({params}:{params:{buildId:string}}) {
+export default async function WebglLoaderPage(props:{params: Promise<{buildId:string}>}) {
+  const params = await props.params;
   if(!/^[0-9a-f-]{36}$/i.test(params.buildId)) notFound();
   const database=createPublicServerSupabaseClient();
   if(!database) notFound();

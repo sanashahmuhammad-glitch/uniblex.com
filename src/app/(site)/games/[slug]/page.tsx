@@ -19,7 +19,8 @@ export function generateStaticParams() {
   return games.filter((game) => game.status === "Published").map((game) => ({ slug: game.slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const game = await getPublishedGame(params.slug);
   if (!game) return {};
 
@@ -53,7 +54,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default async function GameDetailPage({ params }: { params: { slug: string } }) {
+export default async function GameDetailPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const [game, publishedGames] = await Promise.all([getPublishedGame(params.slug), getPublishedGames()]);
   if (!game) return notFound();
 
