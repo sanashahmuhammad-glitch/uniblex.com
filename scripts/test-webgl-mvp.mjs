@@ -39,7 +39,7 @@ function unity(suffix,type) {
   const paths=["index.html","Build/game.loader.js",`Build/game.framework.js${suffix}`,`Build/game.data${suffix}`,`Build/game.wasm${suffix}`];
   equal(detection.detectWebglBuild('<script src="Build/game.loader.js"></script>',paths).buildType,type);
 }
-function entry(path,size=1){return {path,size,sha256:"a".repeat(64),crc32:"00000000",contentType:"application/octet-stream",cacheControl:"public, max-age=31536000, immutable"}}
+function entry(path,size=1){return {path,size,sha256:"a".repeat(64),crc32:"00000000",...manifestModule.webglHostingMetadata(path)}}
 function manifest(files){return {schemaVersion:1,entryPath:"index.html",buildType:"html5",compressionMode:"mixed-generic",requiredPaths:["index.html"],totalBytes:files.reduce((sum,file)=>sum+file.size,0),files:files.sort((a,b)=>a.path.localeCompare(b.path))}}
 
 test("Unity Brotli build",()=>unity(".br","unity-brotli"));
@@ -56,6 +56,7 @@ test("oversized ZIP constant is bounded",()=>equal(manifestModule.WEBGL_MVP_LIMI
 test("excessive extracted size",()=>throws(()=>manifestModule.validateWebglManifest(manifest(Array.from({length:9},(_,i)=>entry(i?`f${i}.data`:"index.html",512*1024*1024)))),"extracted-size"));
 test("excessive files",()=>throws(()=>manifestModule.validateWebglManifest(manifest(Array.from({length:5001},(_,i)=>entry(i?`f${i}.js`:"index.html")))),"file count"));
 test("missing index.html",()=>throws(()=>manifestModule.validateWebglManifest(manifest([entry("main.js")])),"index.html"));
+test("manifest cannot disguise executable content with attacker-selected MIME",()=>throws(()=>manifestModule.validateWebglManifest(manifest([{...entry("index.html"),contentType:"image/png"}])) ,"hosting metadata"));
 test("WebGL delivery uses its runtime-specific public base",()=>equal(manifestModule.webglPublicBaseUrl({R2_WEBGL_PUBLIC_BASE_URL:" https://webgl.example/ "},"https://games.example"),"https://webgl.example"));
 test("WebGL delivery falls back without changing existing media URLs",()=>equal(manifestModule.webglPublicBaseUrl({},"https://games.example/"),"https://games.example"));
 test("WebGL delivery rejects unsafe public bases",()=>throws(()=>manifestModule.webglPublicBaseUrl({R2_WEBGL_PUBLIC_BASE_URL:"http://webgl.example"},"https://games.example"),"invalid"));
@@ -109,6 +110,14 @@ test("R2 HEAD rejects missing metadata",()=>equal(r2.getMvpHeadMismatch(expected
 test("R2 HEAD rejects missing R2 checksum",()=>equal(r2.getMvpHeadMismatch(expectedHead,head(200,{"x-amz-meta-size-bytes":"68","x-amz-meta-sha256":expectedHead.sha256})),"missing_checksum"));
 test("R2 HEAD rejects wrong checksum",()=>equal(r2.getMvpHeadMismatch(expectedHead,head(200,{"x-amz-meta-size-bytes":"68","x-amz-meta-sha256":expectedHead.sha256,"x-amz-checksum-sha256":Buffer.from("cd".repeat(32),"hex").toString("base64")})),"checksum_mismatch"));
 test("R2 HEAD rejects wrong size",()=>equal(r2.getMvpHeadMismatch(expectedHead,head(200,{"x-amz-meta-size-bytes":"67","x-amz-meta-sha256":expectedHead.sha256,"x-amz-checksum-sha256":expectedChecksum})),"size_mismatch"));
+test("R2 HEAD binds executable MIME, encoding, and cache policy",()=>{
+  const hosted={...expectedHead,contentType:"text/javascript; charset=utf-8",contentEncoding:"gzip",cacheControl:"public, max-age=31536000, immutable, no-transform"};
+  const headers={"x-amz-meta-size-bytes":"68","x-amz-meta-sha256":expectedHead.sha256,"x-amz-checksum-sha256":expectedChecksum,"content-type":hosted.contentType,"content-encoding":"gzip","cache-control":hosted.cacheControl};
+  equal(r2.getMvpHeadMismatch(hosted,head(200,headers)),null);
+  equal(r2.getMvpHeadMismatch(hosted,head(200,{...headers,"content-type":"image/png"})),"content_type_mismatch");
+  equal(r2.getMvpHeadMismatch(hosted,head(200,{...headers,"content-encoding":"br"})),"content_encoding_mismatch");
+  equal(r2.getMvpHeadMismatch(hosted,head(200,{...headers,"cache-control":"public"})),"cache_control_mismatch");
+});
 for(const status of [403,404,500]) test("R2 HEAD rejects status "+status,()=>equal(r2.getMvpHeadMismatch(expectedHead,head(status)),"head_status"));
 test("migration enforces trusted game guard and signing lease",()=>{
   const first=fs.readFileSync(path.join(root,"supabase/migrations/20260714000100_webgl_client_upload_mvp.sql"),"utf8");

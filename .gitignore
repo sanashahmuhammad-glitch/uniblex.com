@@ -21,8 +21,6 @@ yarn-error.log*
 pnpm-debug.log*
 
 # local package-manager workarounds
-pnpm-lock.yaml
-pnpm-workspace.yaml
 vendor/
 
 # system files

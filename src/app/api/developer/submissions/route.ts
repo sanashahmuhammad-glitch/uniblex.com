@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { createUserSupabaseClient } from "@/lib/serverSupabase";
+import { createServiceSupabaseClient } from "@/lib/serverServiceSupabase";
 import { verifyDeveloperRequest } from "@/lib/serverDeveloperAuth";
 import { slugify } from "@/lib/slug";
+import { parseMonetization } from "@/lib/monetization";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -40,7 +42,7 @@ export async function GET(request: Request) {
     db
       .from("game_submissions")
       .select(
-        "id,title,slug,status,engine,updated_at,build_verified,short_description,game_id,parent_submission_id,revision_number,game_media(role,public_url),games(view_count,play_count,published_at),submission_reviews(decision,developer_feedback,created_at)",
+        "id,title,slug,status,engine,updated_at,build_verified,short_description,game_id,parent_submission_id,revision_number,monetization,game_media(role,public_url),games(view_count,play_count,published_at),submission_reviews(decision,developer_feedback,created_at)",
       )
       .eq("owner_id", auth.user.id)
       .order("updated_at", { ascending: false })
@@ -99,9 +101,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: 401 });
   try {
     const body = (await request.json()) as Record<string, unknown>;
-    const db = createUserSupabaseClient(
-      request.headers.get("authorization") || "",
-    );
+    const db = createServiceSupabaseClient();
     const { data: profile } = await db
       .from("developer_profiles")
       .select("id")
@@ -200,6 +200,7 @@ export async function POST(request: Request) {
           age_rating: source.age_rating,
           content_declaration: source.content_declaration,
           options: source.options,
+          monetization: source.monetization,
           gameplay_video_url: source.gameplay_video_url,
           status: "draft",
           build_verified: source.build_verified,
@@ -272,6 +273,7 @@ export async function POST(request: Request) {
       age_rating: text(input.age_rating, 80) || null,
       content_declaration: object(input.content_declaration),
       options: object(input.options),
+      monetization: parseMonetization(input.monetization, status !== "draft"),
       gameplay_video_url: httpsUrl(input.gameplay_video_url),
       status,
       submitted_at: status === "submitted" ? new Date().toISOString() : null,

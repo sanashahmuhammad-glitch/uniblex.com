@@ -4,6 +4,7 @@ import {
   WEBGL_MVP_LIMITS,
   normalizeWebglPath,
   stableManifestJson,
+  webglHostingMetadata,
   type WebglBuildType,
   type WebglCompressionMode,
   type WebglManifest,
@@ -94,7 +95,7 @@ async function analyzeArchive(file: File, requestId: string, sessionId: string) 
         size: blob.size,
         sha256,
         crc32: actualCrc.toString(16).padStart(8, "0"),
-        ...hostingMetadata(entry.path)
+        ...webglHostingMetadata(entry.path)
       });
       postMessage({ id: requestId, type: "progress", phase: "extracting", completedFiles: index + 1, totalFiles: entries.length, completedBytes: extracted });
     }
@@ -211,26 +212,6 @@ async function extractEntry(file: File, entry: CentralEntry) {
     : await new Response(compressed.stream().pipeThrough(new DecompressionStream("deflate-raw" as CompressionFormat))).blob();
   if (blob.size !== entry.size) throw new Error(`ZIP extracted size mismatch: ${entry.path}`);
   return blob;
-}
-
-function hostingMetadata(path: string): Pick<WebglManifestEntry, "contentType" | "contentEncoding" | "cacheControl"> {
-  const lower = path.toLowerCase();
-  const contentEncoding = lower.endsWith(".br") ? "br" as const : lower.endsWith(".gz") ? "gzip" as const : undefined;
-  const base = contentEncoding ? lower.replace(/\.(?:br|gz)$/, "") : lower;
-  const extension = base.split(".").pop() || "";
-  const contentType = ({
-    html: "text/html; charset=utf-8", js: "text/javascript; charset=utf-8", mjs: "text/javascript; charset=utf-8",
-    css: "text/css; charset=utf-8", json: "application/json", wasm: "application/wasm", data: "application/octet-stream",
-    unityweb: "application/octet-stream", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp",
-    svg: "image/svg+xml", ico: "image/x-icon", mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav"
-  } as Record<string, string>)[extension] || "application/octet-stream";
-  return {
-    contentType,
-    ...(contentEncoding ? { contentEncoding } : {}),
-    cacheControl: extension === "html"
-      ? "no-cache, no-store, must-revalidate"
-      : `public, max-age=31536000, immutable${contentEncoding ? ", no-transform" : ""}`
-  };
 }
 
 function decodeName(bytes: Uint8Array, flags: number) {

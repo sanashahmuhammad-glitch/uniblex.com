@@ -24,6 +24,9 @@ export type MvpHeadMismatch =
   | "missing_checksum"
   | "size_mismatch"
   | "checksum_mismatch"
+  | "content_type_mismatch"
+  | "content_encoding_mismatch"
+  | "cache_control_mismatch"
   | null;
 
 const region = "auto";
@@ -80,6 +83,21 @@ export async function headMvpObject(config: R2MvpConfig, key: string) {
   return parseMvpHeadResponse(response);
 }
 
+/** Signed storage read, never a developer-provided URL. Bound decoded bytes too. */
+export async function readMvpText(config: R2MvpConfig, key: string, limit: number) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  const chunks: Uint8Array[] = []; let size = 0;
+  try {
+    const response = await signedRequest(config, "GET", key, {}, {}, controller.signal);
+    if (!response.ok || !response.body) throw new Error("Build scan could not read object.");
+    reader = response.body.getReader();
+    while (true) { const chunk = await reader.read(); if (chunk.done) break; size += chunk.value.byteLength; if (size > limit) throw new Error("Scan size limit."); chunks.push(chunk.value); }
+    return Buffer.concat(chunks).toString("utf8");
+  } finally { clearTimeout(timer); controller.abort(); await reader?.cancel().catch(() => undefined); }
+}
+
 export function headR2ObjectResponse(config: R2MvpConfig, key: string) {
   return signedRequest(config, "HEAD", key, {}, { "x-amz-checksum-mode": "ENABLED" });
 }
@@ -126,14 +144,22 @@ export async function replaceMvpObjectHostingMetadata(
   return { ...head, cacheControl };
 }
 
-export function getMvpHeadMismatch(expected: { size: number; sha256: string }, actual: MvpHeadObject): MvpHeadMismatch {
+export function getMvpHeadMismatch(expected: { size: number; sha256: string; contentType?: string; contentEncoding?: string; cacheControl?: string }, actual: MvpHeadObject): MvpHeadMismatch {
   if (!actual.exists || actual.status < 200 || actual.status >= 300) return "head_status";
   if (actual.size === null) return "missing_size";
   if (!actual.sha256) return "missing_metadata";
   if (!actual.checksumSha256) return "missing_checksum";
   if (actual.size !== expected.size) return "size_mismatch";
   if (actual.sha256 !== expected.sha256 || actual.checksumSha256 !== expected.sha256) return "checksum_mismatch";
+  if (expected.contentType !== undefined && actual.contentType.toLowerCase() !== expected.contentType.toLowerCase()) return "content_type_mismatch";
+  if (expected.contentEncoding !== undefined && actual.contentEncoding !== expected.contentEncoding) return "content_encoding_mismatch";
+  if (expected.contentEncoding === undefined && actual.contentEncoding) return "content_encoding_mismatch";
+  if (expected.cacheControl !== undefined && normalizeHeaderList(actual.cacheControl) !== normalizeHeaderList(expected.cacheControl)) return "cache_control_mismatch";
   return null;
+}
+
+function normalizeHeaderList(value: string) {
+  return value.split(",").map((part) => part.trim().toLowerCase()).filter(Boolean).join(",");
 }
 
 export async function listMvpPrefix(config: R2MvpConfig, prefix: string, maxKeys = 5001) {
@@ -167,7 +193,7 @@ export async function deleteMvpObject(config: R2MvpConfig, key: string) {
   }
 }
 
-async function signedRequest(config: R2MvpConfig, method: string, key: string, query: Record<string, string>, extraHeaders: Record<string, string> = {}) {
+async function signedRequest(config: R2MvpConfig, method: string, key: string, query: Record<string, string>, extraHeaders: Record<string, string> = {}, signal?: AbortSignal) {
   const { AwsClient } = await import("aws4fetch");
   const host = `${config.accountId}.r2.cloudflarestorage.com`;
   const client = new AwsClient({
@@ -180,7 +206,8 @@ async function signedRequest(config: R2MvpConfig, method: string, key: string, q
   return client.fetch(`https://${host}${canonicalUri(config.bucket, key)}?${canonicalQuery(query)}`, {
     method,
     headers: extraHeaders,
-    cache: "no-store"
+    cache: "no-store",
+    signal
   });
 }
 

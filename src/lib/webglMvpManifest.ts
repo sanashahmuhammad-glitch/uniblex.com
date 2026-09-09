@@ -40,6 +40,27 @@ const crc32Pattern = /^[a-f0-9]{8}$/;
 const allowedBuildTypes = new Set<WebglBuildType>(["unity-uncompressed", "unity-brotli", "unity-gzip", "unity-unityweb", "html5"]);
 const allowedCompressionModes = new Set<WebglCompressionMode>(["none", "brotli", "gzip", "unityweb", "mixed-generic"]);
 
+/** Hosting metadata is derived by trusted code; manifests cannot choose executable MIME behavior. */
+export function webglHostingMetadata(path: string): Pick<WebglManifestEntry, "contentType" | "contentEncoding" | "cacheControl"> {
+  const lower = path.toLowerCase();
+  const contentEncoding = lower.endsWith(".br") ? "br" as const : lower.endsWith(".gz") ? "gzip" as const : undefined;
+  const base = contentEncoding ? lower.replace(/\.(?:br|gz)$/, "") : lower;
+  const extension = base.split(".").pop() || "";
+  const contentType = ({
+    html: "text/html; charset=utf-8", js: "text/javascript; charset=utf-8", mjs: "text/javascript; charset=utf-8",
+    css: "text/css; charset=utf-8", json: "application/json", wasm: "application/wasm", data: "application/octet-stream",
+    unityweb: "application/octet-stream", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp",
+    svg: "image/svg+xml", ico: "image/x-icon", mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav"
+  } as Record<string, string>)[extension] || "application/octet-stream";
+  return {
+    contentType,
+    ...(contentEncoding ? { contentEncoding } : {}),
+    cacheControl: extension === "html"
+      ? "no-cache, no-store, must-revalidate"
+      : `public, max-age=31536000, immutable${contentEncoding ? ", no-transform" : ""}`
+  };
+}
+
 export function normalizeWebglPath(value: string) {
   if (/[\u0000-\u001f\u007f]/.test(value)) throw new Error("ZIP path contains an unsafe control character.");
   if (value.normalize("NFC") !== value) throw new Error("ZIP paths must use normalized Unicode.");
@@ -51,6 +72,8 @@ export function normalizeWebglPath(value: string) {
   if (parts.some((part) => !part || part === "." || part === "..")) throw new Error("ZIP contains path traversal.");
   if (parts.length > WEBGL_MVP_LIMITS.maxDepth) throw new Error("ZIP path is too deep.");
   const normalized = parts.join("/");
+  if (/[?#%:]/.test(normalized)) throw new Error("Build paths must not contain URL delimiters or encoded paths.");
+  if (/\.(exe|dll|msi|bat|cmd|ps1|sh|com|scr|jar|apk)$/i.test(normalized)) throw new Error("Platform executables are not allowed.");
   if (archiveSuffix.test(normalized)) throw new Error("Nested archives are not allowed.");
   return normalized;
 }
@@ -76,8 +99,10 @@ export function validateWebglManifest(value: unknown): WebglManifest {
     previous = path;
     if (!Number.isSafeInteger(file.size) || file.size < 0 || file.size > WEBGL_MVP_LIMITS.maxFileBytes) throw new Error(`Build file size is invalid: ${path}`);
     if (!sha256Pattern.test(String(file.sha256 ?? "")) || !crc32Pattern.test(String(file.crc32 ?? ""))) throw new Error(`Build checksum is invalid: ${path}`);
-    if (!file.contentType || file.contentType.length > 150 || !file.cacheControl || file.cacheControl.length > 150) throw new Error(`Build hosting metadata is invalid: ${path}`);
-    if (file.contentEncoding && file.contentEncoding !== "br" && file.contentEncoding !== "gzip") throw new Error(`Build content encoding is invalid: ${path}`);
+    const hosting = webglHostingMetadata(path);
+    if (file.contentType !== hosting.contentType || file.cacheControl !== hosting.cacheControl || file.contentEncoding !== hosting.contentEncoding) {
+      throw new Error(`Build hosting metadata is invalid: ${path}`);
+    }
     total += file.size;
     if (total > WEBGL_MVP_LIMITS.maxExtractedBytes) throw new Error("Build exceeds the extracted-size limit.");
   }

@@ -5,24 +5,31 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test-monetization.mjs && node scripts/test-monetization-db.mjs && node scripts/test-webgl-mvp.mjs && node scripts/test-unity-loading-progress.mjs && node scripts/test-developer-webgl-upload.mjs && node scripts/test-developer-upload-availability.mjs && node scripts/test-developer-portal.mjs && node scripts/test-developer-portal-completion.mjs && node scripts/test-admin-wizard-render.cjs && node scripts/test-admin-upload-portal.mjs && node scripts/test-admin-media-drafts.mjs"
   },
   "dependencies": {
-    "@next/third-parties": "15.5.22",
+    "@next/third-parties": "15.5.25",
     "@supabase/supabase-js": "2.45.4",
     "aws4fetch": "1.0.20",
     "lucide-react": "0.468.0",
-    "next": "15.5.22",
+    "next": "15.5.25",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@next/eslint-plugin-next": "15.5.25",
     "@types/node": "20.14.10",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "autoprefixer": "10.4.19",
-    "postcss": "8.4.39",
+    "eslint": "10.10.0",
+    "postcss": "8.5.28",
     "tailwindcss": "3.4.4",
-    "typescript": "5.5.3"
+    "typescript": "5.5.3",
+    "typescript-eslint": "8.69.0"
   }
 }

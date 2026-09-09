@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { MonetizationFields } from "./MonetizationFields";
+import { emptyMonetization, parseMonetization, type MonetizationDisclosure } from "@/lib/monetization";
 import {
   ChangeEvent,
   FormEvent,
@@ -54,6 +56,7 @@ const engines = [
 ];
 type Category = { id: string; name: string; slug: string };
 type Draft = {
+  monetization: MonetizationDisclosure;
   id?: string;
   parentSubmissionId?: string;
   revisionNumber: number;
@@ -95,7 +98,36 @@ type Draft = {
     compressionMode: string;
   };
 };
+const DRAFT_STORAGE_KEY = "uniblex-developer-draft:v2";
+const LEGACY_DRAFT_STORAGE_KEY = "uniblex-developer-draft";
+
+function readLocalDraft(): Partial<Draft> | null {
+  try {
+    const current = localStorage.getItem(DRAFT_STORAGE_KEY);
+    const legacy = current ? null : localStorage.getItem(LEGACY_DRAFT_STORAGE_KEY);
+    const parsed = JSON.parse(current || legacy || "null") as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    const record = parsed as Record<string, unknown>;
+    const restored = "version" in record ? record.version === 2 ? record.draft : null : record;
+    if (!restored || typeof restored !== "object" || Array.isArray(restored)) return null;
+    if (legacy && restored) {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ version: 2, draft: restored }));
+      localStorage.removeItem(LEGACY_DRAFT_STORAGE_KEY);
+    }
+    return restored as Partial<Draft>;
+  } catch { return null; }
+}
+
+function writeLocalDraft(draft: Draft) {
+  try { localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ version: 2, draft })); } catch { /* Private browsing or quota errors must not block the form. */ }
+}
+
+function clearLocalDraft() {
+  try { localStorage.removeItem(DRAFT_STORAGE_KEY); localStorage.removeItem(LEGACY_DRAFT_STORAGE_KEY); } catch { /* Server drafts remain authoritative. */ }
+}
+
 const fresh = (): Draft => ({
+  monetization: emptyMonetization(),
   revisionNumber: 1,
   status: "draft",
   draftKey: crypto.randomUUID(),
@@ -176,14 +208,15 @@ export function DeveloperWizard() {
           }
           return;
         }
-        const raw = localStorage.getItem("uniblex-developer-draft");
+        const saved = readLocalDraft();
         if (active)
           setDraft(
-            raw
+            saved
               ? {
                   ...fresh(),
-                  ...JSON.parse(raw),
-                  media: (JSON.parse(raw).media || []).filter(
+                  ...saved,
+                  monetization: parseMonetization(saved.monetization),
+                  media: (saved.media || []).filter(
                     (item: VerifiedGameMedia) => item.objectKey,
                   ),
                 }
@@ -221,8 +254,8 @@ export function DeveloperWizard() {
   useEffect(() => {
     if (!draft) return;
     if (["draft", "changes_requested", "rejected"].includes(draft.status))
-      localStorage.setItem("uniblex-developer-draft", JSON.stringify(draft));
-    else localStorage.removeItem("uniblex-developer-draft");
+      writeLocalDraft(draft);
+    else clearLocalDraft();
   }, [draft]);
   const cover = draft?.media.find((item) => item.role === "cover");
   const thumbnail = draft?.media.find((item) => item.role === "thumbnail");
@@ -268,6 +301,7 @@ export function DeveloperWizard() {
           engine: draft!.engine,
           primary_language: draft!.primaryLanguage,
           age_rating: draft!.ageRating,
+          monetization: draft!.monetization,
           gameplay_video_url: draft!.videoUrl,
           status,
           content_declaration: {
@@ -412,7 +446,7 @@ export function DeveloperWizard() {
     setBusy(true);
     try {
       await save("submitted");
-      localStorage.removeItem("uniblex-developer-draft");
+      clearLocalDraft();
       setMessage(
         activeDraft.parentSubmissionId
           ? "Update submitted for review. The current live game remains unchanged until this revision is approved and published."
@@ -438,7 +472,7 @@ export function DeveloperWizard() {
       )
     )
       return;
-    localStorage.removeItem("uniblex-developer-draft");
+    clearLocalDraft();
     setDraft(fresh());
     setStep(0);
     setMessage("Local draft discarded.");
@@ -679,6 +713,7 @@ function Details({
         />
       </div>
       <div className="mt-5 grid gap-3">
+        <MonetizationFields value={draft.monetization} onChange={value => update("monetization", value)} />
         <CheckBox
           checked={draft.ipAccepted}
           onChange={(value) => update("ipAccepted", value)}
@@ -898,6 +933,7 @@ function Review({ draft }: { draft: Draft }) {
             {draft.shortDescription}
           </p>
           <p className="mt-4 text-sm text-white">
+            Monetization: {draft.monetization.mode} · Review: {draft.status} · Earnings reporting is not yet available.<br />
             {draft.engine} · {draft.desktop ? "Desktop" : ""}
             {draft.mobile ? " + Mobile" : ""}
           </p>
@@ -931,7 +967,7 @@ function Review({ draft }: { draft: Draft }) {
               rel="noopener noreferrer"
               className="btn-secondary mt-5 text-sm"
             >
-              Open safe build preview
+              Open untrusted build preview
             </Link>
           ) : null}
         </div>
@@ -1030,6 +1066,7 @@ function Progress({ label, value }: { label: string; value: number }) {
 function validate(step: number, draft: Draft) {
   const errors: string[] = [];
   if (step === 0) {
+    try { parseMonetization(draft.monetization, true); } catch (error) { errors.push(error instanceof Error ? error.message : "Complete monetization disclosure."); }
     if (draft.title.trim().length < 2) errors.push("Add a game title.");
     if (!draft.categoryId) errors.push("Choose a category.");
     if (draft.shortDescription.trim().length < 20)
@@ -1088,6 +1125,7 @@ function fromServer(row: Record<string, any>): Draft {
   const build = builds[0];
   return {
     ...base,
+    monetization: parseMonetization(row.monetization),
     id: String(row.id),
     parentSubmissionId: row.parent_submission_id
       ? String(row.parent_submission_id)

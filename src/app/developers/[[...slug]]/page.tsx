@@ -1,3 +1,4 @@
+import { SdkV2Docs } from "@/components/developers/SdkV2Docs";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DeveloperAuthForm } from "@/components/developers/DeveloperAuthForm";
@@ -45,14 +46,14 @@ export default async function DeveloperRoute({ params }: { params: Promise<{ slu
     { title: "Screenshot set", text: "Upload up to six unedited gameplay screenshots at 1280 pixels wide or higher. Do not add ratings, platform logos, or misleading UI." },
     { title: "Brand usage", text: "Do not place the Uniblex logo inside the game or artwork unless you have written approval. Your own studio identity remains yours." }
   ]} />;
-  if (key === "sdk") return <SdkContent />;
+  if (key === "sdk") return <><SdkContent /><SdkV2Docs /></>;
   if (key === "publishing") return <SimpleResourcePage eyebrow="Release workflow" title="Publishing process" intro="Every release moves through a controlled, auditable review state." items={[
     { title: "1. Draft", text: "Complete listing details, artwork, compatibility declarations, and a locally validated browser build." },
     { title: "2. Verification", text: "Files upload directly to isolated object storage and are checked against the authoritative manifest." },
     { title: "3. Review", text: "A reviewer tests quality, policy compliance, controls, responsive behavior, and listing accuracy." },
     { title: "4. Decision", text: "Approved releases can be published by an authorized Uniblex role. Changes remain attached to the submission timeline." }
   ]} />;
-  if (key === "monetization") return <SimpleResourcePage eyebrow="Business" title="Monetization overview" intro="Uniblex is preparing developer monetization, but revenue sharing and payment collection are not active." items={[
+  if (key === "monetization") return <SimpleResourcePage eyebrow="Business" title="Monetization overview" intro="Games containing advertising may be submitted for review. Disclose developer-managed or Uniblex host-managed integrations in the submission form. Read /game-monetization-policy. Revenue sharing and payment collection are not active." items={[
     { title: "No payment details yet", text: "The portal never asks for card, bank, tax, or payout information in this release." },
     { title: "Ads must be approved", text: "Do not embed an advertising SDK or deceptive promotion. Future integrations will use documented host controls." },
     { title: "Transparent rollout", text: "Commercial terms, eligibility, reporting, and payout setup will be presented for explicit acceptance before activation." },

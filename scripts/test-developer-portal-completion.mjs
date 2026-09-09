@@ -14,6 +14,7 @@ const authForm = source("src/components/developers/DeveloperAuthForm.tsx");
 const reviewer = source("src/components/admin/DeveloperReviewPortal.tsx");
 const zipWorker = source("src/workers/webglZip.worker.ts");
 const r2Mvp = source("src/lib/r2Mvp.ts");
+const webglManifest = source("src/lib/webglMvpManifest.ts");
 const publicGames = source("src/lib/publicGames.ts");
 let passed = 0;
 
@@ -43,10 +44,10 @@ test("publication creates the public game and links the immutable submission", (
 });
 
 test("developers can restore only their own server draft and reviewed snapshots are read-only", () => {
-  assert.match(submissionRoute, /\.eq\("id",id\)\.eq\("owner_id",auth\.user\.id\)/);
+  assert.match(submissionRoute, /\.eq\("id",\s*(?:id|sourceId)\)[\s\S]{0,80}\.eq\("owner_id",\s*auth\.user\.id\)/);
   assert.ok(submissionRoute.includes("This reviewed submission is read-only."));
   assert.ok(wizard.includes("fromServer(payload.submission)"));
-  assert.ok(wizard.includes('includes(activeDraft.status)'));
+  assert.match(wizard, /includes\(\s*activeDraft\.status,?\s*\)/);
   assert.ok(wizard.includes("window.location.replace"));
   assert.ok(authForm.includes('startsWith("/developers/")'));
 });
@@ -75,9 +76,9 @@ test("review form survives the asynchronous session lookup and shows request err
 });
 
 test("precompressed WebGL assets prohibit CDN recompression", () => {
-  assert.ok(zipWorker.includes('", no-transform"'));
-  assert.ok(zipWorker.includes("contentEncoding ?"));
-  assert.ok(reviewRoute.includes('body.action==="repair_hosting"'));
+  assert.ok(webglManifest.includes('", no-transform"'));
+  assert.ok(zipWorker.includes("webglHostingMetadata(entry.path)"));
+  assert.match(reviewRoute, /body\.action\s*===\s*"repair_hosting"/);
   assert.ok(reviewRoute.includes("getMvpHeadMismatch"));
   assert.ok(r2Mvp.includes('"x-amz-metadata-directive": "MERGE"'));
   assert.ok(r2Mvp.includes('"content-encoding": metadata.contentEncoding'));

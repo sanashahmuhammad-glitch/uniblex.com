@@ -6,8 +6,8 @@ import {
   getR2MvpConfig,
   getMvpHeadMismatch,
   replaceMvpObjectHostingMetadata,
-  withNoTransform,
 } from "@/lib/r2Mvp";
+import { webglHostingMetadata } from "@/lib/webglMvpManifest";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const decisions = new Set([
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   const { data, error } = await db
     .from("game_submissions")
     .select(
-      "*,developer_profiles!game_submissions_owner_id_fkey(studio_name,display_name,support_email),developer_game_builds(id,verification_status,preview_url,build_type,compression_mode,file_count,total_bytes,verified_at,manifest),game_media(role,public_url),submission_reviews(id,decision,developer_feedback,checklist,created_at,reviewer_id)",
+      "*,developer_profiles!game_submissions_owner_id_fkey(studio_name,display_name,support_email),developer_game_builds(id,verification_status,preview_url,build_type,compression_mode,file_count,total_bytes,verified_at,manifest,build_security_scans(status,findings,scanner_version,scanned_at)),game_media(role,public_url),submission_reviews(id,decision,developer_feedback,checklist,created_at,reviewer_id)",
     )
     .order("updated_at", { ascending: false })
     .limit(200);
@@ -121,6 +121,10 @@ export async function POST(request: Request) {
       const safe = String(error.message || "");
       const known = [
         "Reviewer access is required",
+        "Advertising disclosure and scan review are required",
+        "A server security scan is required before approval",
+        "Explain the manual resolution of flagged scan findings",
+        "Current advertising policy acceptance and disclosure are required",
         "Owner or admin authority is required to publish",
         "Developer-visible feedback is required",
         "Submission was not found",
@@ -238,15 +242,19 @@ async function repairHosting(submissionId: string) {
         { error: "Build object ownership is invalid." },
         { status: 409 },
       );
+    const hosting = webglHostingMetadata(path);
+    if (!hosting.contentEncoding)
+      return NextResponse.json(
+        { error: "Build compression metadata is invalid." },
+        { status: 409 },
+      );
     const result = await replaceMvpObjectHostingMetadata(config, key, {
-      contentType: String(file.contentType || "application/octet-stream"),
-      contentEncoding: file.contentEncoding as "br" | "gzip",
-      cacheControl: withNoTransform(
-        String(file.cacheControl || "public, max-age=31536000, immutable"),
-      ),
+      contentType: hosting.contentType,
+      contentEncoding: hosting.contentEncoding,
+      cacheControl: hosting.cacheControl,
     });
     const mismatch = getMvpHeadMismatch(
-      { size: Number(file.size), sha256: String(file.sha256 || "") },
+      { size: Number(file.size), sha256: String(file.sha256 || ""), ...hosting },
       result,
     );
     if (mismatch)
@@ -256,9 +264,7 @@ async function repairHosting(submissionId: string) {
     file.contentEncoding === "br" || file.contentEncoding === "gzip"
       ? {
           ...file,
-          cacheControl: withNoTransform(
-            String(file.cacheControl || "public, max-age=31536000, immutable"),
-          ),
+          ...webglHostingMetadata(String(file.path || "")),
         }
       : file,
   );
