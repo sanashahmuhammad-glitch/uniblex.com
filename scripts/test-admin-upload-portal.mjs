@@ -49,7 +49,7 @@ test("upload cancellation uses AbortController", () => equal(wizard.includes("ab
 test("verification result gates publish", () => equal(wizard.includes("canPublishVerifiedBuild"), true));
 test("quarantine state disables production upload controls", () => equal(wizard.includes("Production uploads are quarantined"), true));
 test("mobile portal uses an accessible drawer", () => equal(sidebar.includes("Open admin navigation") && sidebar.includes("lg:hidden"), true));
-test("feature flag remains exact-value fail closed", () => equal(flag.includes('process.env.R2_GAME_UPLOADS_ENABLED === "true"'), true));
+test("feature flag remains exact-value fail closed", () => equal(/environment\["R2_GAME_UPLOADS_ENABLED"\]\s*!==\s*"true"/.test(flag), true));
 test("invalid Continue focuses the rendered error summary", () => {
   equal(wizard.includes("const errorSummaryRef = useRef<HTMLDivElement | null>(null)"), true);
   equal(/useEffect\(\(\) => \{\s*if \(errors\.length\) errorSummaryRef\.current\?\.focus\(\);\s*\}, \[errors\]\);/.test(wizard), true);

@@ -42,6 +42,7 @@ export type SubmissionRow = {
   parent_submission_id?: string | null;
   revision_number?: number;
   active_update_id?: string | null;
+  monetization?: { mode?: string } | null;
   games?:
     | {
         view_count?: number | null;
@@ -592,6 +593,9 @@ function SubmissionItem({
               BUILD VERIFIED
             </span>
           ) : null}
+          <span className="rounded-full bg-white/5 px-2 py-1 text-[10px] font-bold uppercase text-white/70">
+            Ads: {(row.monetization?.mode || "none").replaceAll("_", " ")}
+          </span>
         </div>
         <p className="mt-1 truncate text-sm text-uniblex-gray">
           /{row.slug} · {row.engine || "Engine not set"} · Updated{" "}

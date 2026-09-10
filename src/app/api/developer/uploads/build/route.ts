@@ -1,7 +1,8 @@
+import { scanStoredBuild } from "@/lib/serverBuildScan";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { verifyDeveloperRequest } from "@/lib/serverDeveloperAuth";
-import { createUserSupabaseClient } from "@/lib/serverSupabase";
+import { createServiceSupabaseClient } from "@/lib/serverServiceSupabase";
 import { getR2GameUploadAvailability } from "@/lib/r2GameUploads";
 import { deleteMvpObject, getMvpHeadMismatch, getR2MvpConfig, headMvpObject, listMvpPrefix, presignMvpPut, sha256HexToBase64 } from "@/lib/r2Mvp";
 import { publicObjectUrl, validateWebglManifest, WEBGL_MVP_LIMITS } from "@/lib/webglMvpManifest";
@@ -15,9 +16,9 @@ export async function POST(request:Request){
   const auth=await verifyDeveloperRequest(request);if(!auth.authorized)return NextResponse.json({error:auth.error},{status:401});
   const availability=getR2GameUploadAvailability(process.env);if(!availability.available)return NextResponse.json({error:availability.error,code:availability.code},{status:503});
   try{
-    const body=await request.json() as Record<string,unknown>;const action=String(body.action||"");const db=createUserSupabaseClient(request.headers.get("authorization") || "");const config=getR2MvpConfig(process.env);
+    const body=await request.json() as Record<string,unknown>;const action=String(body.action||"");const db=createServiceSupabaseClient();const config=getR2MvpConfig(process.env);
     if(action==="initiate"){
-      const submissionId=uuid(body.submissionId);const {data:submission}=await db.from("game_submissions").select("id").eq("id",submissionId).eq("owner_id",auth.user.id).maybeSingle();if(!submission)return NextResponse.json({error:"Submission was not found."},{status:404});
+      const submissionId=uuid(body.submissionId);const {data:submission}=await db.from("game_submissions").select("id,status").eq("id",submissionId).eq("owner_id",auth.user.id).maybeSingle();if(!submission || !["draft","changes_requested","rejected","upload_failed","verification_failed","ready_for_review"].includes(submission.status))return NextResponse.json({error:"Submission was not found."},{status:404});
       const idempotencyKey=String(body.idempotencyKey||"");if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/.test(idempotencyKey))throw new Error("A valid build upload request identity is required.");const manifest=validateWebglManifest(body.manifest);
       const {data:replayed}=await db.from("developer_game_builds").select("id,operation_id,file_count,total_bytes").eq("owner_id",auth.user.id).eq("submission_id",submissionId).eq("idempotency_key",idempotencyKey).maybeSingle();if(replayed)return NextResponse.json({operationId:replayed.operation_id,buildId:replayed.id,fileCount:replayed.file_count,totalBytes:replayed.total_bytes,replayed:true});
       const operationId=randomUUID();const prefix=`${buildPrefix()}/${auth.user.id}/${operationId}/`;const files:StoredFile[]=manifest.files.map(file=>({...file,objectKey:`${prefix}${file.path}`}));
@@ -26,7 +27,10 @@ export async function POST(request:Request){
       return NextResponse.json({operationId,buildId:data.id,fileCount:files.length,totalBytes:manifest.totalBytes},{status:201});
     }
     const operationId=uuid(body.operationId);const {data:build,error:buildError}=await db.from("developer_game_builds").select("*").eq("operation_id",operationId).eq("owner_id",auth.user.id).maybeSingle();if(buildError||!build)return NextResponse.json({error:"Build upload operation was not found."},{status:404});
-    const files=(Array.isArray(build.manifest)?build.manifest:[]) as StoredFile[];const prefix=`${buildPrefix()}/${auth.user.id}/${operationId}/`;if(files.some(file=>!file.objectKey.startsWith(prefix)))throw new Error("Build object ownership is invalid.");
+    const {data:release}=await db.from("game_submissions").select("status").eq("id",build.submission_id).eq("owner_id",auth.user.id).maybeSingle();
+    if(!release || !["draft","uploading","upload_failed","verification_pending","verification_failed","ready_for_review","changes_requested","rejected"].includes(release.status))return NextResponse.json({error:"Reviewed releases are immutable."},{status:409});
+    if(build.verification_status === "verified" && ["abort","cleanup","sign"].includes(action))return NextResponse.json({error:"Verified builds are immutable."},{status:409});
+    const files=(Array.isArray(build.manifest)?build.manifest:[]) as StoredFile[];const prefix=`${buildPrefix()}/${auth.user.id}/${operationId}/`;if(files.some(file=>file.objectKey !== `${prefix}${file.path}`))throw new Error("Build object ownership is invalid.");
     if(action==="sign"){
       const requested=Array.isArray(body.files)?body.files as Array<Record<string,unknown>>:[];if(!requested.length||requested.length>WEBGL_MVP_LIMITS.maxSigningBatch)throw new Error(`Sign at most ${WEBGL_MVP_LIMITS.maxSigningBatch} files per batch.`);
       const signed=await Promise.all(requested.map(async candidate=>{const file=matchStoredFile(files,candidate);const headers:Record<string,string>={"content-type":file.contentType,"cache-control":file.cacheControl,"x-amz-meta-sha256":file.sha256,"x-amz-meta-size-bytes":String(file.size),"x-amz-checksum-sha256":sha256HexToBase64(file.sha256),"if-none-match":"*"};if(file.contentEncoding)headers["content-encoding"]=file.contentEncoding;return{path:file.path,url:await presignMvpPut(config,file.objectKey,headers,signingSeconds),headers};}));
@@ -34,11 +38,11 @@ export async function POST(request:Request){
     }
     if(action==="inspect"){
       const cursor=Math.max(0,Number(body.cursor)||0);const end=Math.min(cursor+WEBGL_MVP_LIMITS.verificationBatch,files.length);const batch=files.slice(cursor,end);
-      const checks=await Promise.all(batch.map(async file=>({file,mismatch:getMvpHeadMismatch({size:file.size,sha256:file.sha256},await headMvpObject(config,file.objectKey))})));
+      const checks=await Promise.all(batch.map(async file=>({file,mismatch:getMvpHeadMismatch(file,await headMvpObject(config,file.objectKey))})));
       return NextResponse.json({done:end>=files.length,nextCursor:end,totalFiles:files.length,verifiedPaths:checks.filter(check=>!check.mismatch).map(check=>check.file.path)});
     }
     if(action==="check"){
-      const file=matchStoredFile(files,body.file as Record<string,unknown>);const head=await headMvpObject(config,file.objectKey);const mismatch=getMvpHeadMismatch({size:file.size,sha256:file.sha256},head);
+      const file=matchStoredFile(files,body.file as Record<string,unknown>);const head=await headMvpObject(config,file.objectKey);const mismatch=getMvpHeadMismatch(file,head);
       return NextResponse.json({path:file.path,verified:!mismatch,exists:head.exists,reason:mismatch||null});
     }
     if(action==="cleanup"){
@@ -47,10 +51,12 @@ export async function POST(request:Request){
     }
     if(action==="verify"){
       const cursor=Math.max(0,Number(body.cursor)||0);const end=Math.min(cursor+WEBGL_MVP_LIMITS.verificationBatch,files.length);const batch=files.slice(cursor,end);
-      const checks=await Promise.all(batch.map(async file=>({file,mismatch:getMvpHeadMismatch({size:file.size,sha256:file.sha256},await headMvpObject(config,file.objectKey))})));const mismatch=checks.find(check=>check.mismatch);
+      const checks=await Promise.all(batch.map(async file=>({file,mismatch:getMvpHeadMismatch(file,await headMvpObject(config,file.objectKey))})));const mismatch=checks.find(check=>check.mismatch);
       if(mismatch){await db.from("developer_game_builds").update({verification_status:"failed",verification_error:`${mismatch.mismatch}: ${mismatch.file.path}`}).eq("id",build.id);await db.from("game_submissions").update({status:"verification_failed",build_verified:false}).eq("id",build.submission_id);return NextResponse.json({error:`Uploaded file failed verification: ${mismatch.file.path}`},{status:422});}
       if(end<files.length)return NextResponse.json({done:false,nextCursor:end,totalFiles:files.length});
+      for(let index=0;index<files.length;index+=8){const verified=await Promise.all(files.slice(index,index+8).map(async file=>getMvpHeadMismatch(file,await headMvpObject(config,file.objectKey))));if(verified.some(Boolean))throw new Error("Full build verification failed.");}
       const actual=await listMvpPrefix(config,prefix,files.length+1);const expected=new Set(files.map(file=>file.objectKey));if(actual.length!==expected.size||actual.some(key=>!expected.has(key)))return NextResponse.json({error:"Upload prefix contains missing or unexpected files."},{status:422});
+      const scan=await scanStoredBuild(config,files);const {error:scanError}=await db.from("build_security_scans").upsert({build_id:build.id,...scan});if(scanError)throw new Error("Security scan could not be recorded.");
       const entry=files.find(file=>file.path===build.entry_path);if(!entry)throw new Error("Build entry point is missing.");const previewUrl=publicObjectUrl(config.publicBaseUrl,entry.objectKey);const now=new Date().toISOString();
       await db.from("developer_game_builds").update({verification_status:"verified",verification_error:null,verified_at:now,preview_url:previewUrl}).eq("id",build.id);await db.from("game_submissions").update({status:"ready_for_review",build_verified:true}).eq("id",build.submission_id).eq("owner_id",auth.user.id);
       return NextResponse.json({done:true,nextCursor:end,operationId,buildId:build.id,previewUrl});

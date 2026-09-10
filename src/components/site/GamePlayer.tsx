@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useGameBridge } from "@/components/games/GameBridge";
+import { safeGameFrameUrl } from "@/lib/gameFramePolicy";
 import {
   AlertTriangle, Expand, Gamepad2, Heart, Maximize2, Minimize2, Play, RotateCw,
   Share2, Smartphone, ThumbsDown, ThumbsUp, Volume2, VolumeX
@@ -19,6 +21,7 @@ type GamePlayerProps = {
 };
 
 export function GamePlayer({ title, slug, cover, thumbnail, iframeUrl, aspectRatio = "16/9", desktopControls, mobileControls }: GamePlayerProps) {
+  iframeUrl = safeGameFrameUrl(iframeUrl);
   const [started, setStarted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
@@ -33,6 +36,7 @@ export function GamePlayer({ title, slug, cover, thumbnail, iframeUrl, aspectRat
   const desktopControlList = desktopControls?.length ? desktopControls : ["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"];
   const mobileControlList = mobileControls?.length ? mobileControls : ["Rotate screen", "Use in-game touch controls"];
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  useGameBridge(iframeRef, iframeUrl, started, slug);
 
   useEffect(() => {
     const updateFullscreen = () => setIsFullscreen(document.fullscreenElement === containerRef.current);
@@ -145,6 +149,8 @@ export function GamePlayer({ title, slug, cover, thumbnail, iframeUrl, aspectRat
                 ) : null}
                 <iframe
                   ref={iframeRef}
+                  sandbox="allow-scripts allow-same-origin allow-pointer-lock"
+                  referrerPolicy="origin"
                   title={title}
                   src={iframeUrl}
                   className="block h-full w-full border-0 bg-black outline-none"

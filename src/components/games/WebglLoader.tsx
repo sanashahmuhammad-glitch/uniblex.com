@@ -1,4 +1,5 @@
 "use client";
+import { useGameBridge } from "./GameBridge";
 
 import {useEffect,useMemo,useRef,useState} from "react";
 import {formatMegabytes,getUnityDownloadPlan,initialUnityProgress,reduceUnityProgress,type UnityProgressState} from "@/lib/unityLoadingProgress.js";
@@ -17,6 +18,7 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
   const [unityProgress,setUnityProgress]=useState<UnityProgressState>(()=>initialUnityProgress(downloadPlan.totalBytes||config.totalBytes));
   const [error,setError]=useState("");
   const [loadAttempt,setLoadAttempt]=useState(runtimeLoader?1:0);
+  useGameBridge(iframe, config.entryUrl, runtimeLoader || phase === "ready", undefined, loadAttempt);
   const total=Math.max(config.totalBytes,config.files.reduce((sum,file)=>sum+file.size,0),1);
   const percent=Math.min(100,Math.round((loaded/total)*100));
 
@@ -66,7 +68,7 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
   return <main className="flex min-h-screen items-center justify-center bg-black p-0 text-white">
     <div ref={root} tabIndex={0} className="relative aspect-video w-full max-w-[1920px] overflow-hidden bg-black outline-none" onClick={()=>{root.current?.focus();if(phase==="ready") iframe.current?.focus();}}>
       {runtimeLoader?<>
-        <iframe key={loadAttempt} ref={iframe} src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen tabIndex={0} className={"h-full w-full border-0 bg-black transition-opacity duration-500 motion-reduce:transition-none "+(phase==="ready"?"opacity-100":"opacity-0")}/>
+        <iframe sandbox="allow-scripts allow-same-origin allow-pointer-lock" referrerPolicy="origin" key={loadAttempt} ref={iframe} src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen tabIndex={0} className={"h-full w-full border-0 bg-black transition-opacity duration-500 motion-reduce:transition-none "+(phase==="ready"?"opacity-100":"opacity-0")}/>
         <div aria-hidden={phase==="ready"} className={"absolute inset-0 flex items-center justify-center bg-cover bg-center p-4 text-center transition-opacity duration-500 motion-reduce:transition-none sm:p-6 "+(phase==="ready"?"pointer-events-none opacity-0":"opacity-100")} style={{backgroundImage:"linear-gradient(rgba(0,0,0,.42),rgba(0,0,0,.72)),url("+config.coverUrl+")"}}>
           <div className="flex w-full max-w-2xl flex-col items-center rounded-3xl border border-white/10 bg-[#070b14]/95 p-6 shadow-[0_28px_100px_rgba(0,0,0,.72)] backdrop-blur-md sm:p-8">
             <p className="mb-4 text-xs font-black uppercase tracking-[.22em] text-uniblex-blue">Uniblex Game Launcher</p>
@@ -85,7 +87,7 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
             <p className="mt-5 hidden text-sm text-white/80 [@media(orientation:portrait)]:block">Rotate your device for the best 16:9 experience.</p>
           </div>
         </div>
-      </>:phase==="ready"?<iframe src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen className="h-full w-full border-0 bg-black"/>:
+      </>:phase==="ready"?<iframe sandbox="allow-scripts allow-same-origin allow-pointer-lock" referrerPolicy="origin" ref={iframe} src={config.entryUrl} title={config.title} allow="fullscreen; gamepad; autoplay" allowFullScreen className="h-full w-full border-0 bg-black"/>:
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-cover bg-center p-6 text-center" style={{backgroundImage:"linear-gradient(rgba(0,0,0,.58),rgba(0,0,0,.88)),url("+config.coverUrl+")"}}>
         {config.thumbnailUrl?<img src={config.thumbnailUrl} alt="" className="mb-5 aspect-video w-40 rounded-lg object-cover shadow-2xl"/>:null}
         <h1 className="font-heading text-3xl sm:text-5xl">{config.title}</h1>

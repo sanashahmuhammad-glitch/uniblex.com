@@ -31,7 +31,12 @@ export default async function WebglLoaderPage(props:{params: Promise<{buildId:st
 }
 
 async function getPublishedDeveloperLoader(buildId:string) {
-  const database=createServiceSupabaseClient();
+  let database: ReturnType<typeof createServiceSupabaseClient>;
+  try {
+    database=createServiceSupabaseClient();
+  } catch {
+    return null;
+  }
   const {data:build,error:buildError}=await database.from("developer_game_builds")
     .select("id,submission_id,total_bytes,manifest,preview_url,verification_status")
     .eq("id",buildId).eq("verification_status","verified").maybeSingle();
