@@ -7,6 +7,7 @@ import type { AdminProfile } from "@/lib/adminAuth";
 import { allowedAdminRoles } from "@/lib/adminAuth";
 import { slugify } from "@/lib/slug";
 import { uploadWebglMvp, updateWebglMvp, type WebglUploadProgress } from "@/lib/webglMvpClient";
+import { GAME_SANDBOX, safeGameFrameUrl } from "@/lib/gameFramePolicy";
 
 type TableName = "admins" | "categories" | "games" | "blogs" | "contacts" | "ad_zones" | "seo_settings";
 type FieldKind = "text" | "textarea" | "select" | "boolean" | "number" | "tags" | "json" | "datetime";
@@ -818,7 +819,7 @@ export function AdminShell({ initialAdminProfile = null, r2GameUploadsEnabled = 
                   {activeConfig.table === "games" && previewGameUrl ? (
                     <div className="grid gap-2">
                       <p className="text-sm font-bold">Game Preview</p>
-                      <iframe className="h-[420px] w-full rounded-lg border border-uniblex-border bg-black" src={previewGameUrl} title="Game preview" allowFullScreen />
+                      <iframe className="h-[420px] w-full rounded-lg border border-uniblex-border bg-black" src={safeGameFrameUrl(previewGameUrl)} title="Game preview" sandbox={GAME_SANDBOX} referrerPolicy="origin" allow="fullscreen; gamepad; autoplay" allowFullScreen />
                     </div>
                   ) : null}
                   <div className="grid gap-3 sm:flex sm:flex-wrap sm:justify-end">

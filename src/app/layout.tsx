@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Orbitron, Exo_2 } from "next/font/google";
-import Script from "next/script";
+import { ConsentControlledAnalytics } from "@/components/site/ConsentControlledAnalytics";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { canonicalUrl, defaultAuthors, defaultRobots, organizationJsonLd, siteConfig, websiteJsonLd } from "@/lib/seo";
 import "./globals.css";
@@ -71,19 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
         {children}
-        {gaId ? (
-          <>
-            <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${gaId}');
-              `}
-            </Script>
-          </>
-        ) : null}
+        <ConsentControlledAnalytics measurementId={gaId} />
       </body>
     </html>
   );
