@@ -4,7 +4,7 @@ import { useGameBridge } from "./GameBridge";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {formatMegabytes,getUnityDownloadPlan,initialUnityProgress,reduceUnityProgress,type UnityProgressState} from "@/lib/unityLoadingProgress.js";
 
-type LoaderConfig={title:string;coverUrl:string;thumbnailUrl:string;entryUrl:string;totalBytes:number;files:Array<{url:string;size:number;contentEncoding:string}>};
+type LoaderConfig={title:string;slug:string;coverUrl:string;thumbnailUrl:string;entryUrl:string;totalBytes:number;files:Array<{url:string;size:number;contentEncoding:string}>};
 type Phase="idle"|"loading"|"ready"|"error";
 type UnityMessage={source?:string;type?:string;message?:string;progress?:number;loadedBytes?:number;totalBytes?:number;stage?:string};
 
@@ -18,7 +18,7 @@ export function WebglLoader({config}:{config:LoaderConfig}) {
   const [unityProgress,setUnityProgress]=useState<UnityProgressState>(()=>initialUnityProgress(downloadPlan.totalBytes||config.totalBytes));
   const [error,setError]=useState("");
   const [loadAttempt,setLoadAttempt]=useState(runtimeLoader?1:0);
-  useGameBridge(iframe, config.entryUrl, runtimeLoader || phase === "ready", undefined, loadAttempt);
+  useGameBridge(iframe, root, config.entryUrl, runtimeLoader || phase === "ready", config.slug || undefined, loadAttempt);
   const total=Math.max(config.totalBytes,config.files.reduce((sum,file)=>sum+file.size,0),1);
   const percent=Math.min(100,Math.round((loaded/total)*100));
 

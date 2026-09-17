@@ -5,6 +5,8 @@ import {
   AlertTriangle, Expand, Gamepad2, Heart, Maximize2, Minimize2, Play, RotateCw,
   Share2, ThumbsDown, ThumbsUp, Volume2, VolumeX
 } from "lucide-react";
+import { useGameBridge } from "@/components/games/GameBridge";
+import { GAME_SANDBOX, safeGameFrameUrl } from "@/lib/gameFramePolicy";
 import { MOTO_RIDER_COVER_URL, MOTO_RIDER_THUMBNAIL_URL } from "@/lib/gameIframeUrls";
 
 type Props = {
@@ -16,6 +18,7 @@ type Props = {
 };
 
 export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobileControls }: Props) {
+  const safeIframeUrl = safeGameFrameUrl(iframeUrl);
   const poster = MOTO_RIDER_COVER_URL;
   const [started, setStarted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -29,6 +32,7 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
   const [message, setMessage] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  useGameBridge(iframeRef, containerRef, safeIframeUrl, started, slug);
 
   useEffect(() => {
     const updateViewport = () => {
@@ -105,11 +109,13 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
         <div className="absolute inset-0 h-full w-full bg-black">
           {!started ? (
             <Poster title={title} poster={poster} thumbnail={MOTO_RIDER_THUMBNAIL_URL} portrait={isPortrait} onPlay={startGame} onFullscreen={() => void toggleFullscreen(true)} />
-          ) : (
+          ) : safeIframeUrl ? (
             <iframe
                 ref={iframeRef}
                 title={title}
-                src={iframeUrl}
+                src={safeIframeUrl}
+                sandbox={GAME_SANDBOX}
+                referrerPolicy="origin"
                 className="absolute inset-0 block h-full w-full border-0 bg-black outline-none"
                 allow="fullscreen; gamepad; autoplay; xr-spatial-tracking"
                 loading="eager"
@@ -118,6 +124,8 @@ export function MotoRiderPlayer({ title, slug, iframeUrl, desktopControls, mobil
                 onPointerDown={() => iframeRef.current?.focus()}
                 onLoad={() => window.setTimeout(() => iframeRef.current?.focus(), 100)}
               />
+          ) : (
+            <div className="absolute inset-0 grid place-items-center p-6 text-center text-red-200" role="alert">This game URL is not eligible for secure playback.</div>
           )}
         </div>
       </div>

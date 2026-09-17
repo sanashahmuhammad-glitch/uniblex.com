@@ -36,7 +36,7 @@ export function GamePlayer({ title, slug, cover, thumbnail, iframeUrl, aspectRat
   const desktopControlList = desktopControls?.length ? desktopControls : ["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"];
   const mobileControlList = mobileControls?.length ? mobileControls : ["Rotate screen", "Use in-game touch controls"];
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  useGameBridge(iframeRef, iframeUrl, started, slug);
+  useGameBridge(iframeRef, containerRef, iframeUrl, started, slug);
 
   useEffect(() => {
     const updateFullscreen = () => setIsFullscreen(document.fullscreenElement === containerRef.current);

@@ -29,7 +29,12 @@ export function attachGameBridge(frame: HTMLIFrameElement, entryUrl: string, man
     let payload: unknown;
     if (m.method === "init") { telemetry("sdk_init"); payload = { session, interstitial: manager.available("interstitial"), rewarded: manager.available("rewarded") }; }
     else if (m.method === "getCapabilities") payload = { interstitial: manager.available("interstitial"), rewarded: manager.available("rewarded") };
-    else if (m.method === "showInterstitial" || m.method === "showRewarded") payload = await manager.show(m.requestId, m.method === "showRewarded" ? "rewarded" : "interstitial", m.payload as AdRequest);
+    else if (m.method === "showInterstitial" || m.method === "showRewarded") payload = await manager.show(
+      m.requestId,
+      m.method === "showRewarded" ? "rewarded" : "interstitial",
+      m.payload as AdRequest,
+      { session: requestSession, frameOrigin: origin },
+    );
     else if ((LIFECYCLE_METHODS as readonly string[]).includes(m.method)) { telemetry(m.method); payload = { accepted: true }; }
     else payload = { status: "blocked", rewardGranted: false, reason: "unsupported_method" };
     if (!disposed && requestSession === session) frame.contentWindow?.postMessage({ protocol: "uniblex", version: 2, type: "response", requestId: m.requestId, session, payload }, origin);

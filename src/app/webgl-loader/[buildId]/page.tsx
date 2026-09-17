@@ -19,10 +19,11 @@ export default async function WebglLoaderPage(props:{params: Promise<{buildId:st
   const loaderData=developerLoader||(!error&&data?.entryUrl&&Array.isArray(data.manifest)?data:null);
   if(!loaderData?.entryUrl||!Array.isArray(loaderData.manifest)) notFound();
   const {data:publishedGame}=await database.from("games")
-    .select("title,cover_url,thumbnail_url")
+    .select("title,slug,cover_url,thumbnail_url")
     .eq("build_id",params.buildId).eq("status","published").maybeSingle();
   return <WebglLoader config={{
     title:String(publishedGame?.title||loaderData.title||"WebGL Game"),
+    slug:String(publishedGame?.slug||loaderData.slug||""),
     coverUrl:String(publishedGame?.cover_url||loaderData.coverUrl||""),
     thumbnailUrl:String(publishedGame?.thumbnail_url||publishedGame?.cover_url||loaderData.thumbnailUrl||""),
     entryUrl:String(loaderData.entryUrl),totalBytes:Number(loaderData.totalBytes||0),
@@ -47,12 +48,13 @@ async function getPublishedDeveloperLoader(buildId:string) {
   if(submissionError||!submission?.game_id) return null;
 
   const {data:game,error:gameError}=await database.from("games")
-    .select("title,status,cover_url,thumbnail_url,build_id")
+    .select("title,slug,status,cover_url,thumbnail_url,build_id")
     .eq("id",submission.game_id).eq("status","published").eq("build_id",build.id).maybeSingle();
   if(gameError||!game) return null;
 
   return {
     title:game.title,
+    slug:game.slug,
     coverUrl:game.cover_url,
     thumbnailUrl:game.thumbnail_url||game.cover_url,
     entryUrl:build.preview_url,
