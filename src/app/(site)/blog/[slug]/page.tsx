@@ -88,21 +88,11 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
         </div>
 
         <div className="prose prose-invert max-w-none prose-headings:font-heading prose-h2:text-3xl prose-p:text-uniblex-gray prose-p:leading-8">
-          <h2>Overview</h2>
+          <h2>Practical guide</h2>
           {post.content.map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
           ))}
           <AdZone label="In Content" size="in-content" />
-          <h2>Uniblex Publishing Notes</h2>
-          <p>
-            This article is part of the Uniblex content system: original writing, clear headings, readable paragraphs, featured imagery, schema markup, and internal links. The goal is to give players and creators useful information while keeping every page ready for search indexing and future monetization.
-          </p>
-          <h2>Action Checklist</h2>
-          <ul>
-            <li>Keep the page title specific and human-readable.</li>
-            <li>Add original examples, screenshots, or production notes before launch.</li>
-            <li>Review mobile spacing, image loading, and internal links after publishing.</li>
-          </ul>
         </div>
       </article>
 

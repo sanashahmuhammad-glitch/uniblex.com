@@ -28,7 +28,7 @@ type GameRow = {
 };
 
 const accents = ["#00B2FF", "#7A3CFF", "#FF4DDB", "#26E6D0"];
-const fallbackPublishedGames = fallbackGames.filter((game) => game.status === "Published");
+const fallbackPublishedGames = fallbackGames.filter((game) => game.slug === MOTO_RIDER_SLUG && Boolean(game.iframeUrl));
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || "";
 const publicDataSupabase = supabaseUrl.startsWith("https://") && supabaseAnonKey.length > 20
@@ -50,9 +50,9 @@ export async function getPublishedGames() {
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false });
 
-  if (error || !data?.length) return fallbackPublishedGames;
+  if (error || !data) return [];
 
-  const games = (data as GameRow[]).map(mapGameRow);
+  const games = (data as GameRow[]).map(mapGameRow).filter(isPlayableGame);
   return withOptionalCounters(games);
 }
 
@@ -66,15 +66,17 @@ export async function getPublishedGame(slug: string) {
     .eq("slug", slug)
     .maybeSingle();
 
-  if (error || !data) return fallbackPublishedGames.find((game) => game.slug === slug);
+  if (error || !data) return undefined;
 
-  return withOptionalCounter(mapGameRow(data as GameRow));
+  const game = mapGameRow(data as GameRow);
+  return isPlayableGame(game) ? withOptionalCounter(game) : undefined;
 }
 
 function mapGameRow(row: GameRow): Game {
   const tags = row.tags?.length ? row.tags : ["WebGL"];
   const genre = row.genre || "WebGL Game";
   const isMotoRider = row.slug === MOTO_RIDER_SLUG;
+  const isCarSim = row.slug === "car-sim-game";
   const metadata = row.build_metadata && typeof row.build_metadata === "object" ? row.build_metadata : {};
 
   return {
@@ -82,7 +84,9 @@ function mapGameRow(row: GameRow): Game {
     slug: row.slug,
     genre,
     status: "Published",
-    description: row.description,
+    description: isCarSim
+      ? "Play a 3D car simulation directly in your browser. Load the secure player, follow the in-game guidance, and drive without installing an app."
+      : row.description,
     cover: isMotoRider ? MOTO_RIDER_THUMBNAIL_URL : row.cover_url || "/cards/game-cover-sprite.png",
     iframeUrl: isMotoRider ? MOTO_RIDER_IFRAME_URL : row.iframe_url || undefined,
     thumbnailUrl: isMotoRider ? MOTO_RIDER_THUMBNAIL_URL : row.thumbnail_url || row.cover_url || undefined,
@@ -92,10 +96,12 @@ function mapGameRow(row: GameRow): Game {
     desktopControls: normalizeControlList(row.desktop_controls, ["WASD / Arrow Keys = Move", "Space = Brake / Action", "Mouse = Select"]),
     mobileControls: normalizeControlList(row.mobile_controls, ["Rotate your device", "Use on-screen controls"]),
     tags,
-    playStyle: row.description,
+    playStyle: isCarSim
+      ? "A browser-based 3D driving experience that starts on demand inside the secure Uniblex player."
+      : row.description,
     controls: ["Use the in-game controls after pressing Play."],
-    highlights: ["Playable in browser", "WebGL build uploaded through Uniblex admin", "No install required"],
-    technicalNotes: ["Game files are served from the uploaded WebGL build.", "The iframe loads only after the player clicks Play."],
+    highlights: ["Playable in browser", "Loads after you press Play", "No install required"],
+    technicalNotes: ["The game runs in a sandboxed browser player.", "The player loads only after the player clicks Play."],
     difficulty: "Medium",
     sessionLength: "5-10 min",
     players: "Solo",
@@ -103,12 +109,18 @@ function mapGameRow(row: GameRow): Game {
     accent: accents[Math.abs(hashCode(row.slug)) % accents.length],
     viewCount: typeof row.view_count === "number" ? row.view_count : null,
     playCount: typeof row.play_count === "number" ? row.play_count : null,
-    developerName: typeof metadata.developer_name === "string" ? metadata.developer_name : "Uniblex Creator",
+    developerName: isCarSim
+      ? "Uniblex"
+      : typeof metadata.developer_name === "string" ? metadata.developer_name : "Uniblex Creator",
     engine: typeof metadata.engine === "string" ? metadata.engine : row.genre || "WebGL",
     orientation: typeof metadata.orientation === "string" ? metadata.orientation : "landscape",
     publishedAt: row.published_at || undefined,
     updatedAt: row.updated_at || row.published_at || undefined
   };
+}
+
+function isPlayableGame(game: Game) {
+  return game.status === "Published" && typeof game.iframeUrl === "string" && game.iframeUrl.startsWith("https://");
 }
 
 async function withOptionalCounters(games: Game[]) {

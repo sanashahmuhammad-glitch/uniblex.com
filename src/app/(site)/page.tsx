@@ -11,10 +11,11 @@ import {
 } from "lucide-react";
 import { PostCard } from "@/components/site/PostCard";
 import { GameThumbnail } from "@/components/site/VisualThumb";
-import { games, type Game } from "@/data/games";
+import type { Game } from "@/data/games";
 import { posts } from "@/data/posts";
 import { AuthAwareDeveloperLink } from "@/components/developers/AuthAwareDeveloperLink";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { getPublishedGames } from "@/lib/publicGames";
 import { canonicalUrl, defaultAuthors, defaultRobots, homePageJsonLd, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -42,19 +43,14 @@ export const metadata: Metadata = {
   }
 };
 
-const categories = [
-  { label: "Action", genre: "Action Arena" },
-  { label: "Racing", genre: "Racing" },
-  { label: "Arcade", genre: "Arcade Runner" },
-  { label: "Puzzle", genre: "Puzzle" },
-  { label: "Strategy", genre: "Strategy" },
-  { label: "Casual", genre: "Casual Sim" },
-];
+export const dynamic = "force-dynamic";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const games = await getPublishedGames();
   const heroGame = games[0];
   const gameShelf = games.slice(0, 8);
   const latestPosts = posts.slice(0, 3);
+  const categories = Array.from(new Set(games.map((game) => game.genre))).slice(0, 6);
 
   return (
     <main className="min-h-screen bg-[#080b12]">
@@ -70,11 +66,11 @@ export default function HomePage() {
           </Link>
           {categories.map((category) => (
             <Link
-              key={category.genre}
-              href={`/games?genre=${encodeURIComponent(category.genre)}`}
+              key={category}
+              href={`/games?genre=${encodeURIComponent(category)}`}
               className="shrink-0 rounded-lg border border-white/[.08] bg-white/[.035] px-4 py-2 text-xs font-bold text-[#b8c0cf] transition hover:border-white/20 hover:bg-white/[.07] hover:text-white"
             >
-              {category.label}
+              {category}
             </Link>
           ))}
         </div>
@@ -100,7 +96,7 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-xs font-bold text-[#8791a3]">
-              <span>{games.length} games</span>
+              <span>{games.length} live game{games.length === 1 ? "" : "s"}</span>
               <span>No downloads</span>
               <span>Desktop &amp; mobile</span>
             </div>
@@ -119,8 +115,8 @@ export default function HomePage() {
           linkLabel="View all games"
         />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {gameShelf.map((game, index) => (
-            <HomeGameTile key={game.slug} game={game} badge={index === 0 ? "Top pick" : index < 3 ? "Popular" : undefined} />
+          {gameShelf.map((game) => (
+            <HomeGameTile key={game.slug} game={game} badge="Playable" />
           ))}
         </div>
       </section>

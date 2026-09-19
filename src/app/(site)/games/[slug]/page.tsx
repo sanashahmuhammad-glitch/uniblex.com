@@ -8,16 +8,11 @@ import { GameCard } from "@/components/site/GameCard";
 import { GameEngagement } from "@/components/site/GameEngagement";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GameThumbnail } from "@/components/site/VisualThumb";
-import { games } from "@/data/games";
 import { getPublishedGame, getPublishedGames } from "@/lib/publicGames";
 import { MOTO_RIDER_SLUG } from "@/lib/gameIframeUrls";
 import { absoluteUrl, breadcrumbJsonLd, canonicalUrl, defaultAuthors, defaultRobots, pageKeywords, siteConfig } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-
-export function generateStaticParams() {
-  return games.filter((game) => game.status === "Published").map((game) => ({ slug: game.slug }));
-}
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const params = await props.params;

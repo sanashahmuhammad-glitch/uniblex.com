@@ -46,7 +46,7 @@ function PortalPreview() {
     <div className="relative mx-auto w-full max-w-xl">
       <div className="absolute -inset-10 rounded-full bg-gradient-to-br from-uniblex-blue/20 to-uniblex-purple/20 blur-3xl" />
       <div className="card relative overflow-hidden p-3 shadow-[0_30px_100px_rgba(0,0,0,.55)]">
-        <div className="flex items-center gap-2 border-b border-white/10 px-3 py-3"><span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" /><span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" /><span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" /><span className="ml-3 text-xs text-uniblex-gray">developers.uniblex.com</span></div>
+        <div className="flex items-center gap-2 border-b border-white/10 px-3 py-3"><span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" /><span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" /><span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" /><span className="ml-3 text-xs text-uniblex-gray">Illustrative workflow preview — no production data</span></div>
         <div className="grid gap-3 p-3 sm:grid-cols-[.34fr_.66fr]">
           <div className="rounded-xl border border-white/10 bg-black/25 p-3">
             <div className="mb-5 flex items-center gap-2 text-sm font-bold text-white"><Gamepad2 size={18} className="text-uniblex-blue" /> Workspace</div>
@@ -54,10 +54,10 @@ function PortalPreview() {
           </div>
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
-              {["7 Games", "2 Review", "4 Published"].map((item) => <div key={item} className="rounded-xl border border-white/10 bg-white/[.035] p-3 text-center text-xs font-bold text-white">{item}</div>)}
+              {["Draft", "In review", "Published"].map((item) => <div key={item} className="rounded-xl border border-white/10 bg-white/[.035] p-3 text-center text-xs font-bold text-white">{item}</div>)}
             </div>
             <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-              <div className="flex items-start justify-between gap-3"><div className="h-16 w-20 rounded-lg bg-gradient-to-br from-uniblex-blue/50 to-uniblex-purple/50" /><div className="flex-1"><p className="text-sm font-bold text-white">Neon Drift</p><p className="mt-1 text-xs text-uniblex-gray">Build verified · WebGL</p><div className="mt-3 h-1.5 rounded-full bg-white/10"><div className="h-full w-4/5 rounded-full bg-gradient-to-r from-uniblex-blue to-uniblex-purple" /></div></div><span className="rounded-full bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-300">APPROVED</span></div>
+              <div className="flex items-start justify-between gap-3"><div className="h-16 w-20 rounded-lg bg-gradient-to-br from-uniblex-blue/50 to-uniblex-purple/50" /><div className="flex-1"><p className="text-sm font-bold text-white">Example release</p><p className="mt-1 text-xs text-uniblex-gray">Workflow illustration · WebGL</p><div className="mt-3 h-1.5 rounded-full bg-white/10"><div className="h-full w-4/5 rounded-full bg-gradient-to-r from-uniblex-blue to-uniblex-purple" /></div></div><span className="rounded-full bg-uniblex-blue/10 px-2 py-1 text-[10px] font-bold text-cyan-200">SAMPLE</span></div>
             </div>
             <div className="rounded-xl border border-dashed border-white/15 p-5 text-center text-xs text-uniblex-gray"><Sparkles className="mx-auto mb-2 text-uniblex-purple" size={22} />Review feedback stays attached to each release.</div>
           </div>
