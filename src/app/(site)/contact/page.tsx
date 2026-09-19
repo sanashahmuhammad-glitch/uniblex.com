@@ -38,7 +38,7 @@ export default function ContactPage() {
             <p className="text-sm font-black uppercase tracking-[.24em] text-uniblex-blue">Contact</p>
             <h1 className="mt-3 font-heading text-4xl leading-tight md:text-5xl">Get in Touch</h1>
             <p className="mt-5 leading-8 text-uniblex-gray">
-              Send feedback, collaboration notes, game questions, or website support requests. Messages are saved to the Uniblex admin dashboard when Supabase is configured.
+              Send feedback, collaboration notes, game questions, or website support requests. The Uniblex team reviews messages submitted through this form.
             </p>
           </div>
           <div className="relative mt-8 grid gap-4">

@@ -9,292 +9,143 @@ export type Post = {
   content: string[];
 };
 
+type PostSource = Omit<Post, "readingTime">;
+
 const sharedImages = ["/og-image.png", "/brand/gaming.png", "/brand/gaming-icon.png", "/brand/horizontal-lockup.png", "/icon-512.png"];
 
-export const posts: Post[] = [
+const publishedPosts: PostSource[] = [
   {
-    title: "Why Browser Games Are Growing Again",
-    slug: "why-browser-games-are-growing-again",
-    category: "Industry News",
-    excerpt: "Modern browser games are winning attention because they remove downloads, reduce friction, and let players try an idea instantly.",
-    publishedAt: "2026-06-27",
-    readingTime: "7 min read",
-    image: sharedImages[0],
-    content: [
-      "Browser games are becoming relevant again because the web platform is no longer limited to simple static pages. WebGL, WebAssembly, modern JavaScript engines, gamepad support, pointer lock, and better mobile browsers have made it possible to run interactive experiences with impressive visual quality. The biggest advantage is still access. A player can open a link, understand the idea, and begin playing without a store page, installer, or device-specific download.",
-      "For independent creators, that frictionless access changes how a game can be tested and shared. A prototype can be placed in front of a client, friend, publisher, or community within seconds. The same page can include development notes, screenshots, controls, credits, and update history. That makes the game page both a playable demo and a content asset.",
-      "Uniblex is built around this shift. The platform combines WebGL showcases with original writing so every game has context around design, art, production, and player experience. That combination is more useful than a simple iframe page because it helps search engines understand the topic and helps visitors learn something even before they press play."
-    ]
-  },
-  {
-    title: "How 3D Artists Can Build a Strong Game Portfolio",
-    slug: "how-3d-artists-can-build-a-strong-game-portfolio",
-    category: "3D Art",
-    excerpt: "A game art portfolio should show production thinking, not only polished renders.",
-    publishedAt: "2026-06-26",
-    readingTime: "8 min read",
-    image: sharedImages[1],
-    content: [
-      "A strong game portfolio is not only a gallery of beautiful final images. Clients and studios want to know whether an artist understands how assets survive real production. That means topology, UV layout, texture budgets, scale, naming, file organization, and in-engine presentation all matter. A clean render can attract attention, but production evidence builds trust.",
-      "For each hero asset, include one final shot, one wireframe or clay view, one texture breakdown, and one engine screenshot. Keep descriptions short but useful. Explain the target platform, triangle budget, texture sizes, tools used, and any technical decisions that protected performance. This gives reviewers the information they need without forcing them to guess.",
-      "Uniblex can publish portfolio breakdowns as educational articles because they are useful for artists and friendly to organic search. A post about a single prop, vehicle, environment piece, or shader can become long-form content when it explains the problem, constraints, workflow, and lessons learned."
-    ]
-  },
-  {
-    title: "WebGL Game Pages: SEO Checklist",
+    title: "WebGL Game Pages: A Practical SEO Checklist",
     slug: "webgl-game-pages-seo-checklist",
     category: "Game Dev",
-    excerpt: "A game page needs unique copy, schema, screenshots, fast loading, and a player that does not punish Core Web Vitals.",
+    excerpt: "Build a useful game page around the playable experience with accurate copy, stable media, canonical metadata, and a player that loads on demand.",
     publishedAt: "2026-06-25",
-    readingTime: "9 min read",
     image: sharedImages[3],
     content: [
-      "A WebGL game page should never be only an embedded player. Search engines and visitors both need context. Start with a unique H1, a useful description, genre, tags, controls, screenshots, and an explanation of the gameplay loop. Add a clear play button and load the iframe only after the user chooses to start. This improves performance and avoids wasting bandwidth for visitors who are still reading.",
-      "Structured data matters because it gives search engines a clearer description of the page. GameApplication schema can include the title, genre, operating system, description, and application category. BlogPosting schema should be used for articles that discuss the game. Canonical URLs help avoid duplicate content when tracking links or alternate paths are used.",
-      "Performance is part of SEO. Compress images, use the Next.js Image component, avoid blocking third-party scripts, and keep the game bundle out of the initial page load. If the game build is large, host it on reliable storage and document the expected wait time so the experience feels intentional instead of broken."
+      "A useful WebGL game page begins by answering the questions a player has before pressing Play. State what the game is, what the player does, which inputs it expects, and whether it works best on desktop or mobile. The title and description should describe the actual published build rather than a future plan. A page with a working player and specific guidance gives people a reason to stay even while a large game is loading.",
+      "Keep the playable build out of the initial page load. On Uniblex, the poster, game information, and controls render first, while the iframe starts only after the player chooses to play. This protects the rest of the page from a heavy WebGL download and avoids spending bandwidth on a visitor who only wants to read. Reserve a fixed aspect ratio for the player so that starting the game does not push nearby content around.",
+      "Write metadata for the individual game instead of copying the directory description. The page title, meta description, Open Graph fields, and canonical URL should all point to the same game. A canonical URL should omit temporary query parameters. If a game is removed or has never been published, its old destination should return a real not-found response and should not remain in the sitemap or navigation.",
+      "Structured data can describe the page in a machine-readable form, but it must match what visitors can see. A GameApplication record can include the published title, genre, description, image, browser platform, and publisher. Do not add ratings, prices, release dates, or capabilities that the public page cannot substantiate. Structured data is supporting context, not a substitute for useful visible content.",
+      "Media quality affects both trust and load behavior. Use a real cover or thumbnail from the game, give it meaningful alternative text, and make sure every public media URL returns successfully. Keep screenshot dimensions consistent and avoid generic images that imply gameplay not found in the build. If a remote asset moves, update the page before search engines and players repeatedly request a broken file.",
+      "Internal links should help a visitor move through the site. Link a game back to the game directory, show related games only when they are genuinely playable, and link to relevant guides when the guide adds practical help. Avoid empty categories and cards that lead to Coming Soon pages while claiming the game is published. A small accurate library is more useful than a large invented catalogue.",
+      "Finish with a real-browser check. Load the page at desktop and phone widths, start the game, test keyboard or touch input, exit fullscreen, and confirm the surrounding page remains usable. Review the browser console and network panel for blocked frames, missing media, repeated requests, and unexpected third-party scripts. The final page should remain informative and navigable even when the game host is slow or temporarily unavailable."
     ]
   },
   {
     title: "A Practical Pipeline for WebGL Build Uploads",
     slug: "practical-pipeline-for-webgl-build-uploads",
     category: "Tutorials",
-    excerpt: "A simple upload pipeline keeps browser games organized, fast, and easier to maintain after launch.",
+    excerpt: "Treat a browser build as a versioned release: validate its archive, upload assets safely, review the exact revision, and publish only after playback checks pass.",
     publishedAt: "2026-06-24",
-    readingTime: "7 min read",
     image: sharedImages[2],
     content: [
-      "A reliable WebGL upload workflow starts before the build is exported. Name the project, version, and build folder clearly. Keep a release note that lists the engine version, compression settings, known issues, target devices, and the date of upload. This small habit prevents confusion when a game receives multiple updates.",
-      "The build should be compressed and hosted in storage designed for static assets. Supabase Storage, Cloudinary, and S3-compatible providers can all work depending on the project's needs. The public game page should store metadata separately from the actual build files, including title, slug, description, cover image, tags, genre, status, and iframe URL.",
-      "Before publishing, test on desktop Chrome, desktop Firefox, Android Chrome, and Safari if possible. Check that the loading screen appears, the game receives keyboard or pointer input, the player can exit fullscreen, and the page still scrolls normally after the iframe loses focus."
+      "A reliable WebGL release starts with an exact build artifact. Record the engine, version, entry point, compression format, expected orientation, and supported controls before uploading. Keep the exported folder intact and avoid renaming files after the loader has been generated, because the HTML and loader scripts usually refer to precise relative paths. A release note should identify the revision being reviewed so feedback cannot be confused with a newer local build.",
+      "Validate the archive before sending it to storage. Reject absolute paths, parent-directory traversal, executables, nested archives, duplicate paths, and unexpected entry points. A browser game normally needs an index document plus its scripts, styles, data, and WebAssembly files. Validation should also cap file counts and total expanded size so a malformed archive cannot consume unlimited memory, storage, or review time.",
+      "Large build files should travel directly to object storage through short-lived, scoped upload authorization. The application server can authorize the operation and record metadata without proxying every byte. Each upload should be tied to the authenticated developer, game, build revision, expected path, content type, and checksum. Finalization must verify the recorded files rather than trusting a browser message that says the upload succeeded.",
+      "Keep listing data separate from build bytes. A game record can hold the title, slug, description, controls, media links, review status, and the published build reference. The build record should identify the immutable revision and its entry point. This separation makes it possible to correct public copy without silently replacing a reviewed build, and to review a new build without changing the live player first.",
+      "Security review should inspect text-based files for risky external scripts, unexpected network destinations, redirects, and attempts to escape the host frame. Automated scanning can identify suspicious patterns, but it cannot certify a game as safe. A reviewer still needs to launch the exact revision in the intended sandbox, inspect network activity, test navigation, and confirm that the declared external hosts match the build.",
+      "Publishing should be a separate authorized action after review. The public page should resolve only the approved published revision, while drafts and rejected revisions remain private. If the database query fails, the listing should fail closed instead of substituting fictional published games. A rollback should point the public record to the previous known-good revision without deleting the newer upload or its review history.",
+      "After publication, test the public URL from a clean browser session. Confirm the poster loads, the play action creates the expected iframe, WebGL assets return with correct content types and encodings, fullscreen can be exited, and the page recovers if the iframe is closed or navigation changes. Repeating these checks on a phone-sized viewport catches layout and input problems that archive validation cannot see."
     ]
   },
   {
     title: "Designing Game Controls for Browser Players",
     slug: "designing-game-controls-for-browser-players",
     category: "Game Dev",
-    excerpt: "Browser game controls should be obvious, forgiving, and documented directly on the game page.",
+    excerpt: "Make input requirements clear before launch, acquire focus only after a player action, and provide safe ways to pause, exit, and recover.",
     publishedAt: "2026-06-23",
-    readingTime: "6 min read",
     image: sharedImages[0],
     content: [
-      "Controls are part of the first impression. A browser player may not know whether a game expects keyboard, mouse, touch, or gamepad input. The page should explain the primary controls before the iframe loads and repeat them near the player. This reduces frustration and helps users decide whether the game fits their device.",
-      "Keyboard layouts should support both arrow keys and WASD when possible. Mouse games should avoid hidden pointer lock surprises by asking for input after the player clicks play. Touch support should be explicit instead of assumed. If the game is not comfortable on phones, say so clearly and provide the best recommended device.",
-      "Good control documentation is also content. A short section explaining movement, actions, pause, restart, and accessibility notes makes the page more complete and useful. It supports players and adds original text that helps the page avoid thin-content problems."
+      "A browser player arrives with less context than someone launching an installed game. The page should identify the main input method before the build loads: keyboard and mouse, touch, or gamepad. List movement and primary actions in plain language near the player. If the game is practical only in landscape or on desktop, say that directly instead of allowing the player to discover the limitation after a long download.",
+      "Acquire keyboard focus after an explicit Play action. An embedded game should not capture keys while a visitor is reading, tabbing through navigation, or filling a form elsewhere on the page. When the iframe finishes loading, focus can move to it, but the surrounding interface must still offer an obvious way to leave fullscreen or return to the page. Pointer lock and fullscreen should always follow a user gesture.",
+      "Support familiar alternatives where the game design allows them. Arrow keys and WASD cover more keyboard preferences, while visible touch controls are more reliable than assuming keyboard input on a phone. Buttons need enough spacing to avoid accidental presses, and important actions should not sit under browser gestures or unsafe screen edges. A rotate prompt is useful when landscape materially improves the play area.",
+      "The host page should remain stable when input state changes. Starting, pausing, muting, entering fullscreen, exiting fullscreen, and closing an overlay should not leave an invisible layer intercepting clicks. If an external iframe fails to load, show a clear unavailable state and restore page scrolling. If the player navigates away during a pending operation, abort it and avoid sending a late result into a destroyed frame.",
+      "Audio deserves the same care as keyboard focus. Do not begin sound before a player action, and make the game's mute or volume controls discoverable. A host-level preference can explain whether sound is expected, but it cannot reliably mute an unrelated cross-origin game unless the game supports a trusted message contract. Documentation should distinguish a saved preference from actual audio control.",
+      "Treat messages from an iframe as untrusted input. Check the exact source window, allowed origin, protocol version, request shape, and active session before acting. A game should never be able to award itself a reward, open arbitrary navigation, or claim that a host-controlled operation completed. Reject duplicate and malformed messages without exposing private host data in error responses.",
+      "Test controls as a complete journey. Navigate to the page by keyboard, start the player, confirm the game receives input, toggle help, enter and exit fullscreen, resize the viewport, and return focus to the host. On mobile, test portrait and landscape behavior and verify no control forces horizontal scrolling. These checks reveal browser integration problems even when the game itself works correctly."
     ]
   },
   {
     title: "Making 3D Game Assets Load Faster on the Web",
     slug: "making-3d-game-assets-load-faster-on-the-web",
     category: "3D Art",
-    excerpt: "Fast web games depend on asset discipline: texture sizes, mesh budgets, compression, and smart loading.",
+    excerpt: "Reduce browser-game load cost by budgeting textures, meshes, materials, audio, and the first playable scene before export.",
     publishedAt: "2026-06-22",
-    readingTime: "8 min read",
     image: sharedImages[4],
     content: [
-      "The fastest WebGL game is usually the one with the most disciplined asset pipeline. Large uncompressed textures, unnecessary mesh density, long audio files, and duplicate materials can make a browser experience feel heavy before gameplay even starts. The goal is not to make everything tiny. The goal is to spend detail where the player will notice it.",
-      "Start with texture budgets. Use smaller maps for props that are seen at distance, combine materials where sensible, and compress assets in formats supported by the target engine. Meshes should be checked for hidden faces, excessive bevels, and accidental high-density exports. These small fixes add up quickly in a web build.",
-      "A good Uniblex game page can document the optimization choices behind a project. That turns technical production work into educational content for other artists and helps visitors understand why the game loads quickly."
-    ]
-  },
-  {
-    title: "How to Write Game Descriptions That Help Players",
-    slug: "how-to-write-game-descriptions-that-help-players",
-    category: "Tutorials",
-    excerpt: "Useful game descriptions explain the fantasy, the loop, the controls, and why someone should try one more run.",
-    publishedAt: "2026-06-21",
-    readingTime: "6 min read",
-    image: sharedImages[1],
-    content: [
-      "A game description should do more than describe a genre. Players need to know what they will do, what makes the game interesting, and how quickly they can understand it. A strong description introduces the player fantasy, explains the main loop, and gives enough detail to set expectations without spoiling every moment.",
-      "Avoid generic phrases such as fun gameplay, amazing graphics, or addictive action unless they are supported by specifics. Instead, mention the type of decisions the player makes, the session length, the progression system, and the main challenge. This helps the page feel original and trustworthy.",
-      "For search visibility, the description should naturally include the game type, platform, and key features. For users, it should remain readable and direct. The best result is a paragraph that sounds human and still gives search engines enough topic signals."
-    ]
-  },
-  {
-    title: "The Minimum Content Stack Before AdSense Submission",
-    slug: "minimum-content-stack-before-adsense-submission",
-    category: "Industry News",
-    excerpt: "Before applying for AdSense, a site should look complete, useful, original, and easy to navigate.",
-    publishedAt: "2026-06-20",
-    readingTime: "9 min read",
-    image: sharedImages[3],
-    content: [
-      "AdSense approval is never guaranteed, but a website has a better foundation when it looks complete and useful. That means real navigation, original articles, privacy policy, terms of service, about page, contact page, fast performance, and no obvious placeholder content. Thin pages and empty sections make the site look unfinished.",
-      "A practical goal is to publish at least fifteen to twenty original content pages before submission. For Uniblex, those pages can include game detail pages, tutorials, production breakdowns, 3D art articles, and browser gaming guides. Each page should have a clear purpose and enough detail to help a real visitor.",
-      "Ad placements should be planned but not overwhelming. Use header, sidebar, in-content, and below-player zones carefully. The experience should remain readable on mobile because many approval and quality signals depend on how the site behaves for everyday visitors."
+      "Web delivery makes every asset decision visible. A large texture, duplicate material, dense hidden mesh, or untrimmed audio file increases the bytes a player must fetch before the game can start. Optimization works best when the team sets budgets before export rather than trying to repair a finished build. Separate the first playable scene from later content so the initial download contains only what the player needs to begin.",
+      "Review textures by their actual screen use. A background prop rarely needs the same resolution as a vehicle or character shown close to the camera. Remove unused alpha channels, choose a suitable compression format, and reuse atlases where that reduces materials without creating waste. Normal, mask, and light maps should earn their memory cost through a visible contribution to the final scene.",
+      "Inspect meshes for hidden faces, duplicated vertices, accidental subdivision, and modifiers that were exported at a higher level than intended. Use level-of-detail meshes for objects whose screen size changes substantially. Combine static geometry only when it helps batching without harming culling. The goal is a predictable scene cost, not the smallest possible triangle count at the expense of silhouettes and gameplay readability.",
+      "Materials and shaders can expand into many variants. Keep the browser target in mind when selecting lighting, transparency, reflections, shadows, and post-processing. Transparent overdraw and full-screen effects can be expensive on mobile GPUs even when the download size looks reasonable. Bake lighting where it suits the art direction, limit real-time lights, and provide quality settings when one configuration cannot serve every device.",
+      "Audio and animation also belong in the budget. Trim silence, compress long music tracks appropriately, remove unused clips, and avoid shipping source-quality audio when the browser only needs the final mix. Check animation curves for unnecessary keys and confirm that duplicate clips are not embedded in several assets. These changes can reduce both transfer size and memory pressure.",
+      "Compression on storage does not replace asset optimization. Brotli or gzip can reduce transfer size for WebAssembly and data files, but the browser still needs to download, decode, and allocate the resulting content. Serve the encoding that the build expects, with correct response headers and content types. A mismatch can look like a game bug even though the files exist.",
+      "Measure the exported build rather than judging only the editor project. Record file sizes by category, load the public build on a normal connection, and watch when the first interactive frame appears. Check memory and frame stability on a representative mobile device. Repeat the same measurements after a change so an optimization is supported by the build output rather than by assumptions."
     ]
   },
   {
     title: "Core Web Vitals for Game Showcase Websites",
     slug: "core-web-vitals-for-game-showcase-websites",
     category: "Game Dev",
-    excerpt: "Game pages can be heavy, so performance needs to be designed into images, scripts, iframes, and layout stability.",
+    excerpt: "Keep the public page responsive before the game starts by reserving space, deferring heavy embeds, and limiting early client work.",
     publishedAt: "2026-06-19",
-    readingTime: "8 min read",
     image: sharedImages[0],
     content: [
-      "Core Web Vitals are especially important for game showcase websites because games often bring large files, animated media, third-party scripts, and embedded players. The public page should load quickly even when the game itself is large. This is why the player should be lazy loaded after a click instead of included in the initial render.",
-      "Largest Contentful Paint can be improved with optimized hero images, restrained fonts, and predictable layout dimensions. Cumulative Layout Shift can be reduced by reserving stable space for images, ads, players, and cards. Interaction responsiveness benefits from avoiding expensive client-side work during the first load.",
-      "A polished game website should feel fast before the game starts. If visitors can read the description, inspect screenshots, and press play without layout jumps, the platform feels more premium and more trustworthy."
+      "A showcase page and its game build have different performance jobs. The page should present the title, cover, description, controls, and Play action quickly. The game may be much larger, so loading it with the first document can delay everything the visitor needs to decide whether to play. An on-demand iframe keeps the initial page useful while preserving a direct path into the game.",
+      "Largest Contentful Paint often depends on the main heading or hero image. Use a real, correctly sized image, avoid downloading several competing hero assets, and do not make the first view wait for the game bundle. Web fonts should use a loading strategy that keeps text visible. A decorative background should not be the only way the page communicates its subject.",
+      "Layout stability comes from reserving dimensions. Give covers, screenshots, video, and the game player an aspect ratio before their files arrive. Avoid inserting empty advertising boxes that later change size, especially when no advertising provider is active. Status messages and loading indicators should fit inside the reserved player instead of moving the rest of the article.",
+      "Interaction responsiveness depends on how much JavaScript runs when the user acts. Keep the Play handler small, avoid parsing large metadata on the main thread, and let the game's own loading screen report progress after the iframe starts. Search, filters, and mobile navigation should remain responsive even if a remote thumbnail or analytics endpoint is slow.",
+      "Third-party scripts deserve a specific purpose and a consent decision. Each script adds network work and can execute on the main thread. Load analytics only when the host consent state permits it, and keep advertising scripts absent until an approved provider is deliberately integrated. Ownership verification can use a static meta tag without loading an advertising library.",
+      "A stable page also needs failure behavior. Broken posters should fall back to a verified asset, remote games should show an unavailable message instead of a blank rectangle, and a database error should not reveal stale fictional inventory. Clear failure states protect the user experience and make monitoring easier because the page does not pretend an incomplete action succeeded.",
+      "Validate with both lab and real-browser evidence. Check a production build, inspect network waterfalls, resize through common breakpoints, and interact with the page while the game is loading. Review the console for blocked resources and the server logs for repeated failures. Performance work is complete only when the public deployment behaves as expected, not when a source-level checklist is finished."
     ]
   },
   {
-    title: "Planning Blog Categories for a Game Dev Platform",
-    slug: "planning-blog-categories-for-game-dev-platform",
+    title: "How to Write Game Descriptions That Help Players",
+    slug: "how-to-write-game-descriptions-that-help-players",
     category: "Tutorials",
-    excerpt: "Clear categories make a content platform easier to scan, easier to manage, and easier to grow.",
-    publishedAt: "2026-06-18",
-    readingTime: "6 min read",
-    image: sharedImages[2],
-    content: [
-      "Categories should describe how readers think, not how the database happens to be organized. For Uniblex, the useful starting set is Game Dev, 3D Art, Tutorials, and Industry News. Each category has a clear audience and can support multiple long-form topics without becoming too broad.",
-      "Game Dev can cover design notes, WebGL performance, controls, and publishing. 3D Art can cover asset creation, optimization, presentation, and breakdowns. Tutorials can show practical workflows step by step. Industry News can discuss browser gaming trends and creator opportunities.",
-      "A category system also helps the admin workflow. Mohsin can draft an article, assign a category, add a featured image, set reading time, and publish when the page has enough value. This keeps the site organized as content grows."
-    ]
-  },
-  {
-    title: "What Every Game Detail Page Should Include",
-    slug: "what-every-game-detail-page-should-include",
-    category: "Game Dev",
-    excerpt: "A complete game page includes more than a play button. It should answer the player's practical questions.",
-    publishedAt: "2026-06-17",
-    readingTime: "7 min read",
-    image: sharedImages[4],
-    content: [
-      "A strong game detail page answers four questions quickly: what is this game, how do I play, why should I care, and what device works best. The title and description introduce the idea. The controls section removes confusion. The highlights section explains what makes the game worth trying.",
-      "Technical notes are useful when the project is browser-based. Mention if the game is best played on desktop, whether fullscreen is supported, and whether the first load may take a moment. This turns possible friction into clear communication.",
-      "The page should also support growth. Tags, genre, related articles, screenshots, structured data, and ad zones all help the page fit into the wider platform. A game page becomes a durable content asset instead of a temporary demo link."
-    ]
-  },
-  {
-    title: "Creating Original Tutorial Content from Your Own Workflow",
-    slug: "creating-original-tutorial-content-from-your-own-workflow",
-    category: "Tutorials",
-    excerpt: "The easiest original tutorials come from documenting real decisions while building games and assets.",
-    publishedAt: "2026-06-16",
-    readingTime: "7 min read",
+    excerpt: "Describe the actual player goal, actions, controls, device needs, and session shape without unsupported marketing claims.",
+    publishedAt: "2026-06-21",
     image: sharedImages[1],
     content: [
-      "Original tutorial content does not require inventing a huge course every week. The best starting point is your own workflow. When you solve a problem while modeling, texturing, exporting, optimizing, or publishing a game, write down the steps and explain why each decision mattered.",
-      "A useful tutorial usually has a clear problem, tools used, steps taken, mistakes avoided, and a final checklist. Screenshots make the page stronger, but the written explanation is what helps visitors understand the reasoning. This format also works well for SEO because each article targets a specific question.",
-      "For Uniblex, workflow-based tutorials can connect directly to game pages. A game can link to the article that explains its art style, player controls, optimization process, or WebGL publishing setup. That internal linking makes the platform feel connected and professional."
+      "A useful game description explains what the player will do. Start with the central action and goal: drive through a course, solve a sequence, survive a wave, or explore an environment. Add the decisions or obstacles that shape the session. This is more informative than calling the game exciting, premium, addictive, or realistic without showing what those words mean.",
+      "Write from the published build. If a feature is planned but not playable, leave it out of the public description or identify it clearly as future work outside the listing. Do not copy a concept document into a game page after the implementation has changed. The controls, screenshots, tags, genre, and description should all describe the same revision a player opens.",
+      "Set expectations about input and device support. Mention when keyboard controls are required, when touch controls are available, and when landscape orientation is recommended. If the first load is large, a concise note can prepare the player without promising an exact time that varies by connection and device. Accessibility information should be concrete, such as remappable controls or readable subtitles, only when the build provides it.",
+      "Use specific nouns and verbs. 'Drive a car through a 3D course using keyboard controls' tells the reader more than 'experience amazing racing action.' Specific language also makes duplicate descriptions less likely because it reflects the individual game. Keep the first sentence understandable without tags or screenshots, then use later sentences for the loop, challenge, progression, and session style.",
+      "Avoid claims that need evidence you do not have. Ratings, player counts, awards, popularity labels, and performance promises should come from a reliable source. A new game does not need invented social proof. A clear playable page, accurate media, and honest controls are enough to help a visitor decide. If counters are shown, label them accurately and protect them from trivial manipulation.",
+      "Keep the description readable on small screens. Use a short summary near the title and a fuller explanation below the player when more detail is useful. Repeating the same promotional sentence in several sections adds length without value. Related guides can cover controls, optimization, or development in depth while the game description stays focused on playing.",
+      "Before publishing, compare every sentence with the live build. Start the game, follow the stated objective, use each listed control, and check the recommended device behavior. Remove anything that cannot be verified. This final review prevents the common mismatch where a page looks complete but sends the player to a different or unfinished experience."
     ]
   },
   {
-    title: "Safe Ad Placement for Browser Game Pages",
-    slug: "safe-ad-placement-for-browser-game-pages",
-    category: "Industry News",
-    excerpt: "Ads should support monetization without blocking play, confusing users, or damaging mobile readability.",
-    publishedAt: "2026-06-15",
-    readingTime: "6 min read",
-    image: sharedImages[3],
-    content: [
-      "Ad placement on a browser game site needs restraint. A header leaderboard can work well above content, a rectangle can support longer pages, and a below-player zone can appear after the game frame. In-content placements should be spaced naturally between paragraphs rather than interrupting the first few lines.",
-      "The game player itself should remain the priority. Avoid overlays that block controls, accidental clicks near important buttons, or ad units that push the player down suddenly. Stable dimensions matter because layout shifts feel unprofessional and can hurt quality metrics.",
-      "Admin-controlled ad zones are helpful because monetization can be adjusted without redeploying the site. During review or early launch, zones can be inactive or represented by clean placeholders. After approval, real provider code can be enabled carefully."
-    ]
-  },
-  {
-    title: "A Launch Checklist for Uniblex Content Pages",
-    slug: "launch-checklist-for-uniblex-content-pages",
-    category: "Tutorials",
-    excerpt: "Before publishing a page, check its title, slug, image, content depth, links, schema, and mobile layout.",
-    publishedAt: "2026-06-14",
-    readingTime: "8 min read",
-    image: sharedImages[0],
-    content: [
-      "Every Uniblex content page should pass a simple launch checklist. The title should be clear, the slug should be readable, and the excerpt should explain the value of the page. The featured image should load correctly and match the subject. The body should contain original writing, not filler text.",
-      "Technical checks are just as important. Confirm the meta title and description, Open Graph image, canonical URL, structured data, and sitemap entry. Test the page on mobile width to make sure buttons, cards, ad zones, and text do not overlap. If the page includes a game player, confirm it loads only after the play action.",
-      "A checklist makes publishing faster because it removes guesswork. It also protects the quality of the platform as more articles and games are added through the admin dashboard."
-    ]
-  },
-  {
-    title: "How Mohsin Shah Can Position Uniblex as a Creator Platform",
-    slug: "mohsin-shah-uniblex-creator-platform-positioning",
-    category: "Industry News",
-    excerpt: "Uniblex can grow by connecting Mohsin Shah's 3D and game development experience with useful browser-first content.",
-    publishedAt: "2026-06-13",
-    readingTime: "7 min read",
-    image: sharedImages[2],
-    content: [
-      "Uniblex has a strong positioning advantage because it is not only a game listing site. It can represent Mohsin Shah's practical experience as a Senior 3D Modeler and Game Developer from Lahore, Pakistan. That background gives the platform a real creator voice.",
-      "The content strategy should connect playable experiments with production knowledge. A game page can show the experience, while articles explain the modeling, optimization, design, or publishing work behind it. This gives visitors more reasons to stay and gives search engines more useful context.",
-      "Over time, Uniblex can become a home for browser games, development notes, tutorials, and portfolio-quality breakdowns. The first version should focus on quality, speed, clear navigation, and original content. Community features can come later when the foundation is steady."
-    ]
-  },
-  {
-    title: "Designing a Polished Game Card for Better Clicks",
-    slug: "designing-polished-game-card-for-better-clicks",
-    category: "Tutorials",
-    excerpt: "A strong game card should communicate genre, quality, session length, and player promise before the visitor opens the page.",
-    publishedAt: "2026-06-12",
-    readingTime: "7 min read",
-    image: sharedImages[0],
-    content: [
-      "A game card is often the first real decision point on a showcase website. It needs to show the title, genre, visual identity, status, and a short promise that helps visitors understand why they should click. When cards look consistent but not identical, the whole library feels more premium.",
-      "Useful card metadata includes difficulty, session length, rating, player mode, and tags. These details help users choose the right game for their time and device. A casual visitor might choose a three-minute runner, while a strategy player might open a longer tactics page.",
-      "The design should avoid crowding. A strong thumbnail area, short copy, three or four data points, and a clear button are enough. The card should feel clickable on desktop and readable on mobile."
-    ]
-  },
-  {
-    title: "How to Prepare Dummy Content for a Client Demo",
-    slug: "prepare-dummy-content-for-client-demo",
-    category: "Tutorials",
-    excerpt: "Client demos feel stronger when placeholder content looks intentional, complete, and close to the final product.",
-    publishedAt: "2026-06-11",
-    readingTime: "6 min read",
-    image: sharedImages[1],
-    content: [
-      "Dummy content should never look like filler. Even when a project is still waiting for final games, screenshots, or articles, the demo should show realistic titles, complete descriptions, categories, metadata, and page structure. This helps the client understand the final experience.",
-      "For a game platform, realistic demo content can include fake game names, session length, difficulty, controls, rating, tags, technical notes, and article links. These details show that the CMS and design system can support real publishing workflows.",
-      "The best demo content is honest and polished. It should not pretend that unavailable games are already launched, but it should still make the platform feel complete and ready for real assets."
-    ]
-  },
-  {
-    title: "Mobile First Checks for Browser Game Libraries",
+    title: "Mobile-First Checks for Browser Game Libraries",
     slug: "mobile-first-checks-for-browser-game-libraries",
     category: "Game Dev",
-    excerpt: "Game libraries need stable cards, readable buttons, and layouts that do not collapse when viewed on smaller screens.",
+    excerpt: "Audit game discovery, player controls, media, navigation, and overflow at phone width before calling a browser-game library responsive.",
     publishedAt: "2026-06-10",
-    readingTime: "8 min read",
     image: sharedImages[2],
     content: [
-      "A browser game library must be easy to scan on mobile. Cards should stack naturally, text should wrap without overlap, buttons should remain large enough to tap, and metadata should not force horizontal scrolling. A premium layout feels calm even on a small device.",
-      "The most common mobile problems are oversized headings inside cards, thumbnails without stable aspect ratios, tags that wrap awkwardly, and buttons that shift when dynamic content loads. These can be prevented with fixed card image ratios, shorter labels, and responsive grid tracks.",
-      "Testing should include the home page, games listing, game detail pages, blog listing, and article pages. The goal is not just that the page loads; it should feel intentionally designed at every viewport."
-    ]
-  },
-  {
-    title: "Turning Game Production Notes into Blog Traffic",
-    slug: "turning-game-production-notes-into-blog-traffic",
-    category: "Game Dev",
-    excerpt: "Production notes can become useful articles when they explain decisions, constraints, tradeoffs, and repeatable lessons.",
-    publishedAt: "2026-06-09",
-    readingTime: "7 min read",
-    image: sharedImages[3],
-    content: [
-      "Game production creates useful content naturally. Every optimization decision, control change, art pass, level design test, and WebGL export issue can become an article if it is explained clearly. This turns everyday development into long-term search value.",
-      "A good production article starts with a specific problem. It explains the context, lists the tools involved, shows the decision process, and ends with a practical checklist. Readers should leave with something they can apply to their own project.",
-      "For Uniblex, this strategy connects games and blog posts together. A game page can link to its production breakdown, while the article sends interested readers back to play the demo."
-    ]
-  },
-  {
-    title: "What Makes a Web Game Page Feel Premium",
-    slug: "what-makes-web-game-page-feel-premium",
-    category: "Industry News",
-    excerpt: "Premium game pages combine fast loading, confident visuals, clear copy, useful metadata, and a player experience that respects the visitor.",
-    publishedAt: "2026-06-08",
-    readingTime: "8 min read",
-    image: sharedImages[4],
-    content: [
-      "A premium web game page feels intentional from the first second. The visitor sees a clear title, strong visual identity, direct description, and useful details like controls, difficulty, session length, and tags. Nothing feels accidental or unfinished.",
-      "Performance is part of the premium feeling. The game player should not load before the visitor asks for it, images should reserve space, and the page should remain readable while assets load. Good structure makes even demo content feel trustworthy.",
-      "The best pages also support business goals. They include schema markup, original text, internal links, ad placement zones, and a CMS-friendly content model. That makes the page useful for players, clients, and search engines at the same time."
+      "A responsive game library needs more than cards that stack. Start at the page header and follow the same route a player takes: open navigation, choose the game directory, scan cards, open a detail page, read the controls, and start the player. Every action should remain reachable without zooming, horizontal scrolling, or relying on a desktop hover state.",
+      "Use stable media ratios so thumbnails do not resize as they load. A one-column card layout is often clearer at narrow widths, with two columns only when titles and metadata still have room. Truncate only secondary labels; a game title should remain understandable. Make the complete card or a clear button tappable, and keep tap targets separated enough to avoid opening the wrong game.",
+      "Navigation should expose the same important destinations as desktop. A menu button needs an accessible label, visible focus, and a predictable open state. The page should close or retain the menu intentionally after navigation. Test with keyboard navigation as well as touch because responsive markup can accidentally hide focusable links off-screen.",
+      "The game player needs a fixed responsive frame and a deliberate orientation path. A landscape game can show a rotate suggestion on portrait phones, but it should not force orientation or trap the user. Fullscreen must have an exit path, and leaving fullscreen should restore the page position and controls. If the game does not support touch, state that before downloading the build.",
+      "Watch for overflow from code blocks, long URLs, tags, tables, and developer documentation. Let code areas scroll within their own container while the page itself remains within the viewport. Wrap metadata chips and action buttons, and avoid fixed widths larger than the screen. A 375-pixel viewport is a useful baseline check, but also resize slightly above and below it to find breakpoint gaps.",
+      "Remote content can fail differently on mobile networks. A broken cover should not leave an unreadable text overlay, and a delayed iframe should keep its loading state inside the player. Navigation, consent controls, and the rest of the page must remain usable while the game host responds. Avoid automatic redirects, popups, or downloads from the embedded frame.",
+      "Finish by reviewing the rendered production site rather than only the local component. Test the homepage, directory, both live game pages, blog, policies, and developer documentation. Check portrait and landscape, inspect console and network errors, and verify all internal links. A page that technically renders but exposes empty placeholders, development copy, or dead destinations is not ready for a mobile visitor."
     ]
   }
 ];
 
-export const categories = ["Game Dev", "3D Art", "Tutorials", "Industry News"] as const;
+function readingTime(content: string[]) {
+  const words = content.join(" ").trim().split(/\s+/).filter(Boolean).length;
+  return `${Math.max(1, Math.ceil(words / 200))} min read`;
+}
+
+export const posts: Post[] = publishedPosts.map((post) => ({
+  ...post,
+  readingTime: readingTime(post.content)
+}));
+
+export const categories = Array.from(new Set(posts.map((post) => post.category)));
 
 export function getPost(slug: string) {
   return posts.find((post) => post.slug === slug);

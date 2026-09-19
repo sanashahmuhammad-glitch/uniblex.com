@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AD_POLICY_VERSION } from "@/lib/monetization";
-export const metadata = { title: "Game Monetization & Advertising Policy | Uniblex" };
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Game Monetization & Advertising Policy | Uniblex",
+  alternates: { canonical: canonicalUrl("/game-monetization-policy") }
+};
 export default function AdvertisingPolicy() {
   return <main className="mx-auto max-w-4xl px-5 py-16 text-white"><h1 className="font-heading text-3xl sm:text-5xl">Uniblex Game Monetization &amp; Advertising Policy</h1><p className="mt-4 text-uniblex-gray">Version {AD_POLICY_VERSION}</p>
     <section className="mt-8 space-y-5 leading-8"><h2 className="font-heading text-2xl">Can I upload a game containing ads?</h2><p>Yes. Monetized games may be submitted subject to advertising, security, player experience, and review requirements. Disclose every provider, format, external destination, tracking purpose, and integration before review. Uploading a build does not approve its advertising.</p>
