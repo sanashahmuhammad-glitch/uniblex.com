@@ -1,5 +1,6 @@
 import { games as fallbackGames, type Game } from "@/data/games";
 import { MOTO_RIDER_IFRAME_URL, MOTO_RIDER_SLUG, MOTO_RIDER_THUMBNAIL_URL } from "@/lib/gameIframeUrls";
+import { safeGameFrameUrl } from "@/lib/gameFramePolicy";
 import { createClient } from "@supabase/supabase-js";
 
 type GameRow = {
@@ -120,7 +121,7 @@ function mapGameRow(row: GameRow): Game {
 }
 
 function isPlayableGame(game: Game) {
-  return game.status === "Published" && typeof game.iframeUrl === "string" && game.iframeUrl.startsWith("https://");
+  return game.status === "Published" && Boolean(safeGameFrameUrl(game.iframeUrl));
 }
 
 async function withOptionalCounters(games: Game[]) {
