@@ -17,6 +17,7 @@ function exactHttpsOrigins(...values) {
 
 const supabaseOrigin = exactHttpsOrigins(supabaseUrl);
 const gameFrameOrigins = exactHttpsOrigins("https://games.uniblex.com", supabaseUrl, process.env.R2_PUBLIC_BASE_URL, process.env.UNIBLEX_GAME_FRAME_ORIGINS);
+const hostedWebglFrameOrigins = exactHttpsOrigins("https://uniblex-webgl-assets.sanashahmuhammad.workers.dev");
 const adScriptOrigins = exactHttpsOrigins(process.env.UNIBLEX_ADS_SCRIPT_ORIGINS);
 const adFrameOrigins = exactHttpsOrigins(process.env.UNIBLEX_ADS_FRAME_ORIGINS);
 const adConnectOrigins = exactHttpsOrigins(process.env.UNIBLEX_ADS_CONNECT_ORIGINS);
@@ -32,7 +33,7 @@ const contentSecurityPolicy = [
   `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com ${gameFrameOrigins.join(" ")} ${adMediaOrigins.join(" ")}`.trim(),
   "font-src 'self' data:",
   `connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com ${supabaseOrigin.join(" ")} ${gameFrameOrigins.join(" ")} ${adConnectOrigins.join(" ")}`.trim(),
-  `frame-src 'self' ${gameFrameOrigins.join(" ")} ${adFrameOrigins.join(" ")}`.trim(),
+  `frame-src 'self' ${gameFrameOrigins.join(" ")} ${hostedWebglFrameOrigins.join(" ")} ${adFrameOrigins.join(" ")}`.trim(),
   `media-src 'self' blob: ${gameFrameOrigins.join(" ")} ${adMediaOrigins.join(" ")}`.trim(),
   "worker-src 'self' blob:",
   "manifest-src 'self'",
