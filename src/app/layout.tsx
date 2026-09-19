@@ -59,6 +59,9 @@ export const metadata: Metadata = {
   verification: {
     ...(googleSiteVerification ? { google: googleSiteVerification } : {}),
     ...(bingSiteVerification ? { other: { "msvalidate.01": bingSiteVerification } } : {})
+  },
+  other: {
+    "google-adsense-account": "ca-pub-7177050530627552"
   }
 };
 
